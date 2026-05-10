@@ -198,6 +198,8 @@ gh release edit v0.1.0 --draft=false
 npm publish --access public
 ```
 
+Branch protection note: enabling `main` protection while RepoBelt was private returned `403` because GitHub requires an eligible plan or a public repository for this feature. Enable branch protection immediately after making the repository public, before publishing the release/npm package.
+
 After making the repo public, enable private vulnerability reporting:
 
 ```bash

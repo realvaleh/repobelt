@@ -13,7 +13,7 @@ For the full release command sequence and explicit approval boundaries, see [`re
 - [ ] Confirm the README demo image renders correctly.
 - [ ] Confirm `CHANGELOG.md` includes the release being launched.
 - [ ] Confirm the GitHub release draft is correct.
-- [ ] Review [`branch-protection.md`](branch-protection.md) and decide whether to enable protection before public launch.
+- [ ] Review [`branch-protection.md`](branch-protection.md). GitHub returned `403` for private-repo branch protection on the current account, so enable it immediately after making the repository public unless the account plan changes first.
 
 ## GitHub security settings
 

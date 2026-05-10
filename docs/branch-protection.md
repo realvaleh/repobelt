@@ -110,6 +110,16 @@ Enable branch protection after:
 - [ ] the `v0.1.0` release draft is ready.
 - [ ] before or immediately after making the repository public.
 
+## GitHub plan limitation
+
+On 2026-05-10, enabling branch protection while RepoBelt was still private returned:
+
+```text
+Upgrade to GitHub Pro or make this repository public to enable this feature. (HTTP 403)
+```
+
+For this repository, branch protection should be enabled immediately after the repository is made public, unless the account is upgraded to a plan that supports branch protection on private repositories first.
+
 ## Notes for early development
 
 During private prelaunch iteration, direct pushes to `main` are acceptable because the repo is still being prepared quickly. Once public, use pull requests for meaningful changes so the repository looks professional and CI history remains clean.
