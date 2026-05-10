@@ -20,7 +20,7 @@ npx repobelt check --base HEAD --head worktree
 
 Works with agent-heavy workflows from Claude Code, Codex, Cursor, Copilot, OpenCode, and other tools that can produce fast-moving pull requests.
 
-See the full demo in [`docs/demo.md`](docs/demo.md).
+See the full demo in [`docs/demo.md`](docs/demo.md). A rendered MP4 demo is available at [`docs/assets/repobelt-demo.mp4`](docs/assets/repobelt-demo.mp4), with regeneration notes in [`docs/demo-video.md`](docs/demo-video.md).
 
 ## Why RepoBelt exists
 
@@ -225,7 +225,7 @@ pnpm build
 pnpm smoke:pack
 ```
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY.md`](SECURITY.md), [`CHANGELOG.md`](CHANGELOG.md), [`docs/packaged-cli-smoke-test.md`](docs/packaged-cli-smoke-test.md), [`docs/branch-protection.md`](docs/branch-protection.md), [`docs/release-process.md`](docs/release-process.md), [`docs/public-launch-checklist.md`](docs/public-launch-checklist.md), and [`docs/launch-announcement-kit.md`](docs/launch-announcement-kit.md).
+See [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY.md`](SECURITY.md), [`CHANGELOG.md`](CHANGELOG.md), [`docs/packaged-cli-smoke-test.md`](docs/packaged-cli-smoke-test.md), [`docs/demo-video.md`](docs/demo-video.md), [`docs/branch-protection.md`](docs/branch-protection.md), [`docs/release-process.md`](docs/release-process.md), [`docs/public-launch-checklist.md`](docs/public-launch-checklist.md), and [`docs/launch-announcement-kit.md`](docs/launch-announcement-kit.md).
 
 ## License
 

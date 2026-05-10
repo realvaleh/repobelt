@@ -4,6 +4,8 @@ This page shows the core RepoBelt value proposition: a deterministic safety repo
 
 ![RepoBelt terminal demo](assets/repobelt-demo.svg)
 
+Rendered MP4 demo: [`assets/repobelt-demo.mp4`](assets/repobelt-demo.mp4)
+
 ## Scenario
 
 An AI coding agent proposes a change that touches:

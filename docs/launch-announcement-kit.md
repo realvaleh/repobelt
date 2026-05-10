@@ -30,6 +30,8 @@ A CI seatbelt for AI-generated pull requests.
 AI agents can modify a lot of code fast. RepoBelt adds a deterministic safety layer in CI: protected files fail, risky paths get called out, and secret-shaped strings are reported without printing the secret value.
 ```
 
+Suggested visual: upload `docs/assets/repobelt-demo.mp4` with the launch post.
+
 ## X/Twitter launch post
 
 ```text
