@@ -232,8 +232,9 @@ describe('RepoBelt CLI foundation', () => {
       );
 
       expect(result.exitCode).toBe(1);
-      expect(errors.join('\n')).toContain('RepoBelt check failed:');
-      expect(errors.join('\n')).toContain('not a git repository');
+      const errorOutput = errors.join('\n');
+      expect(errorOutput).toContain('RepoBelt check failed:');
+      expect(errorOutput.toLowerCase()).toContain('not a git repository');
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
