@@ -57,3 +57,4 @@ Also verify:
 - [ ] Share with AI coding/devtool communities.
 - [ ] Consider Hacker News only after the npm install path is proven.
 - [ ] Prepare a short demo GIF/video from `docs/assets/repobelt-demo.svg` or a real terminal recording.
+- [ ] Use [`launch-announcement-kit.md`](launch-announcement-kit.md) for platform-specific copy.
