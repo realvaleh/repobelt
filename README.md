@@ -6,10 +6,14 @@ RepoBelt is a local-first CLI and GitHub Action that checks pull request diffs f
 
 AI coding agents can move fast. RepoBelt keeps them in bounds.
 
+![RepoBelt terminal demo](docs/assets/repobelt-demo.svg)
+
 ```bash
 npx repobelt init
 npx repobelt check --base HEAD --head worktree
 ```
+
+See the full demo in [`docs/demo.md`](docs/demo.md).
 
 ## Why RepoBelt exists
 
