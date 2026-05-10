@@ -13,7 +13,6 @@ The repository is still private. No public launch action has been taken in this 
 - Repository: `realvaleh/repobelt`
 - Visibility: `PRIVATE`
 - Default branch: `main`
-- Current `main` commit: `c050e82d8f995fa1c557520fd02b778f8d448d27`
 - Working tree: clean
 - Package: `repobelt@0.1.0`
 
@@ -135,17 +134,7 @@ Local tag:
 v0.1.0
 ```
 
-Tag commit:
-
-```text
-c050e82d8f995fa1c557520fd02b778f8d448d27
-```
-
-Release target commit:
-
-```text
-c050e82d8f995fa1c557520fd02b778f8d448d27
-```
+Before publishing the GitHub release, confirm the `v0.1.0` tag and draft release target match the latest tested `main` commit.
 
 Release state:
 
