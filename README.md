@@ -225,7 +225,7 @@ pnpm build
 pnpm smoke:pack
 ```
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY.md`](SECURITY.md), [`CHANGELOG.md`](CHANGELOG.md), [`docs/packaged-cli-smoke-test.md`](docs/packaged-cli-smoke-test.md), and [`docs/public-launch-checklist.md`](docs/public-launch-checklist.md).
+See [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY.md`](SECURITY.md), [`CHANGELOG.md`](CHANGELOG.md), [`docs/packaged-cli-smoke-test.md`](docs/packaged-cli-smoke-test.md), [`docs/release-process.md`](docs/release-process.md), and [`docs/public-launch-checklist.md`](docs/public-launch-checklist.md).
 
 ## License
 

@@ -2,6 +2,8 @@
 
 Use this checklist when RepoBelt is ready to move from private preview to public launch.
 
+For the full release command sequence and explicit approval boundaries, see [`release-process.md`](release-process.md).
+
 ## Before changing visibility
 
 - [ ] Confirm `pnpm test` passes.
