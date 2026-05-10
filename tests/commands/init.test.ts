@@ -13,6 +13,7 @@ describe('repobelt init', () => {
     expect(files['.repobelt.yml']).toContain('risky_paths:');
     expect(files['.github/workflows/repobelt.yml']).toContain('RepoBelt');
     expect(files['.github/workflows/repobelt.yml']).toContain('repobelt check');
+    expect(files['.github/workflows/repobelt.yml']).toContain('FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true');
     expect(files['.github/workflows/repobelt.yml']).toContain('--format markdown');
     expect(files['.github/workflows/repobelt.yml']).toContain('$GITHUB_STEP_SUMMARY');
   });

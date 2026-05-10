@@ -43,6 +43,8 @@ jobs:
   repobelt:
     name: RepoBelt safety check
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     permissions:
       contents: read
       pull-requests: read
