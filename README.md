@@ -2,6 +2,11 @@
 
 **A seatbelt for AI-generated pull requests.**
 
+[![CI](https://github.com/realvaleh/repobelt/actions/workflows/ci.yml/badge.svg)](https://github.com/realvaleh/repobelt/actions/workflows/ci.yml)
+![Status: early preview](https://img.shields.io/badge/status-early_preview-blue)
+![Node >=20](https://img.shields.io/badge/node-%3E%3D20-339933)
+![License: MIT](https://img.shields.io/badge/license-MIT-yellow)
+
 RepoBelt is a local-first CLI and GitHub Action that checks pull request diffs for unsafe AI-agent changes before maintainers merge them.
 
 AI coding agents can move fast. RepoBelt keeps them in bounds.
@@ -12,6 +17,8 @@ AI coding agents can move fast. RepoBelt keeps them in bounds.
 npx repobelt init
 npx repobelt check --base HEAD --head worktree
 ```
+
+Works with agent-heavy workflows from Claude Code, Codex, Cursor, Copilot, OpenCode, and other tools that can produce fast-moving pull requests.
 
 See the full demo in [`docs/demo.md`](docs/demo.md).
 
@@ -43,10 +50,11 @@ It is a **seatbelt**, not an autopilot.
 
 ## Quickstart
 
-Install/run with npm:
+Run without installing globally:
 
 ```bash
 npx repobelt init
+npx repobelt check --base HEAD --head worktree
 ```
 
 This creates:
@@ -56,10 +64,11 @@ This creates:
 .github/workflows/repobelt.yml
 ```
 
-Run locally against your working tree:
+Or add it to a project as a dev dependency:
 
 ```bash
-npx repobelt check --base HEAD --head worktree
+pnpm add -D repobelt
+pnpm exec repobelt init
 ```
 
 Generate a Markdown report:
