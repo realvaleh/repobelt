@@ -224,7 +224,7 @@ pnpm test
 pnpm build
 ```
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY.md`](SECURITY.md), and [`CHANGELOG.md`](CHANGELOG.md).
+See [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY.md`](SECURITY.md), [`CHANGELOG.md`](CHANGELOG.md), and [`docs/public-launch-checklist.md`](docs/public-launch-checklist.md).
 
 ## License
 

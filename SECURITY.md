@@ -6,7 +6,9 @@ RepoBelt is a safety tool, so security reports should be handled carefully.
 
 Please do **not** open a public issue for security-sensitive reports.
 
-Use GitHub private vulnerability reporting if it is enabled for this repository:
+RepoBelt is currently staged as a private repository before public launch. GitHub private vulnerability reporting is intended for public repositories, so it should be enabled during the public launch checklist.
+
+After RepoBelt is public, use GitHub private vulnerability reporting if it is enabled for this repository:
 
 <https://github.com/realvaleh/repobelt/security/advisories/new>
 
