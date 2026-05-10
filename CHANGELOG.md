@@ -18,8 +18,11 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 - Text, Markdown, and JSON report formats.
 - GitHub Actions step-summary friendly Markdown output.
 - Policy documentation, example reports, and a basic example project.
-- README launch demo asset and early-preview badges.
+- README launch demo asset, rendered MP4 launch demo, and early-preview badges.
 - Node 24 GitHub Actions runtime opt-in for generated and project workflows.
+- Packaged CLI smoke test that installs the npm tarball into a clean temporary project and verifies `repobelt` commands through `npx`.
+- GitHub CI step that runs the packaged CLI smoke test on every push and pull request.
+- Issue templates, `SECURITY.md`, release process docs, branch protection plan, public launch checklist, and launch announcement kit.
 
 ### Notes
 
