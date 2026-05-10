@@ -6,7 +6,7 @@ Use this checklist when RepoBelt is ready to move from private preview to public
 
 - [ ] Confirm `pnpm test` passes.
 - [ ] Confirm `pnpm build` passes.
-- [ ] Confirm `npm pack --dry-run` contains the expected files only.
+- [ ] Confirm `pnpm smoke:pack` passes.
 - [ ] Confirm no real secrets, tokens, private keys, credentials, or private repository content are present.
 - [ ] Confirm the README demo image renders correctly.
 - [ ] Confirm `CHANGELOG.md` includes the release being launched.
