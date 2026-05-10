@@ -1,25 +1,23 @@
 # Public Launch Checklist
 
-Use this checklist when RepoBelt is ready to move from private preview to public launch.
+Use this checklist to track RepoBelt public launch status and remaining distribution steps.
 
 For the full release command sequence and explicit approval boundaries, see [`release-process.md`](release-process.md).
 
 ## Before changing visibility
 
-- [ ] Confirm `pnpm test` passes.
-- [ ] Confirm `pnpm build` passes.
-- [ ] Confirm `pnpm smoke:pack` passes.
-- [ ] Confirm no real secrets, tokens, private keys, credentials, or private repository content are present.
-- [ ] Confirm the README demo image renders correctly.
-- [ ] Confirm `CHANGELOG.md` includes the release being launched.
-- [ ] Confirm the GitHub release draft is correct.
-- [ ] Review [`branch-protection.md`](branch-protection.md). GitHub returned `403` for private-repo branch protection on the current account, so enable it immediately after making the repository public unless the account plan changes first.
+- [x] Confirm `pnpm test` passes.
+- [x] Confirm `pnpm build` passes.
+- [x] Confirm `pnpm smoke:pack` passes.
+- [x] Confirm no real secrets, tokens, private keys, credentials, or private repository content are present.
+- [x] Confirm the README demo image renders correctly.
+- [x] Confirm `CHANGELOG.md` includes the release being launched.
+- [x] Confirm the GitHub release draft is correct.
+- [x] Review [`branch-protection.md`](branch-protection.md). GitHub returned `403` while private, then branch protection succeeded after the repository was made public.
 
 ## GitHub security settings
 
-Private vulnerability reporting is intended for public repositories. The API returned `404` while RepoBelt was private, so enable it after making the repository public.
-
-After public visibility is enabled:
+Private vulnerability reporting is enabled for the public repository. Verification command:
 
 ```bash
 gh api -X PUT repos/realvaleh/repobelt/private-vulnerability-reporting \
@@ -37,17 +35,17 @@ Expected result:
 
 Also verify:
 
-- [ ] Issues are enabled.
-- [ ] Blank public issues are disabled by `.github/ISSUE_TEMPLATE/config.yml`.
-- [ ] `SECURITY.md` is visible.
-- [ ] Security contact link works from the public repo.
+- [x] Issues are enabled.
+- [x] Blank public issues are disabled by `.github/ISSUE_TEMPLATE/config.yml`.
+- [x] `SECURITY.md` is visible.
+- [x] Security contact link works from the public repo.
 
 ## Release steps
 
-- [ ] Make the repository public.
-- [ ] Enable private vulnerability reporting.
-- [ ] Publish the `v0.1.0` GitHub release draft.
-- [ ] Publish `repobelt@0.1.0` to npm only after explicit approval.
+- [x] Make the repository public.
+- [x] Enable private vulnerability reporting.
+- [x] Publish the `v0.1.0` GitHub release draft as a prerelease.
+- [ ] Publish `repobelt@0.1.0` to npm only after separate explicit approval.
 - [ ] Verify `npx repobelt --help` works from npm.
 - [ ] Verify `npx repobelt init --dry-run` works from npm.
 

@@ -4,14 +4,14 @@ Audit date: 2026-05-10
 
 ## Summary
 
-RepoBelt is ready for final human approval steps before public launch.
+RepoBelt has completed the approved GitHub public-launch steps.
 
-The repository is still private. No public launch action has been taken in this audit.
+The repository is now public, branch protection is enabled for `main`, private vulnerability reporting is enabled, and the `v0.1.0` GitHub prerelease is published.
 
 ## Repository state
 
 - Repository: `realvaleh/repobelt`
-- Visibility: `PRIVATE`
+- Visibility: `PUBLIC`
 - Default branch: `main`
 - Working tree: clean
 - Package: `repobelt@0.1.0`
@@ -40,10 +40,10 @@ typescript
 
 ## CI status
 
-Latest CI run:
+Latest CI run before launch:
 
 ```text
-https://github.com/realvaleh/repobelt/actions/runs/25636738216
+https://github.com/realvaleh/repobelt/actions/runs/25637296419
 ```
 
 Status:
@@ -52,7 +52,7 @@ Status:
 completed / success
 ```
 
-Required job name for future branch protection:
+Required branch protection status check:
 
 ```text
 Test and build
@@ -134,13 +134,18 @@ Local tag:
 v0.1.0
 ```
 
-Before publishing the GitHub release, confirm the `v0.1.0` tag and draft release target match the latest tested `main` commit.
+Published tag/release target:
+
+```text
+a97b2b5c5cc8d055f13fbc6cc267ead8a6c10c84
+```
 
 Release state:
 
 ```text
-Draft: true
+Draft: false
 Prerelease: true
+Published URL: https://github.com/realvaleh/repobelt/releases/tag/v0.1.0
 ```
 
 Release asset:
@@ -172,7 +177,7 @@ docs/public-launch-checklist.md
 docs/release-process.md
 ```
 
-Private vulnerability reporting was previously checked while the repo was private and returned `404`. Enable it after the repository is public, as documented in `docs/public-launch-checklist.md` and `docs/release-process.md`.
+Private vulnerability reporting is enabled for the public repository.
 
 ## Launch assets
 
@@ -188,36 +193,28 @@ docs/launch-announcement-kit.md
 
 The MP4 demo is synthetic and does not display real secret values.
 
+## Completed public-launch steps
+
+Completed with maintainer approval on 2026-05-10:
+
+```text
+Repository visibility: PUBLIC
+main branch protection: enabled
+Required status check: Test and build
+Private vulnerability reporting: enabled
+GitHub release v0.1.0: published as prerelease
+```
+
+Branch protection note: enabling `main` protection while RepoBelt was private previously returned `403` because GitHub requires an eligible plan or a public repository for this feature. It succeeded after the repository was made public.
+
 ## Approval-required steps remaining
 
-Do not run these without explicit approval from the maintainer:
+Do not run this without separate explicit approval from the maintainer:
 
 ```bash
-gh repo edit realvaleh/repobelt --visibility public
-gh release edit v0.1.0 --draft=false
 npm publish --access public
-```
-
-Branch protection note: enabling `main` protection while RepoBelt was private returned `403` because GitHub requires an eligible plan or a public repository for this feature. Enable branch protection immediately after making the repository public, before publishing the release/npm package.
-
-After making the repo public, enable private vulnerability reporting:
-
-```bash
-gh api -X PUT repos/realvaleh/repobelt/private-vulnerability-reporting \
-  -H 'Accept: application/vnd.github+json' --silent
-
-gh api repos/realvaleh/repobelt/private-vulnerability-reporting \
-  -H 'Accept: application/vnd.github+json'
-```
-
-Expected response:
-
-```json
-{"enabled":true}
 ```
 
 ## Recommendation
 
-Next safe step before public launch: decide whether to enable branch protection now or immediately after the repository is public.
-
-Next public side-effect step, only with explicit approval: make the repository public.
+Next step: review the public GitHub repo and published prerelease page, then decide whether to publish `repobelt@0.1.0` to npm.

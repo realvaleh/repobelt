@@ -1,12 +1,12 @@
 # Branch protection and repository rules
 
-RepoBelt should protect `main` before the repository is made public.
+RepoBelt protects `main` now that the repository is public.
 
 The goal is simple: every public change should pass CI, including the packaged CLI smoke test, before it lands on `main`.
 
 ## Recommended baseline
 
-For the first public launch, use a lightweight protection setup:
+For the first public launch, RepoBelt uses a lightweight protection setup:
 
 - Require pull requests before merging.
 - Require the `Test and build` status check from the `CI` workflow.
@@ -66,7 +66,7 @@ Test and build
 
 ## CLI/API setup option
 
-GitHub branch protection can also be configured by API after the repo is public/stable enough.
+GitHub branch protection was configured by API after the repo became public.
 
 Example command:
 
@@ -82,14 +82,14 @@ gh api -X PUT repos/realvaleh/repobelt/branches/main/protection \
   "enforce_admins": false,
   "required_pull_request_reviews": {
     "required_approving_review_count": 1,
-    "dismiss_stale_reviews": false,
+    "dismiss_stale_reviews": true,
     "require_code_owner_reviews": false
   },
   "restrictions": null,
   "allow_force_pushes": false,
   "allow_deletions": false,
   "required_linear_history": false,
-  "required_conversation_resolution": false
+  "required_conversation_resolution": true
 }
 JSON
 ```
@@ -101,14 +101,20 @@ gh api repos/realvaleh/repobelt/branches/main/protection \
   -H 'Accept: application/vnd.github+json'
 ```
 
-## When to enable
+## Current status
 
-Enable branch protection after:
+Branch protection is enabled for `main` after:
 
-- [ ] CI has passed on the latest `main` commit.
-- [ ] `pnpm smoke:pack` is part of CI.
-- [ ] the `v0.1.0` release draft is ready.
-- [ ] before or immediately after making the repository public.
+- [x] CI passed on the latest launch commit.
+- [x] `pnpm smoke:pack` became part of CI.
+- [x] the `v0.1.0` release draft was ready.
+- [x] the repository was made public.
+
+Current required status check:
+
+```text
+Test and build
+```
 
 ## GitHub plan limitation
 
@@ -118,10 +124,10 @@ On 2026-05-10, enabling branch protection while RepoBelt was still private retur
 Upgrade to GitHub Pro or make this repository public to enable this feature. (HTTP 403)
 ```
 
-For this repository, branch protection should be enabled immediately after the repository is made public, unless the account is upgraded to a plan that supports branch protection on private repositories first.
+For this repository, branch protection succeeded after the repository was made public.
 
 ## Notes for early development
 
-During private prelaunch iteration, direct pushes to `main` are acceptable because the repo is still being prepared quickly. Once public, use pull requests for meaningful changes so the repository looks professional and CI history remains clean.
+Now that the repo is public, use pull requests for meaningful changes so the repository looks professional and CI history remains clean.
 
 If branch protection blocks an urgent release fix, use the admin bypass intentionally and document the reason in the commit or release notes.
