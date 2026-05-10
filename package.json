@@ -1,6 +1,6 @@
 {
   "name": "repobelt",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A seatbelt for AI-generated pull requests.",
   "author": "Valeh",
   "homepage": "https://github.com/realvaleh/repobelt#readme",
@@ -20,6 +20,7 @@
     "docs",
     "examples",
     "README.md",
+    "CHANGELOG.md",
     "CONTRIBUTING.md",
     "LICENSE"
   ],
