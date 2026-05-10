@@ -1,0 +1,19 @@
+version: 1
+
+protected_paths:
+  - .env
+  - secrets/**
+  - '**/*.pem'
+
+risky_paths:
+  auth/**: require_review
+  migrations/**: require_review
+  .github/workflows/**: require_review
+
+required_checks:
+  - test
+  - lint
+
+allowlist:
+  paths:
+    - docs/**

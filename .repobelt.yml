@@ -1,0 +1,25 @@
+version: 1
+
+# Files that should fail CI when changed by an AI-generated PR unless policy is edited.
+protected_paths:
+  - .env
+  - .env.*
+  - secrets/**
+  - '**/*.pem'
+  - '**/*.key'
+
+# Files that are allowed but should receive explicit human review.
+risky_paths:
+  auth/**: require_review
+  payments/**: require_review
+  migrations/**: require_review
+  infra/prod/**: require_review
+  .github/workflows/**: require_review
+
+required_checks:
+  - test
+  - lint
+  - typecheck
+
+allowlist:
+  paths: []
