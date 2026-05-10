@@ -1,0 +1,52 @@
+name: Feature request
+description: Suggest a new RepoBelt capability.
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement. Please avoid sharing private repository code or sensitive details.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What maintainer or AI-agent PR safety problem should this solve?
+      placeholder: I want RepoBelt to help detect...
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: What should RepoBelt do?
+      placeholder: Add a command/setting/report that...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - CLI
+        - GitHub Actions
+        - Policy format
+        - Reports
+        - Secret scanning
+        - Path/risk rules
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional. What else could solve this?
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: This request does not include secrets, tokens, credentials, or private repository content.
+          required: true

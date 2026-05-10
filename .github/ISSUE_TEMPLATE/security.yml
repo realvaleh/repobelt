@@ -1,0 +1,27 @@
+name: Security report guidance
+description: Please do not report vulnerabilities or secrets in a public issue.
+title: "security: see private reporting guidance"
+labels: [security]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Do not post security-sensitive details in a public issue
+
+        Please do **not** include:
+
+        - real API keys, tokens, credentials, or private keys
+        - private repository contents
+        - exploitable vulnerability details that should be handled privately
+        - logs that may contain secrets
+
+        If you found a vulnerability or secret-leak issue in RepoBelt, use GitHub's private vulnerability reporting if it is enabled on the repository, or contact the maintainer privately.
+
+        If your issue is not sensitive, use the bug report template and redact sensitive values as `[REDACTED]`.
+  - type: checkboxes
+    id: acknowledgement
+    attributes:
+      label: Acknowledgement
+      options:
+        - label: I understand that I should not post secrets or vulnerability details in a public issue.
+          required: true

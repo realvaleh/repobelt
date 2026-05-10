@@ -1,0 +1,53 @@
+name: Policy or rule request
+description: Request a new protected path, risky path, secret detector, preset, or policy behavior.
+title: "policy: "
+labels: [policy]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for RepoBelt rule and policy suggestions. Do not paste real secrets or private code. Use synthetic examples only.
+  - type: dropdown
+    id: rule_type
+    attributes:
+      label: Rule type
+      options:
+        - Protected path
+        - Risky path
+        - Secret detector
+        - Policy preset
+        - Report behavior
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use case
+      description: What risky AI-agent PR behavior should this catch or highlight?
+      placeholder: AI-generated PRs often modify...
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Synthetic example
+      description: Provide a fake/minimal example. Do not include real secrets or proprietary source.
+      placeholder: |
+        protected_paths:
+          - fake-prod-config/**
+      render: yaml
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected RepoBelt behavior
+      placeholder: This should produce FAIL/WARN/PASS because...
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety check
+      options:
+        - label: My example is synthetic and contains no real secrets, tokens, credentials, or private code.
+          required: true
