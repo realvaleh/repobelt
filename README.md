@@ -225,7 +225,7 @@ pnpm build
 pnpm smoke:pack
 ```
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY.md`](SECURITY.md), [`CHANGELOG.md`](CHANGELOG.md), [`docs/packaged-cli-smoke-test.md`](docs/packaged-cli-smoke-test.md), [`docs/demo-video.md`](docs/demo-video.md), [`docs/branch-protection.md`](docs/branch-protection.md), [`docs/release-process.md`](docs/release-process.md), [`docs/public-launch-checklist.md`](docs/public-launch-checklist.md), and [`docs/launch-announcement-kit.md`](docs/launch-announcement-kit.md).
+See [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY.md`](SECURITY.md), [`CHANGELOG.md`](CHANGELOG.md), [`docs/packaged-cli-smoke-test.md`](docs/packaged-cli-smoke-test.md), [`docs/demo-video.md`](docs/demo-video.md), [`docs/branch-protection.md`](docs/branch-protection.md), [`docs/release-process.md`](docs/release-process.md), [`docs/public-launch-checklist.md`](docs/public-launch-checklist.md), [`docs/public-launch-readiness-audit.md`](docs/public-launch-readiness-audit.md), and [`docs/launch-announcement-kit.md`](docs/launch-announcement-kit.md).
 
 ## License
 
