@@ -6,6 +6,12 @@ RepoBelt has a short rendered launch video at:
 docs/assets/repobelt-demo.mp4
 ```
 
+A social-post version with generated keyboard/UI sound effects is available at:
+
+```text
+docs/assets/repobelt-demo-sfx.mp4
+```
+
 Render it from the repository root with:
 
 ```bash
