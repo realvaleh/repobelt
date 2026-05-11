@@ -22,7 +22,7 @@ VIDEO_IN = ROOT / "docs" / "assets" / "repobelt-demo.mp4"
 VIDEO_OUT = ROOT / "docs" / "assets" / "repobelt-demo-sfx.mp4"
 
 SAMPLE_RATE = 48_000
-DURATION = 7.0
+DURATION = 10.5
 SAMPLES = int(SAMPLE_RATE * DURATION)
 
 
@@ -33,32 +33,6 @@ def clamp(x: float) -> float:
 def add_sample(buf: list[float], index: int, value: float) -> None:
     if 0 <= index < len(buf):
         buf[index] = clamp(buf[index] + value)
-
-
-def add_click(buf: list[float], t: float, *, amp: float = 0.22, seed: int = 0) -> None:
-    """Short mechanical keyboard click: transient noise + tiny resonant ping."""
-    rng = random.Random(seed)
-    start = int(t * SAMPLE_RATE)
-    length = int(0.032 * SAMPLE_RATE)
-    freq = rng.uniform(2400, 4200)
-    for n in range(length):
-        i = start + n
-        env = math.exp(-n / (0.006 * SAMPLE_RATE))
-        noise = rng.uniform(-1.0, 1.0) * 0.55
-        ping = math.sin(2 * math.pi * freq * n / SAMPLE_RATE) * 0.45
-        body = math.sin(2 * math.pi * 190 * n / SAMPLE_RATE) * 0.16
-        add_sample(buf, i, amp * env * (noise + ping + body))
-
-
-def add_enter(buf: list[float], t: float) -> None:
-    """Slightly heavier key press at command submit."""
-    add_click(buf, t, amp=0.34, seed=999)
-    start = int(t * SAMPLE_RATE)
-    length = int(0.055 * SAMPLE_RATE)
-    for n in range(length):
-        env = math.exp(-n / (0.018 * SAMPLE_RATE))
-        tone = math.sin(2 * math.pi * 150 * n / SAMPLE_RATE)
-        add_sample(buf, start + n, 0.11 * env * tone)
 
 
 def add_beep(buf: list[float], t: float, *, freq: float, dur: float, amp: float, kind: str = "sine") -> None:
@@ -72,6 +46,19 @@ def add_beep(buf: list[float], t: float, *, freq: float, dur: float, amp: float,
         else:
             tone = math.sin(2 * math.pi * freq * n / SAMPLE_RATE)
         add_sample(buf, start + n, amp * env * tone)
+
+
+
+def add_soft_riser(buf: list[float], t: float, *, dur: float = 1.2, amp: float = 0.045) -> None:
+    start = int(t * SAMPLE_RATE)
+    length = int(dur * SAMPLE_RATE)
+    for n in range(length):
+        x = n / max(1, length - 1)
+        env = math.sin(math.pi * x)
+        freq = 180 + 260 * x
+        tone = math.sin(2 * math.pi * freq * n / SAMPLE_RATE)
+        overtone = math.sin(2 * math.pi * (freq * 2.01) * n / SAMPLE_RATE) * 0.35
+        add_sample(buf, start + n, amp * env * (tone + overtone))
 
 
 def add_fail_sting(buf: list[float], t: float) -> None:
@@ -147,14 +134,8 @@ def main() -> None:
 
     buf = [0.0] * SAMPLES
 
-    # Typing sequence matches render-demo-video.py timing: 0.35s to ~1.60s.
-    command_len = len("npx repobelt check --base HEAD --head worktree --format markdown")
-    for idx in range(command_len):
-        t = 0.35 + (idx / command_len) * 1.25
-        # Human-ish rhythm: not perfectly uniform.
-        jitter = math.sin(idx * 1.7) * 0.004 + (0.003 if idx % 7 == 0 else 0)
-        add_click(buf, t + jitter, amp=0.16 + 0.06 * ((idx % 5) / 4), seed=idx)
-    add_enter(buf, 1.62)
+    # No keyboard typing sounds: use subtle UI motion and alert cues instead.
+    add_soft_riser(buf, 0.35, dur=1.25, amp=0.035)
 
     # Report/UI reveals.
     add_fail_sting(buf, 1.76)
@@ -166,7 +147,8 @@ def main() -> None:
     add_pop(buf, 3.80, freq=980, amp=0.12)
     add_beep(buf, 4.75, freq=410, dur=0.22, amp=0.12, kind="square")
     add_pop(buf, 4.88, freq=520, amp=0.09)
-    add_shimmer(buf, 5.95)
+    add_shimmer(buf, 6.95)
+    add_soft_riser(buf, 7.15, dur=2.5, amp=0.025)
 
     buf = apply_limiter(buf)
 

@@ -21,7 +21,7 @@ OUT = ROOT / "docs" / "assets" / "repobelt-demo.mp4"
 WIDTH = 1280
 HEIGHT = 720
 FPS = 24
-DURATION = 7.0
+DURATION = 10.5
 FRAMES = int(FPS * DURATION)
 
 BG = (7, 17, 31)
@@ -56,7 +56,8 @@ def load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
 FONT = load_font(23)
 FONT_SMALL = load_font(19)
 FONT_TITLE = load_font(28, bold=True)
-FONT_BIG = load_font(34, bold=True)
+FONT_BIG = load_font(48, bold=True)
+FONT_HERO = load_font(72, bold=True)
 
 
 def rounded_rect(draw: ImageDraw.ImageDraw, xy, radius, fill, outline=None, width=1):
@@ -101,21 +102,30 @@ def draw_frame(i: int) -> Image.Image:
     img = Image.new("RGBA", (WIDTH, HEIGHT), (*BG, 255))
     draw = ImageDraw.Draw(img, "RGBA")
 
-    # Soft moving background glows.
+    # Cinematic layered background: subtle grid + moving glows.
+    for y in range(0, HEIGHT, 6):
+        shade = int(7 + y / HEIGHT * 10)
+        draw.line((0, y, WIDTH, y), fill=(shade, 20, 38, 45))
+    for x in range(0, WIDTH, 80):
+        draw.line((x, 0, x, HEIGHT), fill=(31, 41, 55, 18))
+    for y in range(0, HEIGHT, 80):
+        draw.line((0, y, WIDTH, y), fill=(31, 41, 55, 18))
     for idx, (cx, cy, color) in enumerate([
         (1040, 110, (37, 99, 235)),
         (160, 610, (34, 197, 94)),
         (1140, 640, (168, 85, 247)),
+        (610, 60, (14, 165, 233)),
     ]):
-        pulse = 0.5 + 0.5 * math.sin(t * 1.4 + idx)
-        r = int(190 + 20 * pulse)
-        alpha = int(18 + 10 * pulse)
+        pulse = 0.5 + 0.5 * math.sin(t * 1.05 + idx)
+        r = int(220 + 32 * pulse)
+        alpha = int(16 + 12 * pulse)
         draw.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(*color, alpha))
 
     # Terminal card.
     shadow_offset = 18
-    rounded_rect(draw, (68 + shadow_offset, 62 + shadow_offset, 1212 + shadow_offset, 654 + shadow_offset), 24, (0, 0, 0, 55))
-    rounded_rect(draw, (68, 62, 1212, 654), 24, (*CARD, 255), (*BORDER, 255), 2)
+    rounded_rect(draw, (68 + shadow_offset, 62 + shadow_offset, 1212 + shadow_offset, 654 + shadow_offset), 24, (0, 0, 0, 75))
+    rounded_rect(draw, (63, 57, 1217, 659), 28, (56, 189, 248, 38), (56, 189, 248, 90), 2)
+    rounded_rect(draw, (68, 62, 1212, 654), 24, (*CARD, 248), (*BORDER, 255), 2)
     rounded_rect(draw, (68, 62, 1212, 128), 24, (*HEADER, 255), None)
 
     for x, color in [(110, RED), (142, YELLOW), (174, GREEN)]:
@@ -156,14 +166,24 @@ def draw_frame(i: int) -> Image.Image:
         draw_text_fade(draw, (312, 605), "Do not merge", RED, FONT_SMALL, alpha_action)
         draw_text_fade(draw, (470, 605), "until blocked findings are resolved.", MUTED, FONT_SMALL, alpha_action)
 
-    # End card overlay.
-    if t > 5.75:
-        a = min(220, int(220 * ((t - 5.75) / 0.55)))
+    # End card overlay. Hold long enough for social viewers to read and remember it.
+    if t > 6.65:
+        a = min(238, int(238 * ((t - 6.65) / 0.65)))
         draw.rectangle((0, 0, WIDTH, HEIGHT), fill=(7, 17, 31, a))
-        title_a = min(255, int(255 * ((t - 5.95) / 0.45)))
-        draw_text_fade(draw, (360, 270), "RepoBelt", CYAN, FONT_BIG, title_a)
-        draw_text_fade(draw, (360, 325), "A seatbelt for AI-generated pull requests", TEXT, FONT, title_a)
-        draw_text_fade(draw, (360, 372), "github.com/realvaleh/repobelt", MUTED, FONT_SMALL, title_a)
+        title_a = min(255, int(255 * ((t - 7.00) / 0.65)))
+        pulse = 0.5 + 0.5 * math.sin(t * 2.2)
+        # Shield mark.
+        shield = [(238, 228), (312, 252), (302, 354), (238, 398), (174, 354), (164, 252)]
+        draw.polygon(shield, fill=(15, 23, 42, title_a), outline=(56, 189, 248, title_a))
+        draw.line((204, 310, 230, 338, 276, 282), fill=(52, 211, 153, title_a), width=8)
+        draw.ellipse((132, 190, 344, 432), outline=(56, 189, 248, int(title_a * (0.35 + 0.25 * pulse))), width=3)
+        draw_text_fade(draw, (390, 235), "RepoBelt", CYAN, FONT_HERO, title_a)
+        draw_text_fade(draw, (394, 323), "A CI seatbelt for AI-generated pull requests", TEXT, FONT_TITLE, title_a)
+        draw_text_fade(draw, (398, 382), "npx repobelt init", GREEN, FONT, title_a)
+        draw_text_fade(draw, (398, 430), "github.com/realvaleh/repobelt", MUTED, FONT_SMALL, title_a)
+        if title_a > 180:
+            rounded_rect(draw, (392, 484, 982, 540), 16, (15, 23, 42, int(title_a * 0.8)), (56, 189, 248, int(title_a * 0.7)), 2)
+            draw_text_fade(draw, (422, 500), "Local-first • GitHub Action • npm: repobelt", TEXT, FONT_SMALL, title_a)
 
     return img.convert("RGB")
 
