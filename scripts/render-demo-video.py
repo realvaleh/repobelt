@@ -172,18 +172,15 @@ def draw_frame(i: int) -> Image.Image:
         draw.rectangle((0, 0, WIDTH, HEIGHT), fill=(7, 17, 31, a))
         title_a = min(255, int(255 * ((t - 7.00) / 0.65)))
         pulse = 0.5 + 0.5 * math.sin(t * 2.2)
-        # Shield mark.
-        shield = [(238, 228), (312, 252), (302, 354), (238, 398), (174, 354), (164, 252)]
-        draw.polygon(shield, fill=(15, 23, 42, title_a), outline=(56, 189, 248, title_a))
-        draw.line((204, 310, 230, 338, 276, 282), fill=(52, 211, 153, title_a), width=8)
-        draw.ellipse((132, 190, 344, 432), outline=(56, 189, 248, int(title_a * (0.35 + 0.25 * pulse))), width=3)
-        draw_text_fade(draw, (390, 235), "RepoBelt", CYAN, FONT_HERO, title_a)
-        draw_text_fade(draw, (394, 323), "A CI seatbelt for AI-generated pull requests", TEXT, FONT_TITLE, title_a)
-        draw_text_fade(draw, (398, 382), "npx repobelt init", GREEN, FONT, title_a)
-        draw_text_fade(draw, (398, 430), "github.com/realvaleh/repobelt", MUTED, FONT_SMALL, title_a)
-        if title_a > 180:
-            rounded_rect(draw, (392, 484, 982, 540), 16, (15, 23, 42, int(title_a * 0.8)), (56, 189, 248, int(title_a * 0.7)), 2)
-            draw_text_fade(draw, (422, 500), "Local-first • GitHub Action • npm: repobelt", TEXT, FONT_SMALL, title_a)
+        # Clean end card: no logo, just readable launch information.
+        line_alpha = int(title_a * (0.45 + 0.18 * pulse))
+        draw.line((320, 230, 960, 230), fill=(56, 189, 248, line_alpha), width=2)
+        draw.line((320, 548, 960, 548), fill=(56, 189, 248, line_alpha), width=2)
+        draw_text_fade(draw, (390, 250), "RepoBelt", CYAN, FONT_HERO, title_a)
+        draw_text_fade(draw, (394, 338), "A CI seatbelt for AI-generated pull requests", TEXT, FONT_TITLE, title_a)
+        rounded_rect(draw, (392, 404, 715, 458), 14, (6, 78, 59, int(title_a * 0.55)), (52, 211, 153, int(title_a * 0.8)), 2)
+        draw_text_fade(draw, (418, 419), "npx repobelt init", GREEN, FONT, title_a)
+        draw_text_fade(draw, (394, 486), "github.com/realvaleh/repobelt", MUTED, FONT_SMALL, title_a)
 
     return img.convert("RGB")
 

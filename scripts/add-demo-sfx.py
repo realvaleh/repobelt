@@ -49,6 +49,34 @@ def add_beep(buf: list[float], t: float, *, freq: float, dur: float, amp: float,
 
 
 
+def add_key_thock(buf: list[float], t: float, *, amp: float = 0.08, seed: int = 0) -> None:
+    """Soft low-profile keyboard sound: muted thock, not clicky."""
+    rng = random.Random(seed)
+    start = int(t * SAMPLE_RATE)
+    length = int(0.045 * SAMPLE_RATE)
+    base = rng.uniform(115, 165)
+    for n in range(length):
+        x = n / max(1, length - 1)
+        env = math.exp(-x * 11.5)
+        low = math.sin(2 * math.pi * base * n / SAMPLE_RATE)
+        mid = math.sin(2 * math.pi * (base * 2.35) * n / SAMPLE_RATE) * 0.38
+        felt = rng.uniform(-1.0, 1.0) * math.exp(-x * 22.0) * 0.22
+        add_sample(buf, start + n, amp * env * (low + mid + felt))
+
+
+def add_spacebar_thock(buf: list[float], t: float) -> None:
+    start = int(t * SAMPLE_RATE)
+    length = int(0.07 * SAMPLE_RATE)
+    rng = random.Random(808)
+    for n in range(length):
+        x = n / max(1, length - 1)
+        env = math.exp(-x * 9.0)
+        tone = math.sin(2 * math.pi * 95 * n / SAMPLE_RATE)
+        wood = math.sin(2 * math.pi * 185 * n / SAMPLE_RATE) * 0.35
+        felt = rng.uniform(-1.0, 1.0) * math.exp(-x * 18.0) * 0.16
+        add_sample(buf, start + n, 0.12 * env * (tone + wood + felt))
+
+
 def add_soft_riser(buf: list[float], t: float, *, dur: float = 1.2, amp: float = 0.045) -> None:
     start = int(t * SAMPLE_RATE)
     length = int(dur * SAMPLE_RATE)
@@ -105,8 +133,9 @@ def add_whoosh(buf: list[float], t: float, *, dur: float = 0.32, amp: float = 0.
 
 
 def add_shimmer(buf: list[float], t: float) -> None:
-    for offset, freq in [(0.00, 660), (0.08, 880), (0.16, 1320), (0.24, 1760)]:
-        add_beep(buf, t + offset, freq=freq, dur=0.34, amp=0.08)
+    # Subtle clean outro, not a sparkly logo sting.
+    for offset, freq in [(0.00, 392), (0.18, 523), (0.36, 659)]:
+        add_beep(buf, t + offset, freq=freq, dur=0.55, amp=0.045)
 
 
 def apply_limiter(buf: list[float]) -> list[float]:
@@ -134,8 +163,13 @@ def main() -> None:
 
     buf = [0.0] * SAMPLES
 
-    # No keyboard typing sounds: use subtle UI motion and alert cues instead.
-    add_soft_riser(buf, 0.35, dur=1.25, amp=0.035)
+    # Softer low-profile keyboard sounds synced to the typed command.
+    command_len = len("npx repobelt check --base HEAD --head worktree --format markdown")
+    for idx in range(command_len):
+        t = 0.35 + (idx / command_len) * 1.25
+        jitter = math.sin(idx * 1.7) * 0.004 + (0.003 if idx % 7 == 0 else 0)
+        add_key_thock(buf, t + jitter, amp=0.055 + 0.018 * ((idx % 4) / 3), seed=idx)
+    add_spacebar_thock(buf, 1.62)
 
     # Report/UI reveals.
     add_fail_sting(buf, 1.76)
