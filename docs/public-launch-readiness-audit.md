@@ -40,10 +40,10 @@ typescript
 
 ## CI status
 
-Latest CI run before launch:
+Latest CI run:
 
 ```text
-https://github.com/realvaleh/repobelt/actions/runs/25637296419
+https://github.com/realvaleh/repobelt/actions/runs/25649881741
 ```
 
 Status:
@@ -97,9 +97,9 @@ Dry-run package:
 ```text
 repobelt@0.1.0
 filename: repobelt-0.1.0.tgz
-package size: 100.5 kB
-unpacked size: 173.8 kB
-total files: 57
+package size: 101.7 kB
+unpacked size: 177.6 kB
+total files: 58
 ```
 
 Important packaged files verified:
@@ -137,7 +137,7 @@ v0.1.0
 Published tag/release target:
 
 ```text
-a97b2b5c5cc8d055f13fbc6cc267ead8a6c10c84
+feefcfc1f200120be9f9aced42c0453cf4e178c1
 ```
 
 Release state:
@@ -156,7 +156,7 @@ repobelt-demo.mp4
 
 ## Security and secrets check
 
-A lightweight scan for obvious real secret-shaped literals found no matches outside ignored build/vendor directories.
+A lightweight scan for obvious real secret-shaped literals found no matches outside ignored build/vendor directories. The package author field and personal copyright name were removed before npm publishing prep; the remaining `realvaleh` references are the public GitHub repository URL/owner handle.
 
 Ignored directories for this check:
 
@@ -209,7 +209,7 @@ Branch protection note: enabling `main` protection while RepoBelt was private pr
 
 ## Approval-required steps remaining
 
-Do not run this without separate explicit approval from the maintainer:
+This has maintainer approval, but cannot be completed until npm authentication is available on this machine:
 
 ```bash
 npm publish --access public
@@ -217,4 +217,4 @@ npm publish --access public
 
 ## Recommendation
 
-Next step: review the public GitHub repo and published prerelease page, then decide whether to publish `repobelt@0.1.0` to npm.
+Next step: authenticate npm on this machine, then publish `repobelt@0.1.0` to npm and verify `npx repobelt --help`.
