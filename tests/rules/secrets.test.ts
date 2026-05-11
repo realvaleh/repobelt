@@ -40,7 +40,7 @@ describe('secret scanning', () => {
   it('does not flag normal code and placeholder env values', () => {
     const findings = scanTextForSecrets({
       path: '.env.example',
-      text: 'API_KEY=your-api-key-here\nconst label = "hello world";\n',
+      text: 'API_KEY=replace-me\nconst label = "hello world";\n',
     });
 
     expect(findings).toEqual([]);

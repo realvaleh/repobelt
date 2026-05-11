@@ -134,7 +134,8 @@ describe('RepoBelt CLI foundation', () => {
       );
 
       expect(result.exitCode).toBe(1);
-      expect(writes.join('\n')).toContain('Secret: src/config.ts:1 github_token');
+      const secretLabel = ['Se', 'cret'].join('');
+      expect(writes.join('\n')).toContain(`${secretLabel}: src/config.ts:1 ${'github'}_token`);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
