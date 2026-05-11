@@ -88,6 +88,13 @@ def draw_text_fade(draw: ImageDraw.ImageDraw, xy, text, fill, font, alpha):
     draw.text(xy, text, font=font, fill=color)
 
 
+def draw_centered_text_fade(draw: ImageDraw.ImageDraw, y: int, text: str, fill, font, alpha: int):
+    if alpha <= 0 or not text:
+        return
+    width = draw.textlength(text, font=font)
+    draw.text(((WIDTH - width) / 2, y), text, font=font, fill=(*fill[:3], alpha))
+
+
 def draw_badge(draw: ImageDraw.ImageDraw, x: int, y: int, text: str, fill, outline, alpha: int):
     if alpha <= 0:
         return
@@ -172,15 +179,18 @@ def draw_frame(i: int) -> Image.Image:
         draw.rectangle((0, 0, WIDTH, HEIGHT), fill=(7, 17, 31, a))
         title_a = min(255, int(255 * ((t - 7.00) / 0.65)))
         pulse = 0.5 + 0.5 * math.sin(t * 2.2)
-        # Clean end card: no logo, just readable launch information.
+        # Clean, centered end card: no logo, just readable launch information.
         line_alpha = int(title_a * (0.45 + 0.18 * pulse))
-        draw.line((320, 230, 960, 230), fill=(56, 189, 248, line_alpha), width=2)
-        draw.line((320, 548, 960, 548), fill=(56, 189, 248, line_alpha), width=2)
-        draw_text_fade(draw, (390, 250), "RepoBelt", CYAN, FONT_HERO, title_a)
-        draw_text_fade(draw, (394, 338), "A CI seatbelt for AI-generated pull requests", TEXT, FONT_TITLE, title_a)
-        rounded_rect(draw, (392, 404, 715, 458), 14, (6, 78, 59, int(title_a * 0.55)), (52, 211, 153, int(title_a * 0.8)), 2)
-        draw_text_fade(draw, (418, 419), "npx repobelt init", GREEN, FONT, title_a)
-        draw_text_fade(draw, (394, 486), "github.com/realvaleh/repobelt", MUTED, FONT_SMALL, title_a)
+        draw.line((310, 222, 970, 222), fill=(56, 189, 248, line_alpha), width=2)
+        draw.line((310, 552, 970, 552), fill=(56, 189, 248, line_alpha), width=2)
+        draw_centered_text_fade(draw, 246, "RepoBelt", CYAN, FONT_HERO, title_a)
+        draw_centered_text_fade(draw, 335, "A CI seatbelt for AI-generated pull requests", TEXT, FONT_TITLE, title_a)
+        pill_text = "npx repobelt init"
+        pill_w = int(draw.textlength(pill_text, font=FONT)) + 56
+        pill_x = (WIDTH - pill_w) // 2
+        rounded_rect(draw, (pill_x, 404, pill_x + pill_w, 458), 14, (6, 78, 59, int(title_a * 0.55)), (52, 211, 153, int(title_a * 0.8)), 2)
+        draw_text_fade(draw, (pill_x + 28, 419), pill_text, GREEN, FONT, title_a)
+        draw_centered_text_fade(draw, 488, "github.com/realvaleh/repobelt", MUTED, FONT_SMALL, title_a)
 
     return img.convert("RGB")
 

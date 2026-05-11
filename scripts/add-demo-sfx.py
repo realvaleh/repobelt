@@ -49,32 +49,35 @@ def add_beep(buf: list[float], t: float, *, freq: float, dur: float, amp: float,
 
 
 
-def add_key_thock(buf: list[float], t: float, *, amp: float = 0.08, seed: int = 0) -> None:
-    """Soft low-profile keyboard sound: muted thock, not clicky."""
+def add_keyboard_tap(buf: list[float], t: float, *, amp: float = 0.11, seed: int = 0) -> None:
+    """Realistic short keyboard tap: crisp switch tick plus small keycap body."""
     rng = random.Random(seed)
     start = int(t * SAMPLE_RATE)
-    length = int(0.045 * SAMPLE_RATE)
-    base = rng.uniform(115, 165)
+    length = int(0.035 * SAMPLE_RATE)
+    click_freq = rng.uniform(2600, 5200)
+    body_freq = rng.uniform(180, 290)
     for n in range(length):
         x = n / max(1, length - 1)
-        env = math.exp(-x * 11.5)
-        low = math.sin(2 * math.pi * base * n / SAMPLE_RATE)
-        mid = math.sin(2 * math.pi * (base * 2.35) * n / SAMPLE_RATE) * 0.38
-        felt = rng.uniform(-1.0, 1.0) * math.exp(-x * 22.0) * 0.22
-        add_sample(buf, start + n, amp * env * (low + mid + felt))
+        # Fast transient for the switch, then a tiny body resonance.
+        tick_env = math.exp(-x * 42.0)
+        body_env = math.exp(-x * 12.0)
+        tick = rng.uniform(-1.0, 1.0) * 0.55 + math.sin(2 * math.pi * click_freq * n / SAMPLE_RATE) * 0.45
+        body = math.sin(2 * math.pi * body_freq * n / SAMPLE_RATE) * 0.42
+        add_sample(buf, start + n, amp * (tick_env * tick + body_env * body))
 
 
-def add_spacebar_thock(buf: list[float], t: float) -> None:
+def add_enter_key(buf: list[float], t: float) -> None:
+    """Slightly heavier Enter key press, still keyboard-like."""
+    add_keyboard_tap(buf, t, amp=0.16, seed=808)
     start = int(t * SAMPLE_RATE)
-    length = int(0.07 * SAMPLE_RATE)
-    rng = random.Random(808)
+    length = int(0.055 * SAMPLE_RATE)
+    rng = random.Random(809)
     for n in range(length):
         x = n / max(1, length - 1)
-        env = math.exp(-x * 9.0)
-        tone = math.sin(2 * math.pi * 95 * n / SAMPLE_RATE)
-        wood = math.sin(2 * math.pi * 185 * n / SAMPLE_RATE) * 0.35
-        felt = rng.uniform(-1.0, 1.0) * math.exp(-x * 18.0) * 0.16
-        add_sample(buf, start + n, 0.12 * env * (tone + wood + felt))
+        env = math.exp(-x * 10.0)
+        body = math.sin(2 * math.pi * 125 * n / SAMPLE_RATE) + 0.25 * math.sin(2 * math.pi * 250 * n / SAMPLE_RATE)
+        noise = rng.uniform(-1.0, 1.0) * math.exp(-x * 20.0) * 0.15
+        add_sample(buf, start + n, 0.09 * env * body + 0.04 * noise)
 
 
 def add_soft_riser(buf: list[float], t: float, *, dur: float = 1.2, amp: float = 0.045) -> None:
@@ -168,8 +171,8 @@ def main() -> None:
     for idx in range(command_len):
         t = 0.35 + (idx / command_len) * 1.25
         jitter = math.sin(idx * 1.7) * 0.004 + (0.003 if idx % 7 == 0 else 0)
-        add_key_thock(buf, t + jitter, amp=0.055 + 0.018 * ((idx % 4) / 3), seed=idx)
-    add_spacebar_thock(buf, 1.62)
+        add_keyboard_tap(buf, t + jitter, amp=0.085 + 0.025 * ((idx % 4) / 3), seed=idx)
+    add_enter_key(buf, 1.62)
 
     # Report/UI reveals.
     add_fail_sting(buf, 1.76)
