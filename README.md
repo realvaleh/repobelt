@@ -67,6 +67,14 @@ npx repobelt init --preset web
 
 The web preset adds extra review routing for API routes, middleware, frontend build config, package manifests, lockfiles, and a `build` check reminder.
 
+For Node.js packages and CLIs, use the node preset:
+
+```bash
+npx repobelt init --preset node
+```
+
+The node preset adds review routing for package manifests, lockfiles, TypeScript config, CLI entrypoints, bin scripts, automation scripts, and a `build` check reminder.
+
 This creates:
 
 ```text
@@ -197,7 +205,7 @@ Commands:
   check    Check a git diff against the RepoBelt policy
 
 Options:
-  --preset <default|web>  Policy preset for init. Default: default
+  --preset <default|web|node>  Policy preset for init. Default: default
   -h, --help              Show this help message
 ```
 
@@ -230,7 +238,7 @@ RepoBelt is early but functional:
 - secret scanning: done
 - CODEOWNERS reviewer hints: done
 - required check reminders: done
-- init policy presets: default and web
+- init policy presets: default, web, and node
 - text/Markdown/JSON/SARIF reports: done
 - GitHub Action template: done
 - CI workflow: done

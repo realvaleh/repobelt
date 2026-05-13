@@ -5,7 +5,7 @@ export interface InitWriteResult {
   created: string[];
 }
 
-export type InitPreset = 'default' | 'web';
+export type InitPreset = 'default' | 'web' | 'node';
 
 export interface InitOptions {
   preset?: InitPreset;
@@ -65,13 +65,20 @@ export async function writeInitFiles(targetDirectory: string, options: InitOptio
 }
 
 function renderPolicy(preset: InitPreset): string {
-  const presetComment = preset === 'web' ? '# Preset: web\n' : '';
+  const presetComment = preset === 'default' ? '' : `# Preset: ${preset}\n`;
   const riskyPaths = [
     'auth/**: require_review',
     'payments/**: require_review',
     'migrations/**: require_review',
     'infra/prod/**: require_review',
     '.github/workflows/**: require_review',
+    ...(preset === 'web' || preset === 'node'
+      ? [
+          'package.json: require_review',
+          'pnpm-lock.yaml: require_review',
+          'package-lock.json: require_review',
+        ]
+      : []),
     ...(preset === 'web'
       ? [
           'app/api/**: require_review',
@@ -80,13 +87,13 @@ function renderPolicy(preset: InitPreset): string {
           'middleware.*: require_review',
           'next.config.*: require_review',
           'vite.config.*: require_review',
-          'package.json: require_review',
-          'pnpm-lock.yaml: require_review',
-          'package-lock.json: require_review',
         ]
       : []),
+    ...(preset === 'node'
+      ? ['tsconfig*.json: require_review', 'src/cli.*: require_review', 'bin/**: require_review', 'scripts/**: require_review']
+      : []),
   ];
-  const requiredChecks = ['test', 'lint', 'typecheck', ...(preset === 'web' ? ['build'] : [])];
+  const requiredChecks = ['test', 'lint', 'typecheck', ...(preset === 'web' || preset === 'node' ? ['build'] : [])];
 
   return `version: 1
 ${presetComment}

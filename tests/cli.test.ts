@@ -15,7 +15,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(help).toContain('RepoBelt');
     expect(help).toContain('A seatbelt for AI-generated pull requests');
     expect(help).toContain('init');
-    expect(help).toContain('--preset <default|web>');
+    expect(help).toContain('--preset <default|web|node>');
     expect(help).toContain('check');
   });
 
@@ -90,6 +90,22 @@ describe('RepoBelt CLI foundation', () => {
       const policy = await readFile(join(dir, '.repobelt.yml'), 'utf8');
       expect(policy).toContain('# Preset: web');
       expect(policy).toContain('app/api/**: require_review');
+      expect(policy).toContain('  - build');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('creates node preset files for init --preset node', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-init-node-'));
+
+    try {
+      const result = await runCli(['init', '--preset', 'node'], { stdout: () => undefined, stderr: () => undefined }, { cwd: dir });
+
+      expect(result.exitCode).toBe(0);
+      const policy = await readFile(join(dir, '.repobelt.yml'), 'utf8');
+      expect(policy).toContain('# Preset: node');
+      expect(policy).toContain('tsconfig*.json: require_review');
       expect(policy).toContain('  - build');
     } finally {
       await rm(dir, { recursive: true, force: true });

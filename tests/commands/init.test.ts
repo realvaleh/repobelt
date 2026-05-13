@@ -34,6 +34,17 @@ describe('repobelt init', () => {
     expect(files['.repobelt.yml']).toContain('  - build');
   });
 
+  it('generates a node preset policy with package and TypeScript review paths', () => {
+    const files = generateInitFiles({ preset: 'node' });
+
+    expect(files['.repobelt.yml']).toContain('# Preset: node');
+    expect(files['.repobelt.yml']).toContain('package.json: require_review');
+    expect(files['.repobelt.yml']).toContain('pnpm-lock.yaml: require_review');
+    expect(files['.repobelt.yml']).toContain('tsconfig*.json: require_review');
+    expect(files['.repobelt.yml']).toContain('src/cli.*: require_review');
+    expect(files['.repobelt.yml']).toContain('  - build');
+  });
+
   it('writes generated files into a target directory', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'repobelt-init-'));
 

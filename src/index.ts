@@ -29,7 +29,7 @@ Commands:
   check    Check a git diff against the RepoBelt policy
 
 Options:
-  --preset <default|web>  Policy preset for init. Default: default
+  --preset <default|web|node>  Policy preset for init. Default: default
   -h, --help              Show this help message
 `;
 }
@@ -244,16 +244,16 @@ function getInitPreset(args: string[], io: CliIo): InitPreset | undefined {
   const presetIndex = args.indexOf('--preset');
   if (presetIndex >= 0 && (args[presetIndex + 1] === undefined || args[presetIndex + 1]?.startsWith('--'))) {
     io.stderr('Missing value for --preset');
-    io.stderr('Supported presets: default, web');
+    io.stderr('Supported presets: default, web, node');
     return undefined;
   }
 
   const preset = getFlagValue(args, '--preset') ?? 'default';
-  if (preset === 'default' || preset === 'web') {
+  if (preset === 'default' || preset === 'web' || preset === 'node') {
     return preset;
   }
   io.stderr(`Unsupported init preset: ${preset}`);
-  io.stderr('Supported presets: default, web');
+  io.stderr('Supported presets: default, web, node');
   return undefined;
 }
 

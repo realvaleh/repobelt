@@ -62,6 +62,7 @@ allowlist:
 ```bash
 repobelt init --preset default
 repobelt init --preset web
+repobelt init --preset node
 ```
 
 The `default` preset is the baseline policy shown above.
@@ -88,6 +89,27 @@ required_checks:
 ```
 
 Use the web preset for Next.js, Vite, or similar frontend/API repositories where agent-generated changes to routing, middleware, dependencies, and build configuration deserve explicit maintainer attention.
+
+The `node` preset keeps the baseline safeguards and adds review routing for Node.js package and CLI risk surfaces:
+
+```yaml
+risky_paths:
+  package.json: require_review
+  pnpm-lock.yaml: require_review
+  package-lock.json: require_review
+  tsconfig*.json: require_review
+  src/cli.*: require_review
+  bin/**: require_review
+  scripts/**: require_review
+
+required_checks:
+  - test
+  - lint
+  - typecheck
+  - build
+```
+
+Use the node preset for TypeScript/JavaScript packages, CLIs, and libraries where generated changes to package metadata, lockfiles, compiler configuration, executable entrypoints, or automation scripts deserve explicit maintainer attention.
 
 ## Fields
 
