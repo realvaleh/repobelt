@@ -76,6 +76,7 @@ try {
   const checkHelpOutput = run('npx', ['repobelt', 'check', '--help'], { cwd: appDir });
   expectIncludes('repobelt check --help', checkHelpOutput, '--config <path>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--baseline <path>');
+  expectIncludes('repobelt check --help', checkHelpOutput, '--diff <base...head>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--changed-files <path>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--stdin-changed-files');
   expectIncludes('repobelt check --help', checkHelpOutput, '--max-files <n>');
@@ -104,7 +105,27 @@ try {
   const commentWorkflow = run('node', ['-e', "process.stdout.write(require('node:fs').readFileSync('.github/workflows/repobelt.yml', 'utf8'))"], { cwd: commentInitDir });
   expectIncludes('repobelt init --pr-comment', commentWorkflow, 'issues: write');
   expectIncludes('repobelt init --pr-comment', commentWorkflow, 'GH_TOKEN: ${{ github.token }}');
+  expectIncludes('repobelt init --pr-comment', commentWorkflow, '--diff "origin/$GITHUB_BASE_REF...$GITHUB_SHA"');
   expectIncludes('repobelt init --pr-comment', commentWorkflow, '--pr-comment auto');
+
+  const diffRangeDir = join(appDir, 'diff-range');
+  mkdirSync(diffRangeDir, { recursive: true });
+  run('git', ['init', '-b', 'main'], { cwd: diffRangeDir });
+  run('git', ['config', 'user.name', 'RepoBelt Smoke Test'], { cwd: diffRangeDir });
+  run('git', ['config', 'user.email', 'smoke@example.com'], { cwd: diffRangeDir });
+  run('npx', ['repobelt', 'init'], { cwd: diffRangeDir });
+  writeFileSync(join(diffRangeDir, '.gitignore'), 'node_modules/\n');
+  writeFileSync(join(diffRangeDir, 'README.md'), '# Diff range smoke test\n');
+  run('git', ['add', '.'], { cwd: diffRangeDir });
+  run('git', ['commit', '-m', 'initial diff range fixture'], { cwd: diffRangeDir });
+  run('git', ['checkout', '-b', 'feature/auth-change'], { cwd: diffRangeDir });
+  mkdirSync(join(diffRangeDir, 'auth'), { recursive: true });
+  writeFileSync(join(diffRangeDir, 'auth', 'login.ts'), 'export const loginChanged = true;\n');
+  run('git', ['add', 'auth/login.ts'], { cwd: diffRangeDir });
+  run('git', ['commit', '-m', 'add auth change'], { cwd: diffRangeDir });
+  const diffRangeOutput = run('npx', ['repobelt', 'check', '--diff', 'main...HEAD'], { cwd: diffRangeDir });
+  expectIncludes('repobelt check --diff', diffRangeOutput, 'RepoBelt check passed with warnings');
+  expectIncludes('repobelt check --diff', diffRangeOutput, 'Risky: auth/login.ts matched auth/**');
 
   run('git', ['init', '-b', 'main'], { cwd: appDir });
   run('git', ['config', 'user.name', 'RepoBelt Smoke Test'], { cwd: appDir });

@@ -7,9 +7,17 @@ export interface ChangedFilesOptions {
   cwd: string;
   base: string;
   head: string;
+  diff?: string;
 }
 
 export async function getChangedFiles(options: ChangedFilesOptions): Promise<string[]> {
+  if (options.diff !== undefined) {
+    const { stdout } = await execFileAsync('git', ['diff', '--name-only', options.diff], {
+      cwd: options.cwd,
+    });
+    return uniqueSortedLines(stdout);
+  }
+
   if (options.head === 'worktree') {
     const [{ stdout: trackedStdout }, { stdout: untrackedStdout }] = await Promise.all([
       execFileAsync('git', ['diff', '--name-only', options.base], { cwd: options.cwd }),

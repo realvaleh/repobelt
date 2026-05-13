@@ -46,8 +46,7 @@ describe('repobelt init', () => {
     const workflow = files['.github/workflows/repobelt.yml'];
 
     expect(workflow).toContain(`          npx repobelt check \\
-            --base "origin/$GITHUB_BASE_REF" \\
-            --head "$GITHUB_SHA" \\
+            --diff "origin/$GITHUB_BASE_REF...$GITHUB_SHA" \\
             --format github \\
             --summary "$GITHUB_STEP_SUMMARY"
 `);
@@ -60,8 +59,7 @@ describe('repobelt init', () => {
     expect(workflow).toContain('issues: write');
     expect(workflow).toContain('GH_TOKEN: ${{ github.token }}');
     expect(workflow).toContain(`          npx repobelt check \\
-            --base "origin/$GITHUB_BASE_REF" \\
-            --head "$GITHUB_SHA" \\
+            --diff "origin/$GITHUB_BASE_REF...$GITHUB_SHA" \\
             --format github \\
             --summary "$GITHUB_STEP_SUMMARY" \\
             --pr-comment auto

@@ -420,6 +420,8 @@ Use `repobelt check --max-secrets <n>` to fail PRs that produce more than `n` se
 
 Use `repobelt check --codeowners-diagnostics-fail` when CODEOWNERS hygiene should be enforced in CI. By default, CODEOWNERS diagnostics are warnings and reviewer context only; this flag exits 1 whenever any CODEOWNERS diagnostic is present.
 
+Use `repobelt check --diff <base...head>` to check an explicit git diff range, for example `repobelt check --diff origin/main...HEAD`. The range is passed to `git diff --name-only` as a single argument, so both two-dot and three-dot git ranges are supported. Do not combine `--diff` with `--base` or `--head`.
+
 Use `repobelt check --format github` to emit GitHub Actions annotations. Protected paths and secret findings become `error` annotations, risky paths become `warning` annotations, and CODEOWNERS/required-check reminders become `notice` annotations. The exit-code rules are the same as other report formats.
 
 Use `repobelt check --summary <path>` to write an additional Markdown report sidecar while keeping the primary output format on stdout or in `--output`. Relative summary paths are resolved from the current working directory, and parent directories are created automatically. This is useful for commands such as `repobelt check --format github --summary "$GITHUB_STEP_SUMMARY"`, where stdout should stay as GitHub annotations but reviewers still get a readable Markdown step summary.

@@ -43,6 +43,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(result.exitCode).toBe(0);
     expect(writes.join('\n')).toContain('Usage: repobelt check');
     expect(writes.join('\n')).toContain('--format <text|markdown|json|sarif|github>');
+    expect(writes.join('\n')).toContain('--diff <base...head>');
     expect(writes.join('\n')).toContain('--output <path>');
     expect(writes.join('\n')).toContain('--summary <path>');
     expect(writes.join('\n')).toContain('--pr-comment <number|auto>');
@@ -589,6 +590,65 @@ allowlist:
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  });
+
+  it('runs check against an explicit git diff range with --diff', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-diff-range-'));
+    const writes: string[] = [];
+
+    try {
+      await execFileAsync('git', ['init', '-b', 'main'], { cwd: dir });
+      await execFileAsync('git', ['config', 'user.email', 'test@example.com'], { cwd: dir });
+      await execFileAsync('git', ['config', 'user.name', 'RepoBelt Test'], { cwd: dir });
+      await runCli(['init'], { stdout: () => undefined, stderr: () => undefined }, { cwd: dir });
+      await writeFile(join(dir, 'README.md'), '# demo\n');
+      await execFileAsync('git', ['add', '.'], { cwd: dir });
+      await execFileAsync('git', ['commit', '-m', 'initial'], { cwd: dir });
+      await execFileAsync('git', ['checkout', '-b', 'feature/auth-change'], { cwd: dir });
+      await mkdir(join(dir, 'auth'), { recursive: true });
+      await writeFile(join(dir, 'auth', 'login.ts'), 'export const loginChanged = true;\n');
+      await execFileAsync('git', ['add', 'auth/login.ts'], { cwd: dir });
+      await execFileAsync('git', ['commit', '-m', 'add auth change'], { cwd: dir });
+
+      const result = await runCli(
+        ['check', '--diff', 'main...HEAD'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(0);
+      expect(writes.join('\n')).toContain('RepoBelt check passed with warnings');
+      expect(writes.join('\n')).toContain('Risky: auth/login.ts matched auth/**');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects check --diff when no range is provided', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['check', '--diff'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Missing value for --diff');
+  });
+
+  it('rejects check --diff when --base or --head are also provided', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['check', '--diff', 'main...HEAD', '--base', 'main'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Use --diff instead of --base/--head, not both');
   });
 
   it('ignores findings that are already present in a JSON baseline report', async () => {

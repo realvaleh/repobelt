@@ -65,6 +65,7 @@ Usage: repobelt check [options]
 Options:
   --base <ref>                    Base git ref. Default: HEAD
   --head <ref|worktree>           Head git ref or worktree. Default: worktree
+  --diff <base...head>            Git diff range shorthand; cannot be combined with --base/--head
   --format <text|markdown|json|sarif|github>   Output format. Default: text
   --output <path>                  Write report to a file instead of stdout
   --summary <path>                 Also write a Markdown summary to a file
@@ -141,6 +142,7 @@ export async function runCli(
 
     const base = getFlagValue(args, '--base') ?? 'HEAD';
     const head = getFlagValue(args, '--head') ?? 'worktree';
+    const diffRange = getFlagValue(args, '--diff');
     const format = getFlagValue(args, '--format') ?? 'text';
     const output = getFlagValue(args, '--output');
     const summary = getFlagValue(args, '--summary');
@@ -180,6 +182,14 @@ export async function runCli(
     }
     if (isMissingFlagValue(args, '--changed-files')) {
       io.stderr('Missing value for --changed-files');
+      return { exitCode: 1 };
+    }
+    if (isMissingFlagValue(args, '--diff')) {
+      io.stderr('Missing value for --diff');
+      return { exitCode: 1 };
+    }
+    if (diffRange !== undefined && (hasFlag(args, '--base') || hasFlag(args, '--head'))) {
+      io.stderr('Use --diff instead of --base/--head, not both');
       return { exitCode: 1 };
     }
     if (isMissingFlagValue(args, '--summary')) {
@@ -255,6 +265,7 @@ export async function runCli(
           maxSecrets,
           failOnWarn,
           failOnCodeownersDiagnostics,
+          diffRange,
         }));
         return { exitCode: 0 };
       }
@@ -280,6 +291,7 @@ export async function runCli(
         cwd: runtime.cwd,
         base,
         head,
+        diff: diffRange,
         policyText,
         changedFilesProvider: changedFiles === undefined ? undefined : async () => changedFiles,
       });
@@ -658,6 +670,7 @@ async function renderResolvedConfig(options: {
   maxSecrets: number | undefined;
   failOnWarn: boolean;
   failOnCodeownersDiagnostics: boolean;
+  diffRange: string | undefined;
 }): Promise<string> {
   const codeownersPath = await findCodeownersPath(options.cwd);
   const cliOverrides = withoutUndefined({
@@ -666,6 +679,7 @@ async function renderResolvedConfig(options: {
     maxSecrets: options.maxSecrets,
     failOnWarn: options.failOnWarn ? true : undefined,
     failOnCodeownersDiagnostics: options.failOnCodeownersDiagnostics ? true : undefined,
+    diff: options.diffRange,
   });
 
   return `${JSON.stringify({
@@ -745,6 +759,10 @@ function writeRequiredChecks(result: Awaited<ReturnType<typeof runCheck>>, io: C
 function getFlagValue(args: string[], flag: string): string | undefined {
   const index = args.indexOf(flag);
   return index >= 0 ? args[index + 1] : undefined;
+}
+
+function hasFlag(args: string[], flag: string): boolean {
+  return args.includes(flag);
 }
 
 function isMissingFlagValue(args: string[], flag: string): boolean {

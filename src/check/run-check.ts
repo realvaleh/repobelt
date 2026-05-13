@@ -11,10 +11,11 @@ export interface RunCheckOptions {
   cwd: string;
   base: string;
   head: string;
+  diff?: string;
   policyText?: string;
   codeownersText?: string;
   ignoreText?: string;
-  changedFilesProvider?: (options: { cwd: string; base: string; head: string }) => Promise<string[]>;
+  changedFilesProvider?: (options: { cwd: string; base: string; head: string; diff?: string }) => Promise<string[]>;
   fileContentProvider?: (path: string, options: { cwd: string }) => Promise<string | undefined>;
 }
 
@@ -37,7 +38,7 @@ export async function runCheck(options: RunCheckOptions): Promise<CheckResult> {
   const policy = loadPolicyFromText(options.policyText);
   const changedFilesProvider = options.changedFilesProvider ?? getChangedFiles;
   const fileContentProvider = options.fileContentProvider ?? readWorkingTreeFile;
-  const rawChangedFiles = await changedFilesProvider({ cwd: options.cwd, base: options.base, head: options.head });
+  const rawChangedFiles = await changedFilesProvider({ cwd: options.cwd, base: options.base, head: options.head, diff: options.diff });
   const ignoreText = options.ignoreText ?? (await readOptionalText(join(options.cwd, '.repobeltignore')));
   const changedFiles = filterIgnoredPaths(rawChangedFiles, ignoreText);
   const pathPolicy = classifyChangedFiles(changedFiles, policy);

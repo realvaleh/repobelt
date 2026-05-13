@@ -236,6 +236,12 @@ limits:
 
 CLI flags override policy limits for one-off stricter or looser runs.
 
+Run against a specific git diff range without spelling out separate base/head flags:
+
+```bash
+npx repobelt check --diff origin/main...HEAD
+```
+
 Print the fully resolved check configuration for CI debugging:
 
 ```bash
