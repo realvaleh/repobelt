@@ -66,6 +66,27 @@ describe('repobelt init', () => {
 `);
   });
 
+  it('can generate strict policy budgets and workflow enforcement flags', () => {
+    const files = generateInitFiles({ strict: true });
+    const policy = files['.repobelt.yml'];
+    const workflow = files['.github/workflows/repobelt.yml'];
+
+    expect(policy).toContain('limits:');
+    expect(policy).toContain('  max_files: 50');
+    expect(policy).toContain('  max_risky: 0');
+    expect(policy).toContain('  max_secrets: 0');
+    expect(workflow).toContain(`          npx repobelt check \\
+            --since-main \\
+            --format github \\
+            --summary "$GITHUB_STEP_SUMMARY" \\
+            --fail-on-warn \\
+            --codeowners-diagnostics-fail \\
+            --max-files 50 \\
+            --max-risky 0 \\
+            --max-secrets 0
+`);
+  });
+
   it('generates a web preset policy with frontend and API review paths', () => {
     const files = generateInitFiles({ preset: 'web' });
 

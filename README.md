@@ -67,6 +67,12 @@ To generate the GitHub Actions workflow with persistent PR report comments enabl
 npx repobelt init --pr-comment
 ```
 
+For stricter CI defaults from day one, generate policy limits and workflow flags that fail on risky-path warnings, CODEOWNERS diagnostics, oversized changes, risky files, and secret findings:
+
+```bash
+npx repobelt init --strict
+```
+
 To discover the built-in policy presets:
 
 ```bash

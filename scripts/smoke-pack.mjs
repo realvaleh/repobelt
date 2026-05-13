@@ -72,6 +72,7 @@ try {
   expectIncludes('repobelt --help', helpOutput, 'Usage: repobelt <command>');
   expectIncludes('repobelt --help', helpOutput, '--list-presets');
   expectIncludes('repobelt --help', helpOutput, '--pr-comment');
+  expectIncludes('repobelt --help', helpOutput, '--strict');
 
   const checkHelpOutput = run('npx', ['repobelt', 'check', '--help'], { cwd: appDir });
   expectIncludes('repobelt check --help', checkHelpOutput, '--config <path>');
@@ -109,6 +110,21 @@ try {
   expectIncludes('repobelt init --pr-comment', commentWorkflow, 'GH_TOKEN: ${{ github.token }}');
   expectIncludes('repobelt init --pr-comment', commentWorkflow, '--diff "origin/$GITHUB_BASE_REF...$GITHUB_SHA"');
   expectIncludes('repobelt init --pr-comment', commentWorkflow, '--pr-comment auto');
+
+  const strictInitDir = join(appDir, 'strict-init');
+  mkdirSync(strictInitDir, { recursive: true });
+  run('npx', ['repobelt', 'init', '--strict'], { cwd: strictInitDir });
+  const strictPolicy = run('node', ['-e', "process.stdout.write(require('node:fs').readFileSync('.repobelt.yml', 'utf8'))"], { cwd: strictInitDir });
+  const strictWorkflow = run('node', ['-e', "process.stdout.write(require('node:fs').readFileSync('.github/workflows/repobelt.yml', 'utf8'))"], { cwd: strictInitDir });
+  expectIncludes('repobelt init --strict', strictPolicy, 'max_files: 50');
+  expectIncludes('repobelt init --strict', strictPolicy, 'max_risky: 0');
+  expectIncludes('repobelt init --strict', strictPolicy, 'max_secrets: 0');
+  expectIncludes('repobelt init --strict', strictWorkflow, '--since-main');
+  expectIncludes('repobelt init --strict', strictWorkflow, '--fail-on-warn');
+  expectIncludes('repobelt init --strict', strictWorkflow, '--codeowners-diagnostics-fail');
+  expectIncludes('repobelt init --strict', strictWorkflow, '--max-files 50');
+  expectIncludes('repobelt init --strict', strictWorkflow, '--max-risky 0');
+  expectIncludes('repobelt init --strict', strictWorkflow, '--max-secrets 0');
 
   const diffRangeDir = join(appDir, 'diff-range');
   mkdirSync(diffRangeDir, { recursive: true });

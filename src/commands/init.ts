@@ -114,6 +114,7 @@ export interface InitPresetDescription {
 export interface InitOptions {
   preset?: InitPreset;
   prComment?: boolean;
+  strict?: boolean;
 }
 
 export function describeInitPresets(): InitPresetDescription[] {
@@ -121,7 +122,7 @@ export function describeInitPresets(): InitPresetDescription[] {
 }
 
 export function generateInitFiles(options: InitOptions = {}): Record<string, string> {
-  const policy = renderPolicy(options.preset ?? 'default');
+  const policy = renderPolicy(options.preset ?? 'default', options);
 
   return {
     '.repobelt.yml': policy,
@@ -167,10 +168,20 @@ ${checkCommand}
 function renderWorkflowCheckCommand(options: InitOptions): string {
   const lines = [
     '          npx repobelt check',
-    '            --diff "origin/$GITHUB_BASE_REF...$GITHUB_SHA"',
+    options.strict === true ? '            --since-main' : '            --diff "origin/$GITHUB_BASE_REF...$GITHUB_SHA"',
     '            --format github',
     '            --summary "$GITHUB_STEP_SUMMARY"',
   ];
+
+  if (options.strict === true) {
+    lines.push(
+      '            --fail-on-warn',
+      '            --codeowners-diagnostics-fail',
+      '            --max-files 50',
+      '            --max-risky 0',
+      '            --max-secrets 0',
+    );
+  }
 
   if (options.prComment === true) {
     lines.push('            --pr-comment auto');
@@ -193,11 +204,17 @@ export async function writeInitFiles(targetDirectory: string, options: InitOptio
   return { created };
 }
 
-function renderPolicy(preset: InitPreset): string {
+function renderPolicy(preset: InitPreset, options: InitOptions): string {
   const presetDefinition = presetDefinitions[preset];
   const presetComment = preset === 'default' ? '' : `# Preset: ${preset}\n`;
   const riskyPaths = [...baseRiskyPaths, ...presetDefinition.riskyPaths];
   const requiredChecks = [...baseRequiredChecks, ...presetDefinition.requiredChecks];
+  const strictLimits = options.strict === true ? `
+limits:
+  max_files: 50
+  max_risky: 0
+  max_secrets: 0
+` : '';
 
   return `version: 1
 ${presetComment}
@@ -218,5 +235,5 @@ ${requiredChecks.map((check) => `  - ${check}`).join('\n')}
 
 allowlist:
   paths: []
-`;
+${strictLimits}`;
 }

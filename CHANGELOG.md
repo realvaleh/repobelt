@@ -8,6 +8,7 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 
 ### Added since release
 
+- `init --strict` for generating stronger first-day CI defaults: policy limits plus workflow flags for `--since-main`, `--fail-on-warn`, `--codeowners-diagnostics-fail`, and explicit file/risky/secret budgets.
 - `check --against <branch>` and `check --since-main` for common local branch comparisons without spelling out full git diff ranges.
 - `check --diff <base...head>` for running RepoBelt against an explicit git diff range such as `origin/main...HEAD` without separate `--base` and `--head` flags.
 - `check --codeowners-diagnostics-fail` for teams that want CODEOWNERS diagnostics to fail CI instead of remaining non-failing warnings.

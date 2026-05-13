@@ -17,6 +17,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(help).toContain('init');
     expect(help).toContain('--preset <default|web|node|python|infra|monorepo>');
     expect(help).toContain('--pr-comment');
+    expect(help).toContain('--strict');
     expect(help).toContain('check');
   });
 
@@ -126,6 +127,29 @@ describe('RepoBelt CLI foundation', () => {
       expect(workflow).toContain('issues: write');
       expect(workflow).toContain('GH_TOKEN: ${{ github.token }}');
       expect(workflow).toContain('--pr-comment auto');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('creates starter files with strict workflow support for init --strict', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-init-strict-'));
+
+    try {
+      const result = await runCli(['init', '--strict'], { stdout: () => undefined, stderr: () => undefined }, { cwd: dir });
+
+      expect(result.exitCode).toBe(0);
+      const policy = await readFile(join(dir, '.repobelt.yml'), 'utf8');
+      const workflow = await readFile(join(dir, '.github/workflows/repobelt.yml'), 'utf8');
+      expect(policy).toContain('max_files: 50');
+      expect(policy).toContain('max_risky: 0');
+      expect(policy).toContain('max_secrets: 0');
+      expect(workflow).toContain('--since-main');
+      expect(workflow).toContain('--fail-on-warn');
+      expect(workflow).toContain('--codeowners-diagnostics-fail');
+      expect(workflow).toContain('--max-files 50');
+      expect(workflow).toContain('--max-risky 0');
+      expect(workflow).toContain('--max-secrets 0');
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

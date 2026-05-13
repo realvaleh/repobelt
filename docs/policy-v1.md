@@ -74,6 +74,8 @@ repobelt init --preset infra
 repobelt init --preset monorepo
 ```
 
+Use `repobelt init --strict` when a repository should start with stronger CI defaults. It adds policy limits (`max_files: 50`, `max_risky: 0`, `max_secrets: 0`) and generates a workflow that runs with `--since-main`, `--fail-on-warn`, `--codeowners-diagnostics-fail`, and explicit count budgets.
+
 The `default` preset is the baseline policy shown above.
 
 The `web` preset keeps the baseline safeguards and adds review routing for common web-app risk surfaces:
