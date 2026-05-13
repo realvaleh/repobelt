@@ -22,6 +22,18 @@ describe('repobelt init', () => {
     expect(files['.github/workflows/repobelt.yml']).toContain('$GITHUB_STEP_SUMMARY');
   });
 
+  it('generates a web preset policy with frontend and API review paths', () => {
+    const files = generateInitFiles({ preset: 'web' });
+
+    expect(files['.repobelt.yml']).toContain('# Preset: web');
+    expect(files['.repobelt.yml']).toContain('app/api/**: require_review');
+    expect(files['.repobelt.yml']).toContain('pages/api/**: require_review');
+    expect(files['.repobelt.yml']).toContain('middleware.*: require_review');
+    expect(files['.repobelt.yml']).toContain('next.config.*: require_review');
+    expect(files['.repobelt.yml']).toContain('pnpm-lock.yaml: require_review');
+    expect(files['.repobelt.yml']).toContain('  - build');
+  });
+
   it('writes generated files into a target directory', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'repobelt-init-'));
 

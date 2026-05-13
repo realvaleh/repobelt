@@ -5,34 +5,17 @@ export interface InitWriteResult {
   created: string[];
 }
 
-export function generateInitFiles(): Record<string, string> {
+export type InitPreset = 'default' | 'web';
+
+export interface InitOptions {
+  preset?: InitPreset;
+}
+
+export function generateInitFiles(options: InitOptions = {}): Record<string, string> {
+  const policy = renderPolicy(options.preset ?? 'default');
+
   return {
-    '.repobelt.yml': `version: 1
-
-# Files that should fail CI when changed by an AI-generated PR unless policy is edited.
-protected_paths:
-  - .env
-  - .env.*
-  - secrets/**
-  - '**/*.pem'
-  - '**/*.key'
-
-# Files that are allowed but should receive explicit human review.
-risky_paths:
-  auth/**: require_review
-  payments/**: require_review
-  migrations/**: require_review
-  infra/prod/**: require_review
-  .github/workflows/**: require_review
-
-required_checks:
-  - test
-  - lint
-  - typecheck
-
-allowlist:
-  paths: []
-`,
+    '.repobelt.yml': policy,
     '.github/workflows/repobelt.yml': `name: RepoBelt
 
 on:
@@ -67,8 +50,8 @@ jobs:
   };
 }
 
-export async function writeInitFiles(targetDirectory: string): Promise<InitWriteResult> {
-  const files = generateInitFiles();
+export async function writeInitFiles(targetDirectory: string, options: InitOptions = {}): Promise<InitWriteResult> {
+  const files = generateInitFiles(options);
   const created: string[] = [];
 
   for (const [relativePath, content] of Object.entries(files)) {
@@ -79,4 +62,50 @@ export async function writeInitFiles(targetDirectory: string): Promise<InitWrite
   }
 
   return { created };
+}
+
+function renderPolicy(preset: InitPreset): string {
+  const presetComment = preset === 'web' ? '# Preset: web\n' : '';
+  const riskyPaths = [
+    'auth/**: require_review',
+    'payments/**: require_review',
+    'migrations/**: require_review',
+    'infra/prod/**: require_review',
+    '.github/workflows/**: require_review',
+    ...(preset === 'web'
+      ? [
+          'app/api/**: require_review',
+          'pages/api/**: require_review',
+          'src/app/api/**: require_review',
+          'middleware.*: require_review',
+          'next.config.*: require_review',
+          'vite.config.*: require_review',
+          'package.json: require_review',
+          'pnpm-lock.yaml: require_review',
+          'package-lock.json: require_review',
+        ]
+      : []),
+  ];
+  const requiredChecks = ['test', 'lint', 'typecheck', ...(preset === 'web' ? ['build'] : [])];
+
+  return `version: 1
+${presetComment}
+# Files that should fail CI when changed by an AI-generated PR unless policy is edited.
+protected_paths:
+  - .env
+  - .env.*
+  - secrets/**
+  - '**/*.pem'
+  - '**/*.key'
+
+# Files that are allowed but should receive explicit human review.
+risky_paths:
+${riskyPaths.map((path) => `  ${path}`).join('\n')}
+
+required_checks:
+${requiredChecks.map((check) => `  - ${check}`).join('\n')}
+
+allowlist:
+  paths: []
+`;
 }

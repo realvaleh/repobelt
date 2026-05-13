@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join } from 'node:path';
-import { generateInitFiles, writeInitFiles } from './commands/init.js';
+import { generateInitFiles, writeInitFiles, type InitPreset } from './commands/init.js';
 import { runCheck } from './check/run-check.js';
 import { renderJsonReport } from './report/json.js';
 import { renderMarkdownReport } from './report/markdown.js';
@@ -29,7 +29,8 @@ Commands:
   check    Check a git diff against the RepoBelt policy
 
 Options:
-  -h, --help    Show this help message
+  --preset <default|web>  Policy preset for init. Default: default
+  -h, --help              Show this help message
 `;
 }
 
@@ -60,7 +61,11 @@ export async function runCli(
   }
 
   if (command === 'init' && args.includes('--dry-run')) {
-    const files = generateInitFiles();
+    const preset = getInitPreset(args, io);
+    if (preset === undefined) {
+      return { exitCode: 1 };
+    }
+    const files = generateInitFiles({ preset });
     io.stdout('RepoBelt would create:');
     for (const path of Object.keys(files)) {
       io.stdout(`- ${path}`);
@@ -69,8 +74,12 @@ export async function runCli(
   }
 
   if (command === 'init') {
+    const preset = getInitPreset(args, io);
+    if (preset === undefined) {
+      return { exitCode: 1 };
+    }
     try {
-      const result = await writeInitFiles(runtime.cwd);
+      const result = await writeInitFiles(runtime.cwd, { preset });
       for (const path of result.created) {
         io.stdout(`Created ${path}`);
       }
@@ -229,6 +238,23 @@ function writeRequiredChecks(result: Awaited<ReturnType<typeof runCheck>>, io: C
 function getFlagValue(args: string[], flag: string): string | undefined {
   const index = args.indexOf(flag);
   return index >= 0 ? args[index + 1] : undefined;
+}
+
+function getInitPreset(args: string[], io: CliIo): InitPreset | undefined {
+  const presetIndex = args.indexOf('--preset');
+  if (presetIndex >= 0 && (args[presetIndex + 1] === undefined || args[presetIndex + 1]?.startsWith('--'))) {
+    io.stderr('Missing value for --preset');
+    io.stderr('Supported presets: default, web');
+    return undefined;
+  }
+
+  const preset = getFlagValue(args, '--preset') ?? 'default';
+  if (preset === 'default' || preset === 'web') {
+    return preset;
+  }
+  io.stderr(`Unsupported init preset: ${preset}`);
+  io.stderr('Supported presets: default, web');
+  return undefined;
 }
 
 function isSupportedFormat(format: string): boolean {

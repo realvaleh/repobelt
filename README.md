@@ -59,6 +59,14 @@ npx repobelt init
 npx repobelt check --base HEAD --head worktree
 ```
 
+For web apps, start with the web preset:
+
+```bash
+npx repobelt init --preset web
+```
+
+The web preset adds extra review routing for API routes, middleware, frontend build config, package manifests, lockfiles, and a `build` check reminder.
+
 This creates:
 
 ```text
@@ -187,6 +195,10 @@ Usage: repobelt <command>
 Commands:
   init     Create a starter .repobelt.yml and GitHub Action workflow
   check    Check a git diff against the RepoBelt policy
+
+Options:
+  --preset <default|web>  Policy preset for init. Default: default
+  -h, --help              Show this help message
 ```
 
 ```text
@@ -218,6 +230,7 @@ RepoBelt is early but functional:
 - secret scanning: done
 - CODEOWNERS reviewer hints: done
 - required check reminders: done
+- init policy presets: default and web
 - text/Markdown/JSON/SARIF reports: done
 - GitHub Action template: done
 - CI workflow: done
@@ -235,7 +248,7 @@ Later:
 
 - GitHub App
 - MCP integration
-- policy presets for common stacks
+- more policy presets for common stacks
 - richer dependency and migration risk checks
 
 ## Development

@@ -15,6 +15,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(help).toContain('RepoBelt');
     expect(help).toContain('A seatbelt for AI-generated pull requests');
     expect(help).toContain('init');
+    expect(help).toContain('--preset <default|web>');
     expect(help).toContain('check');
   });
 
@@ -77,6 +78,34 @@ describe('RepoBelt CLI foundation', () => {
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  });
+
+  it('creates web preset files for init --preset web', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-init-web-'));
+
+    try {
+      const result = await runCli(['init', '--preset', 'web'], { stdout: () => undefined, stderr: () => undefined }, { cwd: dir });
+
+      expect(result.exitCode).toBe(0);
+      const policy = await readFile(join(dir, '.repobelt.yml'), 'utf8');
+      expect(policy).toContain('# Preset: web');
+      expect(policy).toContain('app/api/**: require_review');
+      expect(policy).toContain('  - build');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects init --preset when no preset value is provided', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['init', '--preset'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Missing value for --preset');
   });
 
   it('runs check and exits 1 when a protected path changed', async () => {

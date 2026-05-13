@@ -55,6 +55,40 @@ allowlist:
   paths: []
 ```
 
+## Init presets
+
+`repobelt init` supports policy presets:
+
+```bash
+repobelt init --preset default
+repobelt init --preset web
+```
+
+The `default` preset is the baseline policy shown above.
+
+The `web` preset keeps the baseline safeguards and adds review routing for common web-app risk surfaces:
+
+```yaml
+risky_paths:
+  app/api/**: require_review
+  pages/api/**: require_review
+  src/app/api/**: require_review
+  middleware.*: require_review
+  next.config.*: require_review
+  vite.config.*: require_review
+  package.json: require_review
+  pnpm-lock.yaml: require_review
+  package-lock.json: require_review
+
+required_checks:
+  - test
+  - lint
+  - typecheck
+  - build
+```
+
+Use the web preset for Next.js, Vite, or similar frontend/API repositories where agent-generated changes to routing, middleware, dependencies, and build configuration deserve explicit maintainer attention.
+
 ## Fields
 
 ### `version`
