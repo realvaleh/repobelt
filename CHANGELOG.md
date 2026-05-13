@@ -8,6 +8,7 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 
 ### Added since release
 
+- `check --explain-stdin` for piping newline-delimited path lists directly into batch path explanations without creating a temporary file.
 - `check --explain-from <path>` for batch path explanations from newline-delimited file lists, with text output or JSON arrays.
 - `check --explain <path> --format json` for machine-readable path classification explanations in bots and editor integrations.
 - `check --explain <path>` for explaining one path's `.repobeltignore`, protected-path, allowlist, risky-path, and CODEOWNERS matches without running git diff discovery.

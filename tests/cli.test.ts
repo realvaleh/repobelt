@@ -47,6 +47,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(writes.join('\n')).toContain('--print-config');
     expect(writes.join('\n')).toContain('--explain <path>');
     expect(writes.join('\n')).toContain('--explain-from <path>');
+    expect(writes.join('\n')).toContain('--explain-stdin');
     expect(writes.join('\n')).toContain('--config <path>');
     expect(writes.join('\n')).toContain('--baseline <path>');
     expect(writes.join('\n')).toContain('--changed-files <path>');
@@ -338,6 +339,80 @@ allowlist:
     }
   });
 
+  it('explains newline-delimited paths from stdin', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-explain-stdin-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobeltignore'), 'generated/**\n');
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths:
+  - secrets/**
+risky_paths:
+  auth/**: require_review
+required_checks: []
+allowlist:
+  paths: []
+`);
+
+      const result = await runCli(
+        ['check', '--explain-stdin'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir, stdin: async () => 'auth/login.ts\ngenerated/file.ts\nsecrets/key.pem\n' },
+      );
+
+      expect(result.exitCode).toBe(0);
+      const output = writes.join('\n');
+      expect(output).toContain('RepoBelt explain: auth/login.ts');
+      expect(output).toContain('Status: warn');
+      expect(output).toContain('RepoBelt explain: generated/file.ts');
+      expect(output).toContain('Status: ignored');
+      expect(output).toContain('RepoBelt explain: secrets/key.pem');
+      expect(output).toContain('Status: fail');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('prints JSON array explanation when --explain-stdin is combined with --format json', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-explain-stdin-json-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobeltignore'), 'generated/**\n');
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths:
+  - secrets/**
+risky_paths:
+  auth/**: require_review
+required_checks: []
+allowlist:
+  paths: []
+`);
+
+      const result = await runCli(
+        ['check', '--explain-stdin', '--format', 'json'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir, stdin: async () => 'auth/login.ts\nauth/login.ts\ngenerated/file.ts\n' },
+      );
+
+      expect(result.exitCode).toBe(0);
+      const parsed = JSON.parse(writes.join('\n')) as Array<{ path: string; status: string }>;
+      expect(parsed).toEqual([
+        expect.objectContaining({ path: 'auth/login.ts', status: 'warn' }),
+        expect.objectContaining({ path: 'generated/file.ts', status: 'ignored' }),
+      ]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it('prints JSON array explanation when --explain-from is combined with --format json', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-explain-from-json-'));
     const writes: string[] = [];
@@ -385,6 +460,18 @@ allowlist:
 
     expect(result.exitCode).toBe(1);
     expect(errors.join('\n')).toContain('Missing value for --explain-from');
+  });
+
+  it('rejects check --explain-stdin when combined with another explain input', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['check', '--explain', 'auth/login.ts', '--explain-stdin'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Use only one of --explain, --explain-from, or --explain-stdin');
   });
 
   it('explains ignored paths before policy status', async () => {

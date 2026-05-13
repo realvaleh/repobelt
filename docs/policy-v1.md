@@ -418,6 +418,8 @@ Use `repobelt check --explain <path>` to explain how one path is classified with
 
 Use `repobelt check --explain-from <path>` to explain a newline-delimited list of paths from a file. Text output prints one explanation block per path; `--format json` emits an array of explanation objects. Blank lines and duplicate paths are ignored, matching explicit changed-file list parsing.
 
+Use `repobelt check --explain-stdin` to read that same newline-delimited explanation path list from stdin. This is useful when a bot already has changed paths in a pipeline, for example `git diff --name-only origin/main...HEAD | repobelt check --explain-stdin --format json`. Do not combine it with `--explain` or `--explain-from`.
+
 ### `fail`
 
 Returned when:

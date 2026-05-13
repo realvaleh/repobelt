@@ -56,6 +56,7 @@ Options:
   --print-config                   Print resolved policy, limits, sources, and CLI overrides
   --explain <path>                 Explain how one path matches ignore, policy, and CODEOWNERS rules
   --explain-from <path>            Explain newline-delimited paths from a file
+  --explain-stdin                  Explain newline-delimited paths from stdin
   --config <path>                  Policy file path. Default: .repobelt.yml
   --baseline <path>                JSON baseline report; matching existing findings are ignored
   --changed-files <path>           Newline-delimited changed-file list instead of git diff discovery
@@ -130,6 +131,7 @@ export async function runCli(
     const baselinePath = getFlagValue(args, '--baseline');
     const explainPath = getFlagValue(args, '--explain');
     const explainFromPath = getFlagValue(args, '--explain-from');
+    const readExplainFromStdin = args.includes('--explain-stdin');
     const printConfig = args.includes('--print-config');
     const changedFilesPath = getFlagValue(args, '--changed-files');
     const readChangedFilesFromStdin = args.includes('--stdin-changed-files');
@@ -153,8 +155,8 @@ export async function runCli(
       io.stderr('Missing value for --explain-from');
       return { exitCode: 1 };
     }
-    if (explainPath !== undefined && explainFromPath !== undefined) {
-      io.stderr('Use only one of --explain or --explain-from');
+    if ([explainPath !== undefined, explainFromPath !== undefined, readExplainFromStdin].filter(Boolean).length > 1) {
+      io.stderr('Use only one of --explain, --explain-from, or --explain-stdin');
       return { exitCode: 1 };
     }
     if (isMissingFlagValue(args, '--changed-files')) {
@@ -228,6 +230,12 @@ export async function runCli(
       if (explainFromPath !== undefined) {
         const policy = loadPolicyFromText(policyText);
         const paths = await readChangedFilesList(runtime.cwd, explainFromPath);
+        io.stdout(await renderPathExplanations(runtime.cwd, paths, policy, format));
+        return { exitCode: 0 };
+      }
+      if (readExplainFromStdin) {
+        const policy = loadPolicyFromText(policyText);
+        const paths = parseChangedFilesText(await readStdin(runtime));
         io.stdout(await renderPathExplanations(runtime.cwd, paths, policy, format));
         return { exitCode: 0 };
       }

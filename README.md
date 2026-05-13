@@ -246,11 +246,12 @@ For bots and editor integrations, explanations can also be emitted as JSON:
 npx repobelt check --explain auth/login.ts --format json
 ```
 
-Explain many paths from a newline-delimited file list:
+Explain many paths from a newline-delimited file list or stdin:
 
 ```bash
 npx repobelt check --explain-from changed-files.txt
 npx repobelt check --explain-from changed-files.txt --format json
+git diff --name-only origin/main...HEAD | npx repobelt check --explain-stdin --format json
 ```
 
 ## Example policy
@@ -367,6 +368,7 @@ Options:
   --print-config                   Print resolved policy, limits, sources, and CLI overrides
   --explain <path>                 Explain how one path matches ignore, policy, and CODEOWNERS rules
   --explain-from <path>            Explain newline-delimited paths from a file
+  --explain-stdin                  Explain newline-delimited paths from stdin
   --config <path>                  Policy file path. Default: .repobelt.yml
   --baseline <path>                JSON baseline report; matching existing findings are ignored
   --changed-files <path>           Newline-delimited changed-file list instead of git diff discovery
