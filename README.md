@@ -167,6 +167,13 @@ Run with a non-default policy file for monorepos, experiments, or generated poli
 npx repobelt check --base HEAD --head worktree --config policies/strict.repobelt.yml
 ```
 
+Adopt RepoBelt in an existing repo without failing on every known finding by comparing against a prior JSON report baseline. Matching blocked/risky/secret findings are ignored; new findings still report and fail normally:
+
+```bash
+npx repobelt check --format json --output repobelt-baseline.json
+npx repobelt check --baseline repobelt-baseline.json
+```
+
 Feed RepoBelt an explicit newline-delimited file list instead of asking it to discover changed files from git. Blank lines and duplicate paths are ignored:
 
 ```bash
@@ -322,8 +329,18 @@ Usage: repobelt check [options]
 Options:
   --base <ref>                    Base git ref. Default: HEAD
   --head <ref|worktree>           Head git ref or worktree. Default: worktree
-  --format <text|markdown|json|sarif>   Output format. Default: text
+  --format <text|markdown|json|sarif|github>   Output format. Default: text
   --output <path>                  Write report to a file instead of stdout
+  --summary <path>                 Also write a Markdown summary to a file
+  --print-config                   Print resolved policy, limits, sources, and CLI overrides
+  --config <path>                  Policy file path. Default: .repobelt.yml
+  --baseline <path>                JSON baseline report; matching existing findings are ignored
+  --changed-files <path>           Newline-delimited changed-file list instead of git diff discovery
+  --stdin-changed-files            Read newline-delimited changed-file list from stdin
+  --max-files <n>                  Fail when changed file count exceeds n
+  --max-risky <n>                  Fail when risky file count exceeds n
+  --max-secrets <n>                Fail when secret finding count exceeds n
+  --fail-on-warn                  Exit 1 when risky paths produce warnings
   -h, --help                      Show this help message
 ```
 

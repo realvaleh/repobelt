@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join } from 'node:path';
 import { describeInitPresets, generateInitFiles, supportedInitPresets, writeInitFiles, type InitPreset } from './commands/init.js';
-import { runCheck } from './check/run-check.js';
+import { runCheck, type CheckResult } from './check/run-check.js';
 import { loadPolicyFromText } from './policy/load-policy.js';
 import type { RepoBeltPolicy } from './policy/schema.js';
 import { renderGitHubActionsReport } from './report/github-actions.js';
@@ -52,6 +52,7 @@ Options:
   --summary <path>                 Also write a Markdown summary to a file
   --print-config                   Print resolved policy, limits, sources, and CLI overrides
   --config <path>                  Policy file path. Default: .repobelt.yml
+  --baseline <path>                JSON baseline report; matching existing findings are ignored
   --changed-files <path>           Newline-delimited changed-file list instead of git diff discovery
   --stdin-changed-files            Read newline-delimited changed-file list from stdin
   --max-files <n>                  Fail when changed file count exceeds n
@@ -121,6 +122,7 @@ export async function runCli(
     const output = getFlagValue(args, '--output');
     const summary = getFlagValue(args, '--summary');
     const config = getFlagValue(args, '--config');
+    const baselinePath = getFlagValue(args, '--baseline');
     const printConfig = args.includes('--print-config');
     const changedFilesPath = getFlagValue(args, '--changed-files');
     const readChangedFilesFromStdin = args.includes('--stdin-changed-files');
@@ -130,6 +132,10 @@ export async function runCli(
     const failOnWarn = args.includes('--fail-on-warn');
     if (isMissingFlagValue(args, '--config')) {
       io.stderr('Missing value for --config');
+      return { exitCode: 1 };
+    }
+    if (isMissingFlagValue(args, '--baseline')) {
+      io.stderr('Missing value for --baseline');
       return { exitCode: 1 };
     }
     if (isMissingFlagValue(args, '--changed-files')) {
@@ -203,6 +209,9 @@ export async function runCli(
         policyText,
         changedFilesProvider: changedFiles === undefined ? undefined : async () => changedFiles,
       });
+      if (baselinePath !== undefined) {
+        result = applyBaseline(result, await readBaselineReport(runtime.cwd, baselinePath));
+      }
     } catch (error) {
       io.stderr(`RepoBelt check failed: ${formatError(error)}`);
       return { exitCode: 1 };
@@ -336,7 +345,7 @@ function isMaxSecretsExceeded(result: Awaited<ReturnType<typeof runCheck>>, maxS
   return maxSecrets !== undefined && result.secretFindings.length > maxSecrets;
 }
 
-function renderCheckOutput(result: Awaited<ReturnType<typeof runCheck>>, format: string): string {
+function renderCheckOutput(result: CheckResult, format: string): string {
   if (format === 'markdown') {
     return renderMarkdownReport(result);
   }
@@ -350,6 +359,67 @@ function renderCheckOutput(result: Awaited<ReturnType<typeof runCheck>>, format:
     return renderGitHubActionsReport(result);
   }
   return renderTextReport(result);
+}
+
+interface BaselineReport {
+  pathPolicy?: {
+    blocked?: Array<{ path?: unknown; matchedPattern?: unknown }>;
+    risky?: Array<{ path?: unknown; matchedPattern?: unknown }>;
+  };
+  secretFindings?: Array<{ path?: unknown; line?: unknown; kind?: unknown; matchedPattern?: unknown }>;
+}
+
+async function readBaselineReport(cwd: string, baselinePath: string): Promise<BaselineReport> {
+  const text = await readFile(resolveOutputPath(cwd, baselinePath), 'utf8');
+  const parsed = JSON.parse(text) as unknown;
+  if (parsed === null || typeof parsed !== 'object') {
+    throw new Error('Baseline report must be a JSON object');
+  }
+  return parsed as BaselineReport;
+}
+
+function applyBaseline(result: CheckResult, baseline: BaselineReport): CheckResult {
+  const blockedBaseline = new Set((baseline.pathPolicy?.blocked ?? []).map(pathFindingKey).filter(isString));
+  const riskyBaseline = new Set((baseline.pathPolicy?.risky ?? []).map(pathFindingKey).filter(isString));
+  const secretBaseline = new Set((baseline.secretFindings ?? []).map(secretFindingKey).filter(isString));
+
+  const pathPolicy = {
+    blocked: result.pathPolicy.blocked.filter((finding) => !blockedBaseline.has(pathFindingKey(finding))),
+    risky: result.pathPolicy.risky.filter((finding) => !riskyBaseline.has(pathFindingKey(finding))),
+  };
+  const secretFindings = result.secretFindings.filter((finding) => !secretBaseline.has(secretFindingKey(finding)));
+
+  return {
+    ...result,
+    status: deriveStatus(pathPolicy.blocked.length, pathPolicy.risky.length, secretFindings.length),
+    pathPolicy: {
+      ...result.pathPolicy,
+      ...pathPolicy,
+    },
+    secretFindings,
+  };
+}
+
+function pathFindingKey(finding: { path?: unknown; matchedPattern?: unknown }): string {
+  return `${String(finding.path)}\u0000${String(finding.matchedPattern)}`;
+}
+
+function secretFindingKey(finding: { path?: unknown; line?: unknown; kind?: unknown; matchedPattern?: unknown }): string {
+  return `${String(finding.path)}\u0000${String(finding.line)}\u0000${String(finding.kind)}\u0000${String(finding.matchedPattern)}`;
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === 'string';
+}
+
+function deriveStatus(blockedCount: number, riskyCount: number, secretCount: number): CheckResult['status'] {
+  if (blockedCount > 0 || secretCount > 0) {
+    return 'fail';
+  }
+  if (riskyCount > 0) {
+    return 'warn';
+  }
+  return 'pass';
 }
 
 async function renderResolvedConfig(options: {

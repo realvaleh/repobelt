@@ -74,6 +74,7 @@ try {
 
   const checkHelpOutput = run('npx', ['repobelt', 'check', '--help'], { cwd: appDir });
   expectIncludes('repobelt check --help', checkHelpOutput, '--config <path>');
+  expectIncludes('repobelt check --help', checkHelpOutput, '--baseline <path>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--changed-files <path>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--stdin-changed-files');
   expectIncludes('repobelt check --help', checkHelpOutput, '--max-files <n>');
@@ -185,6 +186,18 @@ allowlist:
     cwd: appDir,
   });
   expectIncludes('repobelt check dedupes explicit files', dedupedFilesOutput, 'RepoBelt check passed with warnings');
+
+  writeFileSync(join(appDir, 'repobelt-baseline.json'), JSON.stringify({
+    pathPolicy: {
+      blocked: [],
+      risky: [{ path: 'auth/login.ts', matchedPattern: 'auth/**' }],
+    },
+    secretFindings: [],
+  }));
+  const baselineOutput = run('npx', ['repobelt', 'check', '--changed-files', 'duplicated-files.txt', '--baseline', 'repobelt-baseline.json'], {
+    cwd: appDir,
+  });
+  expectIncludes('repobelt check --baseline', baselineOutput, 'RepoBelt check passed');
 
   run('npx', ['repobelt', 'check', '--changed-files', 'oversized-files.txt', '--format', 'github', '--summary', 'reports/summary.md'], {
     cwd: appDir,

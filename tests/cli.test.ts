@@ -46,6 +46,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(writes.join('\n')).toContain('--summary <path>');
     expect(writes.join('\n')).toContain('--print-config');
     expect(writes.join('\n')).toContain('--config <path>');
+    expect(writes.join('\n')).toContain('--baseline <path>');
     expect(writes.join('\n')).toContain('--changed-files <path>');
     expect(writes.join('\n')).toContain('--stdin-changed-files');
     expect(writes.join('\n')).toContain('--max-files <n>');
@@ -250,6 +251,149 @@ allowlist:
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  });
+
+  it('ignores findings that are already present in a JSON baseline report', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-baseline-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths:
+  - custom-secret.txt
+risky_paths:
+  auth/**: require_review
+required_checks:
+  - baseline-check
+allowlist:
+  paths: []
+`);
+      await mkdir(join(dir, 'auth'), { recursive: true });
+      await writeFile(join(dir, 'custom-secret.txt'), 'safe fixture\n');
+      await writeFile(join(dir, 'auth', 'login.ts'), 'export const login = true;\n');
+      await writeFile(join(dir, 'changed-files.txt'), 'custom-secret.txt\nauth/login.ts\n');
+      await writeFile(join(dir, 'repobelt-baseline.json'), JSON.stringify({
+        pathPolicy: {
+          blocked: [{ path: 'custom-secret.txt', matchedPattern: 'custom-secret.txt' }],
+          risky: [{ path: 'auth/login.ts', matchedPattern: 'auth/**', action: 'require_review' }],
+        },
+        secretFindings: [],
+      }));
+
+      const result = await runCli(
+        ['check', '--changed-files', 'changed-files.txt', '--baseline', 'repobelt-baseline.json'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(0);
+      const output = writes.join('\n');
+      expect(output).toContain('RepoBelt check passed');
+      expect(output).not.toContain('Blocked: custom-secret.txt');
+      expect(output).not.toContain('Risky: auth/login.ts');
+      expect(output).toContain('Required checks: baseline-check');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('ignores matching secret findings from a JSON baseline report', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-baseline-secret-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths: []
+risky_paths: {}
+required_checks: []
+allowlist:
+  paths: []
+`);
+      await mkdir(join(dir, 'src'), { recursive: true });
+      await writeFile(join(dir, 'src', 'config.ts'), `export const token = "${'ghp_'}${'a'.repeat(36)}";\n`);
+      await writeFile(join(dir, 'changed-files.txt'), 'src/config.ts\n');
+      await writeFile(join(dir, 'repobelt-baseline.json'), JSON.stringify({
+        pathPolicy: { blocked: [], risky: [] },
+        secretFindings: [
+          { path: 'src/config.ts', line: 1, kind: 'github_token', matchedPattern: 'GitHub token' },
+        ],
+      }));
+
+      const result = await runCli(
+        ['check', '--changed-files', 'changed-files.txt', '--baseline', 'repobelt-baseline.json'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(0);
+      const output = writes.join('\n');
+      expect(output).toContain('RepoBelt check passed');
+      expect(output).not.toContain('Secret: src/config.ts');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('still fails on new findings that are not present in the baseline', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-baseline-new-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths:
+  - custom-secret.txt
+  - new-secret.txt
+risky_paths: {}
+required_checks: []
+allowlist:
+  paths: []
+`);
+      await writeFile(join(dir, 'custom-secret.txt'), 'safe fixture\n');
+      await writeFile(join(dir, 'new-secret.txt'), 'safe fixture\n');
+      await writeFile(join(dir, 'changed-files.txt'), 'custom-secret.txt\nnew-secret.txt\n');
+      await writeFile(join(dir, 'repobelt-baseline.json'), JSON.stringify({
+        pathPolicy: {
+          blocked: [{ path: 'custom-secret.txt', matchedPattern: 'custom-secret.txt' }],
+          risky: [],
+        },
+        secretFindings: [],
+      }));
+
+      const result = await runCli(
+        ['check', '--changed-files', 'changed-files.txt', '--baseline', 'repobelt-baseline.json'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(1);
+      const output = writes.join('\n');
+      expect(output).toContain('RepoBelt check failed');
+      expect(output).not.toContain('Blocked: custom-secret.txt');
+      expect(output).toContain('Blocked: new-secret.txt matched new-secret.txt');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects check --baseline when no baseline path is provided', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['check', '--baseline'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Missing value for --baseline');
   });
 
   it('runs check and exits 1 when a protected path changed', async () => {

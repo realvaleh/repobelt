@@ -52,6 +52,8 @@ jobs:
 - `WARN`: exits `0`, but the report tells reviewers which files need extra attention.
 - `PASS`: exits `0`.
 
+For incremental adoption in existing repositories, create a JSON report once and pass it back with `--baseline <path>`. Matching existing findings are ignored, while new blocked paths, risky paths, or secret findings still appear in annotations and affect the exit code.
+
 ## Why `fetch-depth: 0`?
 
 RepoBelt compares the pull request head against the base branch. Full fetch history makes `origin/$GITHUB_BASE_REF` available for reliable diffs.
