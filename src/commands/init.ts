@@ -5,7 +5,67 @@ export interface InitWriteResult {
   created: string[];
 }
 
-export type InitPreset = 'default' | 'web' | 'node' | 'python';
+const baseRiskyPaths = [
+  'auth/**: require_review',
+  'payments/**: require_review',
+  'migrations/**: require_review',
+  'infra/prod/**: require_review',
+  '.github/workflows/**: require_review',
+];
+
+const packageRiskyPaths = ['package.json: require_review', 'pnpm-lock.yaml: require_review', 'package-lock.json: require_review'];
+const baseRequiredChecks = ['test', 'lint', 'typecheck'];
+
+type InitPresetDefinition = {
+  riskyPaths: string[];
+  requiredChecks: string[];
+};
+
+const presetDefinitions = {
+  default: {
+    riskyPaths: [],
+    requiredChecks: [],
+  },
+  web: {
+    riskyPaths: [
+      ...packageRiskyPaths,
+      'app/api/**: require_review',
+      'pages/api/**: require_review',
+      'src/app/api/**: require_review',
+      'middleware.*: require_review',
+      'next.config.*: require_review',
+      'vite.config.*: require_review',
+    ],
+    requiredChecks: ['build'],
+  },
+  node: {
+    riskyPaths: [
+      ...packageRiskyPaths,
+      'tsconfig*.json: require_review',
+      'src/cli.*: require_review',
+      'bin/**: require_review',
+      'scripts/**: require_review',
+    ],
+    requiredChecks: ['build'],
+  },
+  python: {
+    riskyPaths: [
+      'pyproject.toml: require_review',
+      'requirements*.txt: require_review',
+      'poetry.lock: require_review',
+      'uv.lock: require_review',
+      'Pipfile.lock: require_review',
+      'alembic/**: require_review',
+      'migrations/**: require_review',
+      'scripts/**: require_review',
+    ],
+    requiredChecks: ['build'],
+  },
+} satisfies Record<string, InitPresetDefinition>;
+
+export const supportedInitPresets = Object.keys(presetDefinitions) as InitPreset[];
+
+export type InitPreset = keyof typeof presetDefinitions;
 
 export interface InitOptions {
   preset?: InitPreset;
@@ -65,52 +125,10 @@ export async function writeInitFiles(targetDirectory: string, options: InitOptio
 }
 
 function renderPolicy(preset: InitPreset): string {
+  const presetDefinition = presetDefinitions[preset];
   const presetComment = preset === 'default' ? '' : `# Preset: ${preset}\n`;
-  const riskyPaths = [
-    'auth/**: require_review',
-    'payments/**: require_review',
-    'migrations/**: require_review',
-    'infra/prod/**: require_review',
-    '.github/workflows/**: require_review',
-    ...(preset === 'web' || preset === 'node'
-      ? [
-          'package.json: require_review',
-          'pnpm-lock.yaml: require_review',
-          'package-lock.json: require_review',
-        ]
-      : []),
-    ...(preset === 'web'
-      ? [
-          'app/api/**: require_review',
-          'pages/api/**: require_review',
-          'src/app/api/**: require_review',
-          'middleware.*: require_review',
-          'next.config.*: require_review',
-          'vite.config.*: require_review',
-        ]
-      : []),
-    ...(preset === 'node'
-      ? ['tsconfig*.json: require_review', 'src/cli.*: require_review', 'bin/**: require_review', 'scripts/**: require_review']
-      : []),
-    ...(preset === 'python'
-      ? [
-          'pyproject.toml: require_review',
-          'requirements*.txt: require_review',
-          'poetry.lock: require_review',
-          'uv.lock: require_review',
-          'Pipfile.lock: require_review',
-          'alembic/**: require_review',
-          'migrations/**: require_review',
-          'scripts/**: require_review',
-        ]
-      : []),
-  ];
-  const requiredChecks = [
-    'test',
-    'lint',
-    'typecheck',
-    ...(preset === 'web' || preset === 'node' || preset === 'python' ? ['build'] : []),
-  ];
+  const riskyPaths = [...baseRiskyPaths, ...presetDefinition.riskyPaths];
+  const requiredChecks = [...baseRequiredChecks, ...presetDefinition.requiredChecks];
 
   return `version: 1
 ${presetComment}

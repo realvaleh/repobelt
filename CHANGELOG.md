@@ -17,6 +17,10 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 - `check --output <path>` for writing text, Markdown, JSON, or SARIF reports to files.
 - Generated and project GitHub workflows now use Node 24-ready action majors (`actions/checkout@v6`, `actions/setup-node@v6`, and `pnpm/action-setup@v6` where applicable).
 
+### Changed since release
+
+- Init presets are now backed by a data-driven registry that also powers CLI validation and help text.
+
 ### Added
 
 - Initial `repobelt` CLI with `init` and `check` commands.

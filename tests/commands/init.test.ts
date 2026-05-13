@@ -2,9 +2,13 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { generateInitFiles, writeInitFiles } from '../../src/commands/init.js';
+import { generateInitFiles, supportedInitPresets, writeInitFiles } from '../../src/commands/init.js';
 
 describe('repobelt init', () => {
+  it('exposes supported preset names from the preset registry', () => {
+    expect(supportedInitPresets).toEqual(['default', 'web', 'node', 'python']);
+  });
+
   it('generates the starter policy and GitHub Action files', () => {
     const files = generateInitFiles();
 

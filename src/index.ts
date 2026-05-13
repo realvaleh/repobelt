@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join } from 'node:path';
-import { generateInitFiles, writeInitFiles, type InitPreset } from './commands/init.js';
+import { generateInitFiles, supportedInitPresets, writeInitFiles, type InitPreset } from './commands/init.js';
 import { runCheck } from './check/run-check.js';
 import { renderJsonReport } from './report/json.js';
 import { renderMarkdownReport } from './report/markdown.js';
@@ -29,7 +29,7 @@ Commands:
   check    Check a git diff against the RepoBelt policy
 
 Options:
-  --preset <default|web|node|python>  Policy preset for init. Default: default
+  --preset <${formatInitPresetChoices()}>  Policy preset for init. Default: default
   -h, --help              Show this help message
 `;
 }
@@ -244,17 +244,29 @@ function getInitPreset(args: string[], io: CliIo): InitPreset | undefined {
   const presetIndex = args.indexOf('--preset');
   if (presetIndex >= 0 && (args[presetIndex + 1] === undefined || args[presetIndex + 1]?.startsWith('--'))) {
     io.stderr('Missing value for --preset');
-    io.stderr('Supported presets: default, web, node, python');
+    io.stderr(`Supported presets: ${formatInitPresetList()}`);
     return undefined;
   }
 
   const preset = getFlagValue(args, '--preset') ?? 'default';
-  if (preset === 'default' || preset === 'web' || preset === 'node' || preset === 'python') {
+  if (isInitPreset(preset)) {
     return preset;
   }
   io.stderr(`Unsupported init preset: ${preset}`);
-  io.stderr('Supported presets: default, web, node, python');
+  io.stderr(`Supported presets: ${formatInitPresetList()}`);
   return undefined;
+}
+
+function isInitPreset(value: string): value is InitPreset {
+  return supportedInitPresets.includes(value as InitPreset);
+}
+
+function formatInitPresetChoices(): string {
+  return supportedInitPresets.join('|');
+}
+
+function formatInitPresetList(): string {
+  return supportedInitPresets.join(', ');
 }
 
 function isSupportedFormat(format: string): boolean {
