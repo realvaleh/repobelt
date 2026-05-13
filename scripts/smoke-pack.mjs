@@ -190,6 +190,7 @@ try {
   expectIncludes('repobelt doctor', doctorOutput, 'OK policy .repobelt.yml');
   expectIncludes('repobelt doctor', doctorOutput, 'Next commands:');
   const doctorJsonOutput = run('npx', ['repobelt', 'doctor', '--format', 'json'], { cwd: appDir });
+  expectIncludes('repobelt doctor --format json', doctorJsonOutput, '"schemaVersion": 1');
   expectIncludes('repobelt doctor --format json', doctorJsonOutput, '"status": "pass"');
   expectIncludes('repobelt doctor --format json', doctorJsonOutput, '"hasFailures": false');
   expectIncludes('repobelt doctor --format json', doctorJsonOutput, '"findings"');

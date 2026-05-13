@@ -505,6 +505,7 @@ interface DoctorFinding {
 }
 
 interface DoctorReport {
+  schemaVersion: 1;
   status: 'pass' | 'fail';
   hasFailures: boolean;
   findings: DoctorFinding[];
@@ -520,6 +521,7 @@ async function renderDoctorReport(options: { cwd: string; config: string | undef
 
   const hasIssues = findings.some((finding) => finding.level !== 'OK');
   return {
+    schemaVersion: 1,
     status: hasIssues ? 'fail' : 'pass',
     hasFailures: hasIssues,
     findings,

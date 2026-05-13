@@ -76,7 +76,7 @@ Write doctor output to an artifact file when another CI step or bot should consu
 npx repobelt doctor --format json --output reports/repobelt-doctor.json
 ```
 
-The JSON shape includes `status` (`pass` or `fail`), `hasFailures`, `findings` (`level`, `message`, and optional `details`), and `nextCommands`. Treat it as a practical integration format for early-preview releases; pin RepoBelt versions in production automations.
+The JSON shape includes `schemaVersion` (`1`), `status` (`pass` or `fail`), `hasFailures`, `findings` (`level`, `message`, and optional `details`), and `nextCommands`. Treat it as a practical integration format for early-preview releases; pin RepoBelt versions in production automations.
 
 To generate the GitHub Actions workflow with persistent PR report comments enabled from the start:
 

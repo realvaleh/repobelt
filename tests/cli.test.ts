@@ -169,12 +169,14 @@ allowlist:
       );
 
       const parsed = JSON.parse(writes.join('\n')) as {
+        schemaVersion: number;
         status: string;
         hasFailures: boolean;
         findings: Array<{ level: string; message: string; details?: string[] }>;
         nextCommands: string[];
       };
       expect(result.exitCode).toBe(0);
+      expect(parsed.schemaVersion).toBe(1);
       expect(parsed.status).toBe('pass');
       expect(parsed.hasFailures).toBe(false);
       expect(parsed.findings).toContainEqual({ level: 'OK', message: 'git repository' });
