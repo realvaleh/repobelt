@@ -14,6 +14,7 @@ const result: CheckResult = {
   secretFindings: [{ path: 'src/config.ts', line: 1, kind: 'github_token', matchedPattern: 'GitHub token' }],
   reviewerHints: [{ path: 'src/config.ts', matchedPattern: '*', owners: ['@core-team'] }],
   requiredChecks: ['test', 'typecheck'],
+  limits: {},
 };
 
 describe('JSON report rendering', () => {

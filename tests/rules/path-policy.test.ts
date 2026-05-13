@@ -12,6 +12,7 @@ const policy: RepoBeltPolicy = {
     '.github/workflows/**': 'require_review',
   },
   requiredChecks: ['test', 'lint'],
+  limits: {},
   allowlist: {
     paths: ['docs/**'],
   },

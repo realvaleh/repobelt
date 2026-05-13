@@ -191,6 +191,10 @@ export async function runCli(
       return { exitCode: 1 };
     }
 
+    const effectiveMaxFiles = maxFiles ?? result.limits.maxFiles;
+    const effectiveMaxRisky = maxRisky ?? result.limits.maxRisky;
+    const effectiveMaxSecrets = maxSecrets ?? result.limits.maxSecrets;
+
     if (summary !== undefined) {
       await writeOutputFile(resolveOutputPath(runtime.cwd, summary), renderMarkdownReport(result));
     }
@@ -198,48 +202,48 @@ export async function runCli(
     if (output !== undefined) {
       await writeOutputFile(resolveOutputPath(runtime.cwd, output), renderCheckOutput(result, format));
       io.stdout(`Wrote RepoBelt report to ${output}`);
-      return { exitCode: getCheckExitCode(result, failOnWarn, maxFiles, maxRisky, maxSecrets) };
+      return { exitCode: getCheckExitCode(result, failOnWarn, effectiveMaxFiles, effectiveMaxRisky, effectiveMaxSecrets) };
     }
 
     if (format === 'markdown') {
       io.stdout(renderMarkdownReport(result));
-      return { exitCode: getCheckExitCode(result, failOnWarn, maxFiles, maxRisky, maxSecrets) };
+      return { exitCode: getCheckExitCode(result, failOnWarn, effectiveMaxFiles, effectiveMaxRisky, effectiveMaxSecrets) };
     }
 
     if (format === 'json') {
       io.stdout(renderJsonReport(result));
-      return { exitCode: getCheckExitCode(result, failOnWarn, maxFiles, maxRisky, maxSecrets) };
+      return { exitCode: getCheckExitCode(result, failOnWarn, effectiveMaxFiles, effectiveMaxRisky, effectiveMaxSecrets) };
     }
 
     if (format === 'sarif') {
       io.stdout(renderSarifReport(result));
-      return { exitCode: getCheckExitCode(result, failOnWarn, maxFiles, maxRisky, maxSecrets) };
+      return { exitCode: getCheckExitCode(result, failOnWarn, effectiveMaxFiles, effectiveMaxRisky, effectiveMaxSecrets) };
     }
 
     if (format === 'github') {
       io.stdout(renderGitHubActionsReport(result));
-      return { exitCode: getCheckExitCode(result, failOnWarn, maxFiles, maxRisky, maxSecrets) };
+      return { exitCode: getCheckExitCode(result, failOnWarn, effectiveMaxFiles, effectiveMaxRisky, effectiveMaxSecrets) };
     }
 
-    if (isMaxFilesExceeded(result, maxFiles)) {
+    if (isMaxFilesExceeded(result, effectiveMaxFiles)) {
       io.stdout('RepoBelt check failed');
-      io.stdout(`Too many changed files: ${result.changedFiles.length} exceeds max ${maxFiles}`);
+      io.stdout(`Too many changed files: ${result.changedFiles.length} exceeds max ${effectiveMaxFiles}`);
       writeReviewerHints(result, io);
       writeRequiredChecks(result, io);
       return { exitCode: 1 };
     }
 
-    if (isMaxRiskyExceeded(result, maxRisky)) {
+    if (isMaxRiskyExceeded(result, effectiveMaxRisky)) {
       io.stdout('RepoBelt check failed');
-      io.stdout(`Too many risky files: ${result.pathPolicy.risky.length} exceeds max ${maxRisky}`);
+      io.stdout(`Too many risky files: ${result.pathPolicy.risky.length} exceeds max ${effectiveMaxRisky}`);
       writeReviewerHints(result, io);
       writeRequiredChecks(result, io);
       return { exitCode: 1 };
     }
 
-    if (isMaxSecretsExceeded(result, maxSecrets)) {
+    if (isMaxSecretsExceeded(result, effectiveMaxSecrets)) {
       io.stdout('RepoBelt check failed');
-      io.stdout(`Too many secret findings: ${result.secretFindings.length} exceeds max ${maxSecrets}`);
+      io.stdout(`Too many secret findings: ${result.secretFindings.length} exceeds max ${effectiveMaxSecrets}`);
       writeReviewerHints(result, io);
       writeRequiredChecks(result, io);
       return { exitCode: 1 };
@@ -265,7 +269,7 @@ export async function runCli(
       }
       writeReviewerHints(result, io);
       writeRequiredChecks(result, io);
-      return { exitCode: getCheckExitCode(result, failOnWarn, maxFiles, maxRisky, maxSecrets) };
+      return { exitCode: getCheckExitCode(result, failOnWarn, effectiveMaxFiles, effectiveMaxRisky, effectiveMaxSecrets) };
     }
 
     io.stdout('RepoBelt check passed');

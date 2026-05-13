@@ -8,6 +8,7 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 
 ### Added since release
 
+- Policy `limits` for storing `max_files`, `max_risky`, and `max_secrets` guardrails in `.repobelt.yml`.
 - `check --summary <path>` for writing a Markdown sidecar report while preserving the primary output format.
 - `check --max-secrets <n>` for failing PRs that exceed a secret-finding budget.
 - `check --format github` for emitting GitHub Actions annotations (`error`, `warning`, and `notice`) from RepoBelt findings.

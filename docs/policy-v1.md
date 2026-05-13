@@ -276,6 +276,21 @@ required_checks:
 
 Current behavior: this field is loaded and included in text, Markdown, JSON, and GitHub Actions annotation reports as reviewer context. RepoBelt does not yet execute commands or verify GitHub check-run status; `required_checks` is a deterministic reminder of the validation commands reviewers expect before merge.
 
+### `limits`
+
+Optional PR-size and finding budgets that make the CLI guardrails part of `.repobelt.yml`.
+
+```yaml
+limits:
+  max_files: 50
+  max_risky: 3
+  max_secrets: 0
+```
+
+- `max_files` must be a positive integer.
+- `max_risky` and `max_secrets` must be non-negative integers.
+- CLI flags (`--max-files`, `--max-risky`, `--max-secrets`) override policy limits for a single run.
+
 ### `allowlist.paths`
 
 A list of paths allowed even if they match a risky pattern.

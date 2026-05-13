@@ -5,6 +5,11 @@ export interface RepoBeltPolicy {
   protectedPaths: string[];
   riskyPaths: Record<string, RiskAction>;
   requiredChecks: string[];
+  limits: {
+    maxFiles?: number;
+    maxRisky?: number;
+    maxSecrets?: number;
+  };
   allowlist: {
     paths: string[];
   };
@@ -15,5 +20,6 @@ export interface RawRepoBeltPolicy {
   protected_paths?: unknown;
   risky_paths?: unknown;
   required_checks?: unknown;
+  limits?: unknown;
   allowlist?: unknown;
 }

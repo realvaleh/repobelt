@@ -23,6 +23,11 @@ export interface CheckResult {
   secretFindings: SecretFinding[];
   reviewerHints: CodeOwnerHint[];
   requiredChecks: string[];
+  limits: {
+    maxFiles?: number;
+    maxRisky?: number;
+    maxSecrets?: number;
+  };
 }
 
 export async function runCheck(options: RunCheckOptions): Promise<CheckResult> {
@@ -42,6 +47,7 @@ export async function runCheck(options: RunCheckOptions): Promise<CheckResult> {
     secretFindings,
     reviewerHints,
     requiredChecks: policy.requiredChecks,
+    limits: policy.limits,
   };
 }
 

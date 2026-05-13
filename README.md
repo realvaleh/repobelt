@@ -197,6 +197,17 @@ Fail PRs that exceed an explicit secret-finding budget:
 npx repobelt check --max-secrets 0
 ```
 
+You can also store budgets in `.repobelt.yml` under `limits`:
+
+```yaml
+limits:
+  max_files: 50
+  max_risky: 3
+  max_secrets: 0
+```
+
+CLI flags override policy limits for one-off stricter or looser runs.
+
 ## Example policy
 
 ```yaml
@@ -223,6 +234,11 @@ required_checks:
 
 allowlist:
   paths: []
+
+limits:
+  max_files: 50
+  max_risky: 3
+  max_secrets: 0
 ```
 
 ## Example failed report

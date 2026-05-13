@@ -13,6 +13,7 @@ export function secureDefaultPolicy(): RepoBeltPolicy {
       '.github/workflows/**': 'require_review',
     },
     requiredChecks: ['test', 'lint', 'typecheck'],
+    limits: {},
     allowlist: {
       paths: [],
     },
@@ -38,6 +39,7 @@ export function loadPolicyFromText(text: string | undefined | null): RepoBeltPol
     protectedPaths: stringArray(raw.protected_paths, 'protected_paths'),
     riskyPaths: riskyPathMap(raw.risky_paths),
     requiredChecks: stringArray(raw.required_checks, 'required_checks'),
+    limits: policyLimits(raw.limits),
     allowlist: {
       paths: allowlistPaths(raw.allowlist),
     },
@@ -84,4 +86,52 @@ function allowlistPaths(value: unknown): string[] {
 
   const paths = (value as { paths?: unknown }).paths ?? [];
   return stringArray(paths, 'allowlist.paths');
+}
+
+function policyLimits(value: unknown): RepoBeltPolicy['limits'] {
+  if (value === undefined) {
+    return {};
+  }
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('RepoBelt policy field limits must be an object');
+  }
+
+  const raw = value as { max_files?: unknown; max_risky?: unknown; max_secrets?: unknown };
+  return {
+    maxFiles: optionalPositiveInteger(raw.max_files, 'limits.max_files'),
+    maxRisky: optionalNonNegativeInteger(raw.max_risky, 'limits.max_risky'),
+    maxSecrets: optionalNonNegativeInteger(raw.max_secrets, 'limits.max_secrets'),
+  };
+}
+
+function optionalPositiveInteger(value: unknown, fieldName: string): number | undefined {
+  const parsed = optionalInteger(value, fieldName);
+  if (parsed === undefined) {
+    return undefined;
+  }
+  if (parsed <= 0) {
+    throw new Error(`RepoBelt policy field ${fieldName} must be a positive integer`);
+  }
+  return parsed;
+}
+
+function optionalNonNegativeInteger(value: unknown, fieldName: string): number | undefined {
+  const parsed = optionalInteger(value, fieldName);
+  if (parsed === undefined) {
+    return undefined;
+  }
+  if (parsed < 0) {
+    throw new Error(`RepoBelt policy field ${fieldName} must be a non-negative integer`);
+  }
+  return parsed;
+}
+
+function optionalInteger(value: unknown, fieldName: string): number | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (typeof value !== 'number' || !Number.isInteger(value)) {
+    throw new Error(`RepoBelt policy field ${fieldName} must be an integer`);
+  }
+  return value;
 }

@@ -17,6 +17,10 @@ required_checks:
 allowlist:
   paths:
     - docs/**
+limits:
+  max_files: 10
+  max_risky: 2
+  max_secrets: 0
 `);
 
     expect(policy.version).toBe(1);
@@ -24,6 +28,22 @@ allowlist:
     expect(policy.riskyPaths).toEqual({ 'auth/**': 'require_review', 'payments/**': 'require_review' });
     expect(policy.requiredChecks).toEqual(['test', 'lint']);
     expect(policy.allowlist.paths).toEqual(['docs/**']);
+    expect(policy.limits).toEqual({ maxFiles: 10, maxRisky: 2, maxSecrets: 0 });
+  });
+
+  it('rejects invalid limit values with a clear error', () => {
+    expect(() =>
+      loadPolicyFromText(`
+version: 1
+protected_paths: []
+risky_paths: {}
+required_checks: []
+allowlist:
+  paths: []
+limits:
+  max_files: 0
+`),
+    ).toThrow('RepoBelt policy field limits.max_files must be a positive integer');
   });
 
   it('provides secure defaults when no policy text is supplied', () => {

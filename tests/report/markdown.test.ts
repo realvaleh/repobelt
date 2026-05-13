@@ -15,6 +15,7 @@ function baseResult(overrides: Partial<CheckResult> = {}): CheckResult {
     secretFindings: [],
     reviewerHints: [],
     requiredChecks: [],
+    limits: {},
     ...overrides,
   };
 }

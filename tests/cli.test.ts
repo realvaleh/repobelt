@@ -474,6 +474,79 @@ allowlist:
     }
   });
 
+  it('applies max-files limits from policy when no CLI override is provided', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-policy-limits-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths:
+  - custom-secret.txt
+risky_paths: {}
+required_checks:
+  - policy-limit-check
+limits:
+  max_files: 1
+allowlist:
+  paths: []
+`);
+      await writeFile(join(dir, 'a.ts'), 'export const a = true;\n');
+      await writeFile(join(dir, 'b.ts'), 'export const b = true;\n');
+      await writeFile(join(dir, 'changed-files.txt'), 'a.ts\nb.ts\n');
+
+      const result = await runCli(
+        ['check', '--changed-files', 'changed-files.txt'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(1);
+      const output = writes.join('\n');
+      expect(output).toContain('Too many changed files: 2 exceeds max 1');
+      expect(output).toContain('Required checks: policy-limit-check');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('lets CLI max-files override policy limits', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-policy-limits-override-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths:
+  - custom-secret.txt
+risky_paths: {}
+required_checks: []
+limits:
+  max_files: 1
+allowlist:
+  paths: []
+`);
+      await writeFile(join(dir, 'a.ts'), 'export const a = true;\n');
+      await writeFile(join(dir, 'b.ts'), 'export const b = true;\n');
+      await writeFile(join(dir, 'changed-files.txt'), 'a.ts\nb.ts\n');
+
+      const result = await runCli(
+        ['check', '--changed-files', 'changed-files.txt', '--max-files', '2'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(0);
+      expect(writes.join('\n')).toContain('RepoBelt check passed');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it('fails with a secret budget message when secret finding count exceeds --max-secrets', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-max-secrets-'));
     const writes: string[] = [];
