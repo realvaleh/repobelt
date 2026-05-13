@@ -396,6 +396,50 @@ allowlist:
     expect(errors.join('\n')).toContain('Missing value for --baseline');
   });
 
+  it('applies .repobeltignore before reports and count guardrails', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-ignore-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths:
+  - generated/.env
+risky_paths:
+  auth/**: require_review
+required_checks:
+  - ignore-check
+allowlist:
+  paths: []
+`);
+      await writeFile(join(dir, '.repobeltignore'), '# generated fixtures\ngenerated/**\n*.snap\n');
+      await mkdir(join(dir, 'generated'), { recursive: true });
+      await mkdir(join(dir, 'auth'), { recursive: true });
+      await writeFile(join(dir, 'generated', '.env'), `TOKEN=${'ghp_'}${'a'.repeat(36)}\n`);
+      await writeFile(join(dir, 'auth', 'login.ts'), 'export const login = true;\n');
+      await writeFile(join(dir, 'view.snap'), 'snapshot\n');
+      await writeFile(join(dir, 'changed-files.txt'), 'generated/.env\nauth/login.ts\nview.snap\n');
+
+      const result = await runCli(
+        ['check', '--changed-files', 'changed-files.txt', '--max-files', '1'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(0);
+      const output = writes.join('\n');
+      expect(output).toContain('RepoBelt check passed with warnings');
+      expect(output).toContain('Risky: auth/login.ts matched auth/**');
+      expect(output).not.toContain('generated/.env');
+      expect(output).not.toContain('Too many changed files');
+      expect(output).toContain('Required checks: ignore-check');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it('runs check and exits 1 when a protected path changed', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-check-'));
     const writes: string[] = [];

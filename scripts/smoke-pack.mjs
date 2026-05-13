@@ -199,6 +199,16 @@ allowlist:
   });
   expectIncludes('repobelt check --baseline', baselineOutput, 'RepoBelt check passed');
 
+  writeFileSync(join(appDir, '.repobeltignore'), 'generated/**\n*.snap\n');
+  mkdirSync(join(appDir, 'generated'), { recursive: true });
+  writeFileSync(join(appDir, 'generated', '.env'), `TOKEN=${'ghp_'}${'c'.repeat(36)}\n`);
+  writeFileSync(join(appDir, 'view.snap'), 'snapshot\n');
+  writeFileSync(join(appDir, 'ignored-files.txt'), 'generated/.env\nview.snap\nauth/login.ts\n');
+  const ignoreOutput = run('npx', ['repobelt', 'check', '--changed-files', 'ignored-files.txt', '--max-files', '1'], {
+    cwd: appDir,
+  });
+  expectIncludes('repobelt check with .repobeltignore', ignoreOutput, 'RepoBelt check passed with warnings');
+
   run('npx', ['repobelt', 'check', '--changed-files', 'oversized-files.txt', '--format', 'github', '--summary', 'reports/summary.md'], {
     cwd: appDir,
   });

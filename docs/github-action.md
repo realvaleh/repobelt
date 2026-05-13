@@ -10,6 +10,8 @@ The workflow runs on pull requests, emits inline GitHub annotations, and writes 
 
 If the repository has `.github/CODEOWNERS`, `CODEOWNERS`, or `docs/CODEOWNERS`, the report also includes reviewer hints for changed files that match CODEOWNERS rules.
 
+If the repository has `.repobeltignore`, ignored paths are removed before annotations, summaries, secret scanning, CODEOWNERS hints, and count guardrails run.
+
 ## Generated workflow
 
 ```yaml

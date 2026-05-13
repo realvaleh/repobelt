@@ -390,6 +390,18 @@ Use `repobelt check --changed-files <path>` to load a newline-delimited list of 
 
 Use `repobelt check --stdin-changed-files` to read that same newline-delimited changed-file list from stdin. This is useful when a CI step or bot can pipe paths directly, and it avoids creating a temporary file. Do not combine it with `--changed-files`.
 
+Add `.repobeltignore` in the repository root to remove noisy paths before policy checks, secret scanning, CODEOWNERS hints, reports, and count guardrails run. Blank lines and `#` comments are ignored. Patterns use RepoBelt's simple glob support; filename-only patterns such as `*.snap` match basenames at any depth.
+
+Example:
+
+```text
+# Generated or vendored files
+generated/**
+vendor/**
+dist/**
+*.snap
+```
+
 Use `repobelt check --max-files <n>` to fail PRs that change more than `n` files. The value must be a positive integer. This gives teams a simple size guardrail for AI-generated pull requests before reviewers spend time on oversized diffs.
 
 Use `repobelt check --max-risky <n>` to fail PRs that produce more than `n` risky-path findings. The value must be a non-negative integer, so `--max-risky 0` means any risky file fails while still preserving normal protected-path and secret-finding behavior.

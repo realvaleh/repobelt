@@ -56,6 +56,27 @@ describe('runCheck', () => {
     expect(result.changedFiles).toEqual(['src/app.ts']);
   });
 
+  it('filters changed files through .repobeltignore patterns before policy and secret checks', async () => {
+    const result = await runCheck({
+      cwd: '/repo',
+      base: 'main',
+      head: 'HEAD',
+      policyText,
+      ignoreText: `
+# generated code is noisy
+generated/**
+*.snap
+`,
+      changedFilesProvider: async () => ['generated/.env', 'src/view.snap', 'src/app.ts'],
+      fileContentProvider: async (path) => (path === 'generated/.env' ? `TOKEN=${'ghp_'}${'a'.repeat(36)}\n` : 'safe\n'),
+    });
+
+    expect(result.status).toBe('pass');
+    expect(result.changedFiles).toEqual(['src/app.ts']);
+    expect(result.pathPolicy.blocked).toEqual([]);
+    expect(result.secretFindings).toEqual([]);
+  });
+
   it('includes required checks from policy for reviewer context', async () => {
     const result = await runCheck({
       cwd: '/repo',

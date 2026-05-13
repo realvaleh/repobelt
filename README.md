@@ -47,6 +47,7 @@ It is a **seatbelt**, not an autopilot.
   - AWS access key IDs
   - high-entropy `.env` assignments
 - CODEOWNERS reviewer hints from `.github/CODEOWNERS`, `CODEOWNERS`, or `docs/CODEOWNERS`
+- `.repobeltignore` filtering for generated files, vendored folders, build outputs, snapshots, and fixtures
 - Required check reminders from policy, such as `test`, `lint`, and `typecheck`
 - Text, Markdown, JSON, SARIF, and GitHub Actions annotation reports for CI and bots
 
@@ -185,6 +186,18 @@ Or pipe changed paths through stdin without creating a temporary file:
 ```bash
 git diff --name-only origin/main...HEAD | npx repobelt check --stdin-changed-files
 ```
+
+Ignore noisy generated, vendored, build-output, snapshot, or fixture paths by adding `.repobeltignore` in the repository root. Patterns use the same simple glob style as policy paths; blank lines and `#` comments are ignored. Filename-only patterns such as `*.snap` match basenames at any depth:
+
+```text
+# Generated or vendored files
+generated/**
+vendor/**
+dist/**
+*.snap
+```
+
+Ignored paths are removed before policy checks, secret scanning, CODEOWNERS hints, reports, and count guardrails run.
 
 Fail oversized PRs automatically with a changed-file count limit:
 

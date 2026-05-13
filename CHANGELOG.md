@@ -9,6 +9,7 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 ### Added since release
 
 - `check --baseline <path>` for ignoring findings already present in a prior JSON report so teams can adopt RepoBelt incrementally while still failing on new findings.
+- `.repobeltignore` support for filtering generated, vendored, build-output, snapshot, or fixture paths before policy checks, secret scanning, CODEOWNERS hints, reports, and count guardrails run.
 - `check --print-config` for debugging resolved policy/config, CODEOWNERS source, CLI overrides, and effective limits without scanning a diff.
 - Policy `limits` for storing `max_files`, `max_risky`, and `max_secrets` guardrails in `.repobelt.yml`.
 - `check --summary <path>` for writing a Markdown sidecar report while preserving the primary output format.

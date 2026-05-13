@@ -74,7 +74,7 @@ function matchesAny(path: string, patterns: string[]): boolean {
   return patterns.some((pattern) => matchesGlob(path, pattern));
 }
 
-function matchesGlob(path: string, pattern: string): boolean {
+export function matchesGlob(path: string, pattern: string): boolean {
   const normalizedPath = normalizePath(path);
   const normalizedPattern = normalizePath(pattern);
   return globToRegExp(normalizedPattern).test(normalizedPath);
