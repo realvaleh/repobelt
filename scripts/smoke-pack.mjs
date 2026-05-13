@@ -81,7 +81,7 @@ try {
   expectIncludes('repobelt check --help', checkHelpOutput, '--max-risky <n>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--max-secrets <n>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--summary <path>');
-  expectIncludes('repobelt check --help', checkHelpOutput, '--pr-comment <number>');
+  expectIncludes('repobelt check --help', checkHelpOutput, '--pr-comment <number|auto>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--print-config');
   expectIncludes('repobelt check --help', checkHelpOutput, '--explain <path>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--explain-from <path>');

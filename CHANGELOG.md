@@ -8,7 +8,7 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 
 ### Added since release
 
-- `check --pr-comment <number>` for posting or updating one persistent Markdown RepoBelt report comment on a GitHub PR via `gh api`.
+- `check --pr-comment <number|auto>` for posting or updating one persistent Markdown RepoBelt report comment on a GitHub PR via `gh api`, including GitHub Actions PR-number auto-detection.
 - `check --explain-stdin` for piping newline-delimited path lists directly into batch path explanations without creating a temporary file.
 - `check --explain-from <path>` for batch path explanations from newline-delimited file lists, with text output or JSON arrays.
 - `check --explain <path> --format json` for machine-readable path classification explanations in bots and editor integrations.

@@ -27,6 +27,7 @@ export interface CliRuntime {
   cwd: string;
   stdin?: () => Promise<string>;
   execFile?: ExecFileRunner;
+  env?: Record<string, string | undefined>;
 }
 
 export type ExecFileRunner = (
@@ -66,7 +67,7 @@ Options:
   --format <text|markdown|json|sarif|github>   Output format. Default: text
   --output <path>                  Write report to a file instead of stdout
   --summary <path>                 Also write a Markdown summary to a file
-  --pr-comment <number>            Post or update a persistent Markdown report comment on a GitHub PR
+  --pr-comment <number|auto>       Post or update a persistent Markdown report comment on a GitHub PR
   --print-config                   Print resolved policy, limits, sources, and CLI overrides
   --explain <path>                 Explain how one path matches ignore, policy, and CODEOWNERS rules
   --explain-from <path>            Explain newline-delimited paths from a file
@@ -186,10 +187,16 @@ export async function runCli(
       io.stderr('Missing value for --pr-comment');
       return { exitCode: 1 };
     }
-    const prCommentNumber = parsePrNumber(prComment);
+    let prCommentNumber: number | undefined;
+    try {
+      prCommentNumber = await resolvePrCommentNumber(prComment, runtime);
+    } catch (error) {
+      io.stderr(formatError(error));
+      return { exitCode: 1 };
+    }
     if (prComment !== undefined && prCommentNumber === undefined) {
       io.stderr(`Invalid value for --pr-comment: ${prComment}`);
-      io.stderr('--pr-comment must be a positive integer');
+      io.stderr('--pr-comment must be a positive integer or auto');
       return { exitCode: 1 };
     }
     if (changedFilesPath !== undefined && readChangedFilesFromStdin) {
@@ -763,6 +770,39 @@ function formatInitPresetDescriptions(): string {
 
 function isSupportedFormat(format: string): boolean {
   return ['text', 'markdown', 'json', 'sarif', 'github'].includes(format);
+}
+
+async function resolvePrCommentNumber(value: string | undefined, runtime: CliRuntime): Promise<number | undefined> {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (value !== 'auto') {
+    return parsePrNumber(value);
+  }
+
+  const eventPath = (runtime.env ?? process.env).GITHUB_EVENT_PATH;
+  if (eventPath === undefined || eventPath.length === 0) {
+    throw new Error('Cannot auto-detect PR number: GITHUB_EVENT_PATH is not set');
+  }
+  const eventText = await readFile(eventPath, 'utf8');
+  const event = JSON.parse(eventText) as unknown;
+  const number = readPullRequestNumber(event);
+  if (number === undefined) {
+    throw new Error('Cannot auto-detect PR number: GitHub event does not contain pull_request.number');
+  }
+  return number;
+}
+
+function readPullRequestNumber(event: unknown): number | undefined {
+  if (event === null || typeof event !== 'object' || !('pull_request' in event)) {
+    return undefined;
+  }
+  const pullRequest = event.pull_request;
+  if (pullRequest === null || typeof pullRequest !== 'object' || !('number' in pullRequest)) {
+    return undefined;
+  }
+  const number = pullRequest.number;
+  return typeof number === 'number' && Number.isInteger(number) && number > 0 ? number : undefined;
 }
 
 function parsePrNumber(value: string | undefined): number | undefined {

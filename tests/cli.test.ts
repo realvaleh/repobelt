@@ -44,7 +44,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(writes.join('\n')).toContain('--format <text|markdown|json|sarif|github>');
     expect(writes.join('\n')).toContain('--output <path>');
     expect(writes.join('\n')).toContain('--summary <path>');
-    expect(writes.join('\n')).toContain('--pr-comment <number>');
+    expect(writes.join('\n')).toContain('--pr-comment <number|auto>');
     expect(writes.join('\n')).toContain('--print-config');
     expect(writes.join('\n')).toContain('--explain <path>');
     expect(writes.join('\n')).toContain('--explain-from <path>');
@@ -1348,6 +1348,61 @@ allowlist:
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  });
+
+  it('auto-detects the PR number from the GitHub Actions event when --pr-comment auto is provided', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-pr-comment-auto-'));
+    const writes: string[] = [];
+    const calls: Array<{ command: string; args: string[] }> = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths: []
+risky_paths: {}
+required_checks: []
+allowlist:
+  paths: []
+`);
+      await writeFile(join(dir, 'changed-files.txt'), 'README.md\n');
+      await writeFile(join(dir, 'event.json'), JSON.stringify({ pull_request: { number: 88 } }));
+
+      const result = await runCli(
+        ['check', '--changed-files', 'changed-files.txt', '--pr-comment', 'auto'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        {
+          cwd: dir,
+          env: { GITHUB_EVENT_PATH: join(dir, 'event.json') },
+          execFile: async (command, args) => {
+            calls.push({ command, args });
+            if (args.includes('repos/:owner/:repo/issues/88/comments')) {
+              return { stdout: '[]', stderr: '' };
+            }
+            return { stdout: '{"id":321}', stderr: '' };
+          },
+        },
+      );
+
+      expect(result.exitCode).toBe(0);
+      expect(writes.join('\n')).toContain('Posted RepoBelt PR comment to #88');
+      expect(calls[0].args).toContain('repos/:owner/:repo/issues/88/comments');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects check --pr-comment auto when the GitHub Actions event path is unavailable', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['check', '--pr-comment', 'auto'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    }, { cwd: process.cwd(), env: {} });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Cannot auto-detect PR number: GITHUB_EVENT_PATH is not set');
   });
 
   it('rejects check --pr-comment when no PR number is provided', async () => {
