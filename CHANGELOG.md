@@ -12,6 +12,7 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 - `init --preset web` for web-app policies covering API routes, middleware, build config, package manifests, lockfiles, and a `build` required-check reminder.
 - `init --preset node` for Node.js package and CLI policies covering package metadata, lockfiles, TypeScript config, CLI/bin entrypoints, automation scripts, and a `build` required-check reminder.
 - `init --preset python` for Python package and service policies covering package metadata, dependency lockfiles, migrations, Alembic config, automation scripts, and a `build` required-check reminder.
+- `init --preset infra` for infrastructure policies covering Terraform, tfvars, Kubernetes, Helm, Docker, Compose, workflow changes, and a `plan` required-check reminder.
 - Required check reminders from policy in check results, text output, Markdown reports, and JSON reports.
 - SARIF report output for blocked paths, risky paths, and secret findings.
 - `check --output <path>` for writing text, Markdown, JSON, or SARIF reports to files.

@@ -61,6 +61,22 @@ const presetDefinitions = {
     ],
     requiredChecks: ['build'],
   },
+  infra: {
+    riskyPaths: [
+      '**/*.tf: require_review',
+      '**/*.tfvars: require_review',
+      'terraform/**: require_review',
+      'infra/**: require_review',
+      'k8s/**: require_review',
+      'kubernetes/**: require_review',
+      'helm/**: require_review',
+      'Dockerfile*: require_review',
+      'docker-compose*.yml: require_review',
+      'docker-compose*.yaml: require_review',
+      '.github/workflows/**: require_review',
+    ],
+    requiredChecks: ['plan'],
+  },
 } satisfies Record<string, InitPresetDefinition>;
 
 export const supportedInitPresets = Object.keys(presetDefinitions) as InitPreset[];

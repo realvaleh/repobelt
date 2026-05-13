@@ -83,6 +83,14 @@ npx repobelt init --preset python
 
 The python preset adds review routing for package metadata, dependency lockfiles, migrations, Alembic config, automation scripts, and a `build` check reminder.
 
+For infrastructure repositories, use the infra preset:
+
+```bash
+npx repobelt init --preset infra
+```
+
+The infra preset adds review routing for Terraform, tfvars, Kubernetes manifests, Helm charts, Dockerfiles, Compose files, workflow changes, and a `plan` check reminder.
+
 This creates:
 
 ```text
@@ -213,7 +221,7 @@ Commands:
   check    Check a git diff against the RepoBelt policy
 
 Options:
-  --preset <default|web|node|python>  Policy preset for init. Default: default
+  --preset <default|web|node|python|infra>  Policy preset for init. Default: default
   -h, --help              Show this help message
 ```
 
@@ -246,7 +254,7 @@ RepoBelt is early but functional:
 - secret scanning: done
 - CODEOWNERS reviewer hints: done
 - required check reminders: done
-- init policy presets: default, web, node, and python
+- init policy presets: default, web, node, python, and infra
 - text/Markdown/JSON/SARIF reports: done
 - GitHub Action template: done
 - CI workflow: done

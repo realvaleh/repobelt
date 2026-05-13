@@ -64,6 +64,7 @@ repobelt init --preset default
 repobelt init --preset web
 repobelt init --preset node
 repobelt init --preset python
+repobelt init --preset infra
 ```
 
 The `default` preset is the baseline policy shown above.
@@ -133,6 +134,31 @@ required_checks:
 ```
 
 Use the python preset for Python packages, APIs, data services, and CLI tools where generated changes to package metadata, dependency locks, migration directories, or automation scripts deserve explicit maintainer attention.
+
+The `infra` preset keeps the baseline safeguards and adds review routing for infrastructure risk surfaces:
+
+```yaml
+risky_paths:
+  '**/*.tf': require_review
+  '**/*.tfvars': require_review
+  terraform/**: require_review
+  infra/**: require_review
+  k8s/**: require_review
+  kubernetes/**: require_review
+  helm/**: require_review
+  Dockerfile*: require_review
+  docker-compose*.yml: require_review
+  docker-compose*.yaml: require_review
+  .github/workflows/**: require_review
+
+required_checks:
+  - test
+  - lint
+  - typecheck
+  - plan
+```
+
+Use the infra preset for Terraform, Kubernetes, Helm, Docker, production infrastructure, and deployment-heavy repositories where generated changes need explicit maintainer review and a plan-style validation reminder.
 
 ## Fields
 

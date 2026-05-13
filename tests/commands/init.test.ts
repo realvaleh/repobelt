@@ -6,7 +6,7 @@ import { generateInitFiles, supportedInitPresets, writeInitFiles } from '../../s
 
 describe('repobelt init', () => {
   it('exposes supported preset names from the preset registry', () => {
-    expect(supportedInitPresets).toEqual(['default', 'web', 'node', 'python']);
+    expect(supportedInitPresets).toEqual(['default', 'web', 'node', 'python', 'infra']);
   });
 
   it('generates the starter policy and GitHub Action files', () => {
@@ -59,6 +59,18 @@ describe('repobelt init', () => {
     expect(files['.repobelt.yml']).toContain('alembic/**: require_review');
     expect(files['.repobelt.yml']).toContain('scripts/**: require_review');
     expect(files['.repobelt.yml']).toContain('  - build');
+  });
+
+  it('generates an infra preset policy with Terraform, Kubernetes, and Docker review paths', () => {
+    const files = generateInitFiles({ preset: 'infra' });
+
+    expect(files['.repobelt.yml']).toContain('# Preset: infra');
+    expect(files['.repobelt.yml']).toContain('**/*.tf: require_review');
+    expect(files['.repobelt.yml']).toContain('k8s/**: require_review');
+    expect(files['.repobelt.yml']).toContain('helm/**: require_review');
+    expect(files['.repobelt.yml']).toContain('Dockerfile*: require_review');
+    expect(files['.repobelt.yml']).toContain('docker-compose*.yml: require_review');
+    expect(files['.repobelt.yml']).toContain('  - plan');
   });
 
   it('writes generated files into a target directory', async () => {
