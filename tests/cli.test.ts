@@ -49,6 +49,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(writes.join('\n')).toContain('--stdin-changed-files');
     expect(writes.join('\n')).toContain('--max-files <n>');
     expect(writes.join('\n')).toContain('--max-risky <n>');
+    expect(writes.join('\n')).toContain('--max-secrets <n>');
     expect(writes.join('\n')).toContain('--fail-on-warn');
   });
 
@@ -471,6 +472,56 @@ allowlist:
       await rm(dir, { recursive: true, force: true });
       await rm(outputDir, { recursive: true, force: true });
     }
+  });
+
+  it('fails with a secret budget message when secret finding count exceeds --max-secrets', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-max-secrets-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths:
+  - custom-secret.txt
+risky_paths: {}
+required_checks:
+  - max-secrets-check
+allowlist:
+  paths: []
+`);
+      await mkdir(join(dir, 'src'), { recursive: true });
+      await writeFile(join(dir, 'src', 'a.ts'), `export const a = "${'ghp_'}${'a'.repeat(36)}";\n`);
+      await writeFile(join(dir, 'src', 'b.ts'), `export const b = "${'ghp_'}${'b'.repeat(36)}";\n`);
+      await writeFile(join(dir, 'changed-files.txt'), 'src/a.ts\nsrc/b.ts\n');
+
+      const result = await runCli(
+        ['check', '--changed-files', 'changed-files.txt', '--max-secrets', '1'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(1);
+      const output = writes.join('\n');
+      expect(output).toContain('RepoBelt check failed');
+      expect(output).toContain('Too many secret findings: 2 exceeds max 1');
+      expect(output).toContain('Required checks: max-secrets-check');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects check --max-secrets when the value is not a non-negative integer', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['check', '--max-secrets', '-1'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Invalid value for --max-secrets: -1');
   });
 
   it('fails when risky finding count exceeds --max-risky', async () => {

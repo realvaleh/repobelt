@@ -53,6 +53,7 @@ Options:
   --stdin-changed-files            Read newline-delimited changed-file list from stdin
   --max-files <n>                  Fail when changed file count exceeds n
   --max-risky <n>                  Fail when risky file count exceeds n
+  --max-secrets <n>                Fail when secret finding count exceeds n
   --fail-on-warn                  Exit 1 when risky paths produce warnings
   -h, --help                      Show this help message
 `;
@@ -121,6 +122,7 @@ export async function runCli(
     const readChangedFilesFromStdin = args.includes('--stdin-changed-files');
     const maxFilesValue = getFlagValue(args, '--max-files');
     const maxRiskyValue = getFlagValue(args, '--max-risky');
+    const maxSecretsValue = getFlagValue(args, '--max-secrets');
     const failOnWarn = args.includes('--fail-on-warn');
     if (isMissingFlagValue(args, '--config')) {
       io.stderr('Missing value for --config');
@@ -158,6 +160,16 @@ export async function runCli(
       io.stderr('--max-risky must be a non-negative integer');
       return { exitCode: 1 };
     }
+    if (isMissingFlagValue(args, '--max-secrets')) {
+      io.stderr('Missing value for --max-secrets');
+      return { exitCode: 1 };
+    }
+    const maxSecrets = parseNonNegativeInteger(maxSecretsValue);
+    if (maxSecretsValue !== undefined && maxSecrets === undefined) {
+      io.stderr(`Invalid value for --max-secrets: ${maxSecretsValue}`);
+      io.stderr('--max-secrets must be a non-negative integer');
+      return { exitCode: 1 };
+    }
     if (!isSupportedFormat(format)) {
       io.stderr(`Unsupported format: ${format}`);
       io.stderr('Supported formats: text, markdown, json, sarif, github');
@@ -186,27 +198,27 @@ export async function runCli(
     if (output !== undefined) {
       await writeOutputFile(resolveOutputPath(runtime.cwd, output), renderCheckOutput(result, format));
       io.stdout(`Wrote RepoBelt report to ${output}`);
-      return { exitCode: getCheckExitCode(result, failOnWarn, maxFiles, maxRisky) };
+      return { exitCode: getCheckExitCode(result, failOnWarn, maxFiles, maxRisky, maxSecrets) };
     }
 
     if (format === 'markdown') {
       io.stdout(renderMarkdownReport(result));
-      return { exitCode: getCheckExitCode(result, failOnWarn, maxFiles, maxRisky) };
+      return { exitCode: getCheckExitCode(result, failOnWarn, maxFiles, maxRisky, maxSecrets) };
     }
 
     if (format === 'json') {
       io.stdout(renderJsonReport(result));
-      return { exitCode: getCheckExitCode(result, failOnWarn, maxFiles, maxRisky) };
+      return { exitCode: getCheckExitCode(result, failOnWarn, maxFiles, maxRisky, maxSecrets) };
     }
 
     if (format === 'sarif') {
       io.stdout(renderSarifReport(result));
-      return { exitCode: getCheckExitCode(result, failOnWarn, maxFiles, maxRisky) };
+      return { exitCode: getCheckExitCode(result, failOnWarn, maxFiles, maxRisky, maxSecrets) };
     }
 
     if (format === 'github') {
       io.stdout(renderGitHubActionsReport(result));
-      return { exitCode: getCheckExitCode(result, failOnWarn, maxFiles, maxRisky) };
+      return { exitCode: getCheckExitCode(result, failOnWarn, maxFiles, maxRisky, maxSecrets) };
     }
 
     if (isMaxFilesExceeded(result, maxFiles)) {
@@ -220,6 +232,14 @@ export async function runCli(
     if (isMaxRiskyExceeded(result, maxRisky)) {
       io.stdout('RepoBelt check failed');
       io.stdout(`Too many risky files: ${result.pathPolicy.risky.length} exceeds max ${maxRisky}`);
+      writeReviewerHints(result, io);
+      writeRequiredChecks(result, io);
+      return { exitCode: 1 };
+    }
+
+    if (isMaxSecretsExceeded(result, maxSecrets)) {
+      io.stdout('RepoBelt check failed');
+      io.stdout(`Too many secret findings: ${result.secretFindings.length} exceeds max ${maxSecrets}`);
       writeReviewerHints(result, io);
       writeRequiredChecks(result, io);
       return { exitCode: 1 };
@@ -245,7 +265,7 @@ export async function runCli(
       }
       writeReviewerHints(result, io);
       writeRequiredChecks(result, io);
-      return { exitCode: getCheckExitCode(result, failOnWarn, maxFiles, maxRisky) };
+      return { exitCode: getCheckExitCode(result, failOnWarn, maxFiles, maxRisky, maxSecrets) };
     }
 
     io.stdout('RepoBelt check passed');
@@ -269,12 +289,14 @@ function getCheckExitCode(
   failOnWarn: boolean,
   maxFiles?: number,
   maxRisky?: number,
+  maxSecrets?: number,
 ): number {
   if (
     result.status === 'fail' ||
     (failOnWarn && result.status === 'warn') ||
     isMaxFilesExceeded(result, maxFiles) ||
-    isMaxRiskyExceeded(result, maxRisky)
+    isMaxRiskyExceeded(result, maxRisky) ||
+    isMaxSecretsExceeded(result, maxSecrets)
   ) {
     return 1;
   }
@@ -287,6 +309,10 @@ function isMaxFilesExceeded(result: Awaited<ReturnType<typeof runCheck>>, maxFil
 
 function isMaxRiskyExceeded(result: Awaited<ReturnType<typeof runCheck>>, maxRisky: number | undefined): boolean {
   return maxRisky !== undefined && result.pathPolicy.risky.length > maxRisky;
+}
+
+function isMaxSecretsExceeded(result: Awaited<ReturnType<typeof runCheck>>, maxSecrets: number | undefined): boolean {
+  return maxSecrets !== undefined && result.secretFindings.length > maxSecrets;
 }
 
 function renderCheckOutput(result: Awaited<ReturnType<typeof runCheck>>, format: string): string {
@@ -415,6 +441,10 @@ function parseMaxFiles(value: string | undefined): number | undefined {
 }
 
 function parseMaxRisky(value: string | undefined): number | undefined {
+  return parseNonNegativeInteger(value);
+}
+
+function parseNonNegativeInteger(value: string | undefined): number | undefined {
   if (value === undefined) {
     return undefined;
   }

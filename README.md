@@ -191,6 +191,12 @@ Fail PRs that touch too many risky review paths while still allowing small warni
 npx repobelt check --max-risky 3
 ```
 
+Fail PRs that exceed an explicit secret-finding budget:
+
+```bash
+npx repobelt check --max-secrets 0
+```
+
 ## Example policy
 
 ```yaml

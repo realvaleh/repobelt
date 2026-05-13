@@ -377,6 +377,8 @@ Use `repobelt check --max-files <n>` to fail PRs that change more than `n` files
 
 Use `repobelt check --max-risky <n>` to fail PRs that produce more than `n` risky-path findings. The value must be a non-negative integer, so `--max-risky 0` means any risky file fails while still preserving normal protected-path and secret-finding behavior.
 
+Use `repobelt check --max-secrets <n>` to fail PRs that produce more than `n` secret findings with an explicit budget message. The value must be a non-negative integer, so `--max-secrets 0` means any secret finding fails with the budget guardrail message. Secret findings already fail RepoBelt by default; this flag makes the failure threshold and message explicit for CI/bot policies.
+
 Use `repobelt check --format github` to emit GitHub Actions annotations. Protected paths and secret findings become `error` annotations, risky paths become `warning` annotations, and CODEOWNERS/required-check reminders become `notice` annotations. The exit-code rules are the same as other report formats.
 
 Use `repobelt check --summary <path>` to write an additional Markdown report sidecar while keeping the primary output format on stdout or in `--output`. Relative summary paths are resolved from the current working directory, and parent directories are created automatically. This is useful for commands such as `repobelt check --format github --summary "$GITHUB_STEP_SUMMARY"`, where stdout should stay as GitHub annotations but reviewers still get a readable Markdown step summary.

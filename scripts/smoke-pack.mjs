@@ -78,6 +78,7 @@ try {
   expectIncludes('repobelt check --help', checkHelpOutput, '--stdin-changed-files');
   expectIncludes('repobelt check --help', checkHelpOutput, '--max-files <n>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--max-risky <n>');
+  expectIncludes('repobelt check --help', checkHelpOutput, '--max-secrets <n>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--summary <path>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--format <text|markdown|json|sarif|github>');
 
@@ -157,6 +158,15 @@ allowlist:
     cwd: appDir,
   });
   expectIncludes('repobelt check --max-risky', maxRiskyOutput, 'Too many risky files: 1 exceeds max 0');
+
+  mkdirSync(join(appDir, 'src'), { recursive: true });
+  writeFileSync(join(appDir, 'src', 'token-a.ts'), `export const tokenA = "${'ghp_'}${'a'.repeat(36)}";\n`);
+  writeFileSync(join(appDir, 'src', 'token-b.ts'), `export const tokenB = "${'ghp_'}${'b'.repeat(36)}";\n`);
+  writeFileSync(join(appDir, 'secret-files.txt'), 'src/token-a.ts\nsrc/token-b.ts\n');
+  const maxSecretsOutput = runExpectFailure('npx', ['repobelt', 'check', '--changed-files', 'secret-files.txt', '--max-secrets', '1'], {
+    cwd: appDir,
+  });
+  expectIncludes('repobelt check --max-secrets', maxSecretsOutput, 'Too many secret findings: 2 exceeds max 1');
 
   const githubFormatOutput = run('npx', ['repobelt', 'check', '--changed-files', 'oversized-files.txt', '--format', 'github'], {
     cwd: appDir,
