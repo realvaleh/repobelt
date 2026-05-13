@@ -63,6 +63,7 @@ allowlist:
 repobelt init --preset default
 repobelt init --preset web
 repobelt init --preset node
+repobelt init --preset python
 ```
 
 The `default` preset is the baseline policy shown above.
@@ -110,6 +111,28 @@ required_checks:
 ```
 
 Use the node preset for TypeScript/JavaScript packages, CLIs, and libraries where generated changes to package metadata, lockfiles, compiler configuration, executable entrypoints, or automation scripts deserve explicit maintainer attention.
+
+The `python` preset keeps the baseline safeguards and adds review routing for Python package and service risk surfaces:
+
+```yaml
+risky_paths:
+  pyproject.toml: require_review
+  requirements*.txt: require_review
+  poetry.lock: require_review
+  uv.lock: require_review
+  Pipfile.lock: require_review
+  alembic/**: require_review
+  migrations/**: require_review
+  scripts/**: require_review
+
+required_checks:
+  - test
+  - lint
+  - typecheck
+  - build
+```
+
+Use the python preset for Python packages, APIs, data services, and CLI tools where generated changes to package metadata, dependency locks, migration directories, or automation scripts deserve explicit maintainer attention.
 
 ## Fields
 

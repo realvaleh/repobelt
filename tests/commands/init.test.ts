@@ -45,6 +45,18 @@ describe('repobelt init', () => {
     expect(files['.repobelt.yml']).toContain('  - build');
   });
 
+  it('generates a python preset policy with package and migration review paths', () => {
+    const files = generateInitFiles({ preset: 'python' });
+
+    expect(files['.repobelt.yml']).toContain('# Preset: python');
+    expect(files['.repobelt.yml']).toContain('pyproject.toml: require_review');
+    expect(files['.repobelt.yml']).toContain('requirements*.txt: require_review');
+    expect(files['.repobelt.yml']).toContain('uv.lock: require_review');
+    expect(files['.repobelt.yml']).toContain('alembic/**: require_review');
+    expect(files['.repobelt.yml']).toContain('scripts/**: require_review');
+    expect(files['.repobelt.yml']).toContain('  - build');
+  });
+
   it('writes generated files into a target directory', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'repobelt-init-'));
 

@@ -5,7 +5,7 @@ export interface InitWriteResult {
   created: string[];
 }
 
-export type InitPreset = 'default' | 'web' | 'node';
+export type InitPreset = 'default' | 'web' | 'node' | 'python';
 
 export interface InitOptions {
   preset?: InitPreset;
@@ -92,8 +92,25 @@ function renderPolicy(preset: InitPreset): string {
     ...(preset === 'node'
       ? ['tsconfig*.json: require_review', 'src/cli.*: require_review', 'bin/**: require_review', 'scripts/**: require_review']
       : []),
+    ...(preset === 'python'
+      ? [
+          'pyproject.toml: require_review',
+          'requirements*.txt: require_review',
+          'poetry.lock: require_review',
+          'uv.lock: require_review',
+          'Pipfile.lock: require_review',
+          'alembic/**: require_review',
+          'migrations/**: require_review',
+          'scripts/**: require_review',
+        ]
+      : []),
   ];
-  const requiredChecks = ['test', 'lint', 'typecheck', ...(preset === 'web' || preset === 'node' ? ['build'] : [])];
+  const requiredChecks = [
+    'test',
+    'lint',
+    'typecheck',
+    ...(preset === 'web' || preset === 'node' || preset === 'python' ? ['build'] : []),
+  ];
 
   return `version: 1
 ${presetComment}

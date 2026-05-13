@@ -75,6 +75,14 @@ npx repobelt init --preset node
 
 The node preset adds review routing for package manifests, lockfiles, TypeScript config, CLI entrypoints, bin scripts, automation scripts, and a `build` check reminder.
 
+For Python packages and services, use the python preset:
+
+```bash
+npx repobelt init --preset python
+```
+
+The python preset adds review routing for package metadata, dependency lockfiles, migrations, Alembic config, automation scripts, and a `build` check reminder.
+
 This creates:
 
 ```text
@@ -205,7 +213,7 @@ Commands:
   check    Check a git diff against the RepoBelt policy
 
 Options:
-  --preset <default|web|node>  Policy preset for init. Default: default
+  --preset <default|web|node|python>  Policy preset for init. Default: default
   -h, --help              Show this help message
 ```
 
@@ -238,7 +246,7 @@ RepoBelt is early but functional:
 - secret scanning: done
 - CODEOWNERS reviewer hints: done
 - required check reminders: done
-- init policy presets: default, web, and node
+- init policy presets: default, web, node, and python
 - text/Markdown/JSON/SARIF reports: done
 - GitHub Action template: done
 - CI workflow: done
