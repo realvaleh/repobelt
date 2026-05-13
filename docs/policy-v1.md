@@ -390,7 +390,7 @@ Use `repobelt check --changed-files <path>` to load a newline-delimited list of 
 
 Use `repobelt check --stdin-changed-files` to read that same newline-delimited changed-file list from stdin. This is useful when a CI step or bot can pipe paths directly, and it avoids creating a temporary file. Do not combine it with `--changed-files`.
 
-Add `.repobeltignore` in the repository root to remove noisy paths before policy checks, secret scanning, CODEOWNERS hints, reports, and count guardrails run. Blank lines and `#` comments are ignored. Patterns use RepoBelt's simple glob support; filename-only patterns such as `*.snap` match basenames at any depth.
+Add `.repobeltignore` in the repository root to remove noisy paths before policy checks, secret scanning, CODEOWNERS hints, reports, and count guardrails run. Blank lines and `#` comments are ignored. Patterns use RepoBelt's simple glob support; filename-only patterns such as `*.snap` match basenames at any depth. Later patterns win, and `!` negation patterns re-include files that should still be checked.
 
 Example:
 
@@ -399,6 +399,7 @@ Example:
 generated/**
 vendor/**
 dist/**
+!dist/manifest.json
 *.snap
 ```
 

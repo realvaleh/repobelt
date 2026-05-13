@@ -193,17 +193,18 @@ Or pipe changed paths through stdin without creating a temporary file:
 git diff --name-only origin/main...HEAD | npx repobelt check --stdin-changed-files
 ```
 
-Ignore noisy generated, vendored, build-output, snapshot, or fixture paths by adding `.repobeltignore` in the repository root. Patterns use the same simple glob style as policy paths; blank lines and `#` comments are ignored. Filename-only patterns such as `*.snap` match basenames at any depth:
+Ignore noisy generated, vendored, build-output, snapshot, or fixture paths by adding `.repobeltignore` in the repository root. Patterns use the same simple glob style as policy paths; blank lines and `#` comments are ignored. Filename-only patterns such as `*.snap` match basenames at any depth. Later patterns win, and `!` negation patterns re-include important files:
 
 ```text
 # Generated or vendored files
 generated/**
 vendor/**
 dist/**
+!dist/manifest.json
 *.snap
 ```
 
-Ignored paths are removed before policy checks, secret scanning, CODEOWNERS hints, reports, and count guardrails run.
+Ignored paths are removed before policy checks, secret scanning, CODEOWNERS hints, reports, and count guardrails run. Re-included paths continue through the normal checks.
 
 Fail oversized PRs automatically with a changed-file count limit:
 

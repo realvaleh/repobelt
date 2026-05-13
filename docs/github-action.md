@@ -16,7 +16,7 @@ The workflow runs on pull requests, emits inline GitHub annotations, and writes 
 
 If the repository has `.github/CODEOWNERS`, `CODEOWNERS`, or `docs/CODEOWNERS`, the report also includes reviewer hints for changed files that match CODEOWNERS rules.
 
-If the repository has `.repobeltignore`, ignored paths are removed before annotations, summaries, secret scanning, CODEOWNERS hints, and count guardrails run.
+If the repository has `.repobeltignore`, ignored paths are removed before annotations, summaries, secret scanning, CODEOWNERS hints, and count guardrails run. Use ordered `!` negation patterns to re-include important files inside broad ignored folders, such as `!dist/manifest.json`.
 
 Use `npx repobelt check --explain <path>` locally or in CI logs to troubleshoot why one path is ignored, blocked, risky, allowed, or assigned to CODEOWNERS before changing policy. Use `--format json` with `--explain` when another tool needs to consume those classification reasons. Use `--explain-from <path>` for newline-delimited path lists when a bot already has the changed-file set, or pipe that list directly with `--explain-stdin`.
 

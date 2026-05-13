@@ -77,6 +77,27 @@ generated/**
     expect(result.secretFindings).toEqual([]);
   });
 
+  it('allows .repobeltignore negations to re-include important files for policy and secret checks', async () => {
+    const result = await runCheck({
+      cwd: '/repo',
+      base: 'main',
+      head: 'HEAD',
+      policyText,
+      ignoreText: `
+dist/**
+!dist/.env
+`,
+      changedFilesProvider: async () => ['dist/app.js', 'dist/.env'],
+      fileContentProvider: async (path) => (path === 'dist/.env' ? `TOKEN=${'ghp_'}${'a'.repeat(36)}\n` : 'safe\n'),
+    });
+
+    expect(result.status).toBe('fail');
+    expect(result.changedFiles).toEqual(['dist/.env']);
+    expect(result.secretFindings).toEqual([
+      { path: 'dist/.env', line: 1, kind: 'github_token', matchedPattern: 'GitHub token' },
+    ]);
+  });
+
   it('includes required checks from policy for reviewer context', async () => {
     const result = await runCheck({
       cwd: '/repo',

@@ -16,7 +16,26 @@ export function filterIgnoredPaths(paths: string[], ignoreText: string | undefin
 }
 
 export function firstMatchingIgnorePattern(path: string, ignoreText: string | undefined): string | undefined {
-  return parseIgnorePatterns(ignoreText).find((pattern) => matchesIgnorePattern(path, pattern));
+  let matchedPattern: string | undefined;
+
+  for (const pattern of parseIgnorePatterns(ignoreText)) {
+    const { negated, glob } = parseIgnorePattern(pattern);
+    if (!matchesIgnorePattern(path, glob)) {
+      continue;
+    }
+
+    matchedPattern = negated ? undefined : pattern;
+  }
+
+  return matchedPattern;
+}
+
+function parseIgnorePattern(pattern: string): { negated: boolean; glob: string } {
+  if (pattern.startsWith('!')) {
+    return { negated: true, glob: pattern.slice(1) };
+  }
+
+  return { negated: false, glob: pattern };
 }
 
 function matchesIgnorePattern(path: string, pattern: string): boolean {
