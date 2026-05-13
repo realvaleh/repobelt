@@ -160,6 +160,12 @@ export async function runCli(
       io.stdout(getDoctorHelpText());
       return { exitCode: 0 };
     }
+    const unknownDoctorOption = findUnknownOption(args.slice(1), ['--config', '--format', '--output']);
+    if (unknownDoctorOption !== undefined) {
+      io.stderr(`Unknown doctor option: ${unknownDoctorOption}`);
+      io.stderr('Run repobelt doctor --help for supported options');
+      return { exitCode: 1 };
+    }
     if (isMissingFlagValue(args, '--config')) {
       io.stderr('Missing value for --config');
       return { exitCode: 1 };
@@ -994,6 +1000,10 @@ async function detectOriginDefaultBranch(cwd: string, execFile: ExecFileRunner):
 function isMissingFlagValue(args: string[], flag: string): boolean {
   const index = args.indexOf(flag);
   return index >= 0 && (args[index + 1] === undefined || args[index + 1]?.startsWith('--') === true);
+}
+
+function findUnknownOption(args: string[], allowedOptions: string[]): string | undefined {
+  return args.find((arg) => arg.startsWith('--') && !allowedOptions.includes(arg));
 }
 
 function getInitOptions(args: string[], io: CliIo): InitOptions | undefined {

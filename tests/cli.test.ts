@@ -233,6 +233,19 @@ allowlist:
     expect(errors.join('\n')).toContain('Missing value for --output');
   });
 
+  it('rejects unknown doctor flags so automation typos do not pass silently', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['doctor', '--formt', 'json'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Unknown doctor option: --formt');
+    expect(errors.join('\n')).toContain('Run repobelt doctor --help for supported options');
+  });
+
   it('fails doctor for invalid policy and CODEOWNERS diagnostics', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-doctor-unhealthy-'));
     const writes: string[] = [];
