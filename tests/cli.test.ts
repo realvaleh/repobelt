@@ -41,6 +41,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(result.exitCode).toBe(0);
     expect(writes.join('\n')).toContain('Usage: repobelt check');
     expect(writes.join('\n')).toContain('--format <text|markdown|json|sarif>');
+    expect(writes.join('\n')).toContain('--output <path>');
   });
 
   it('prints planned init files for init --dry-run', async () => {
@@ -232,6 +233,40 @@ describe('RepoBelt CLI foundation', () => {
       expect(result.exitCode).toBe(1);
       expect(parsed.version).toBe('2.1.0');
       expect(parsed.runs[0]?.results[0]?.ruleId).toBe('repobelt/protected-path');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('writes formatted check output to --output file without printing the report to stdout', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-output-'));
+    const writes: string[] = [];
+
+    try {
+      await runCli(['init'], { stdout: () => undefined, stderr: () => undefined }, { cwd: dir });
+      await execFileAsync('git', ['init'], { cwd: dir });
+      await execFileAsync('git', ['config', 'user.email', 'test@example.com'], { cwd: dir });
+      await execFileAsync('git', ['config', 'user.name', 'RepoBelt Test'], { cwd: dir });
+      await writeFile(join(dir, 'README.md'), '# demo\n');
+      await execFileAsync('git', ['add', '.'], { cwd: dir });
+      await execFileAsync('git', ['commit', '-m', 'initial'], { cwd: dir });
+      await writeFile(join(dir, '.env'), 'SECRET=value\n');
+
+      const result = await runCli(
+        ['check', '--base', 'HEAD', '--head', 'worktree', '--format', 'markdown', '--output', 'reports/repobelt.md'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      const report = await readFile(join(dir, 'reports', 'repobelt.md'), 'utf8');
+      expect(result.exitCode).toBe(1);
+      expect(report).toContain('# RepoBelt Report');
+      expect(report).toContain('- `.env` matched `.env`');
+      expect(writes.join('\n')).toContain('Wrote RepoBelt report to reports/repobelt.md');
+      expect(writes.join('\n')).not.toContain('# RepoBelt Report');
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

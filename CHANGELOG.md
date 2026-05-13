@@ -10,6 +10,7 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 
 - CODEOWNERS reviewer hints in check results, text output, Markdown reports, and JSON reports.
 - SARIF report output for blocked paths, risky paths, and secret findings.
+- `check --output <path>` for writing text, Markdown, JSON, or SARIF reports to files.
 - Generated and project GitHub workflows now use Node 24-ready action majors (`actions/checkout@v6`, `actions/setup-node@v6`, and `pnpm/action-setup@v6` where applicable).
 
 ### Added

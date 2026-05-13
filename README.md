@@ -90,6 +90,12 @@ Generate SARIF for security/code-scanning style consumers:
 npx repobelt check --base HEAD --head worktree --format sarif
 ```
 
+Write any report format to a file:
+
+```bash
+npx repobelt check --base HEAD --head worktree --format sarif --output repobelt.sarif
+```
+
 ## Example policy
 
 ```yaml
@@ -183,6 +189,7 @@ Options:
   --base <ref>                    Base git ref. Default: HEAD
   --head <ref|worktree>           Head git ref or worktree. Default: worktree
   --format <text|markdown|json|sarif>   Output format. Default: text
+  --output <path>                  Write report to a file instead of stdout
   -h, --help                      Show this help message
 ```
 

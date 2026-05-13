@@ -1,5 +1,5 @@
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 import { generateInitFiles, writeInitFiles } from './commands/init.js';
 import { runCheck } from './check/run-check.js';
 import { renderJsonReport } from './report/json.js';
@@ -42,6 +42,7 @@ Options:
   --base <ref>                    Base git ref. Default: HEAD
   --head <ref|worktree>           Head git ref or worktree. Default: worktree
   --format <text|markdown|json|sarif>   Output format. Default: text
+  --output <path>                  Write report to a file instead of stdout
   -h, --help                      Show this help message
 `;
 }
@@ -89,6 +90,7 @@ export async function runCli(
     const base = getFlagValue(args, '--base') ?? 'HEAD';
     const head = getFlagValue(args, '--head') ?? 'worktree';
     const format = getFlagValue(args, '--format') ?? 'text';
+    const output = getFlagValue(args, '--output');
     if (!isSupportedFormat(format)) {
       io.stderr(`Unsupported format: ${format}`);
       io.stderr('Supported formats: text, markdown, json, sarif');
@@ -101,6 +103,12 @@ export async function runCli(
     } catch (error) {
       io.stderr(`RepoBelt check failed: ${formatError(error)}`);
       return { exitCode: 1 };
+    }
+
+    if (output !== undefined) {
+      await writeOutputFile(join(runtime.cwd, output), renderCheckOutput(result, format));
+      io.stdout(`Wrote RepoBelt report to ${output}`);
+      return { exitCode: result.status === 'fail' ? 1 : 0 };
     }
 
     if (format === 'markdown') {
@@ -153,6 +161,48 @@ const defaultIo: CliIo = {
   stdout: (message) => process.stdout.write(`${message}\n`),
   stderr: (message) => process.stderr.write(`${message}\n`),
 };
+
+function renderCheckOutput(result: Awaited<ReturnType<typeof runCheck>>, format: string): string {
+  if (format === 'markdown') {
+    return renderMarkdownReport(result);
+  }
+  if (format === 'json') {
+    return renderJsonReport(result);
+  }
+  if (format === 'sarif') {
+    return renderSarifReport(result);
+  }
+  return renderTextReport(result);
+}
+
+function renderTextReport(result: Awaited<ReturnType<typeof runCheck>>): string {
+  const lines: string[] = [];
+  if (result.status === 'fail') {
+    lines.push('RepoBelt check failed');
+    for (const finding of result.pathPolicy.blocked) {
+      lines.push(`Blocked: ${finding.path} matched ${finding.matchedPattern}`);
+    }
+    for (const finding of result.secretFindings) {
+      lines.push(`Secret: ${finding.path}:${finding.line} ${finding.kind} matched ${finding.matchedPattern}`);
+    }
+  } else if (result.status === 'warn') {
+    lines.push('RepoBelt check passed with warnings');
+    for (const finding of result.pathPolicy.risky) {
+      lines.push(`Risky: ${finding.path} matched ${finding.matchedPattern}`);
+    }
+  } else {
+    lines.push('RepoBelt check passed');
+  }
+  for (const hint of result.reviewerHints) {
+    lines.push(`Reviewer: ${hint.path} matched ${hint.matchedPattern} -> ${hint.owners.join(', ')}`);
+  }
+  return `${lines.join('\n')}\n`;
+}
+
+async function writeOutputFile(path: string, content: string): Promise<void> {
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, content, 'utf8');
+}
 
 function writeReviewerHints(result: Awaited<ReturnType<typeof runCheck>>, io: CliIo): void {
   for (const hint of result.reviewerHints) {
