@@ -45,6 +45,7 @@ Options:
   --head <ref|worktree>           Head git ref or worktree. Default: worktree
   --format <text|markdown|json|sarif>   Output format. Default: text
   --output <path>                  Write report to a file instead of stdout
+  --config <path>                  Policy file path. Default: .repobelt.yml
   --fail-on-warn                  Exit 1 when risky paths produce warnings
   -h, --help                      Show this help message
 `;
@@ -107,15 +108,20 @@ export async function runCli(
     const head = getFlagValue(args, '--head') ?? 'worktree';
     const format = getFlagValue(args, '--format') ?? 'text';
     const output = getFlagValue(args, '--output');
+    const config = getFlagValue(args, '--config');
     const failOnWarn = args.includes('--fail-on-warn');
+    if (isMissingFlagValue(args, '--config')) {
+      io.stderr('Missing value for --config');
+      return { exitCode: 1 };
+    }
     if (!isSupportedFormat(format)) {
       io.stderr(`Unsupported format: ${format}`);
       io.stderr('Supported formats: text, markdown, json, sarif');
       return { exitCode: 1 };
     }
-    const policyText = await readOptionalText(join(runtime.cwd, '.repobelt.yml'));
     let result;
     try {
+      const policyText = await readPolicyText(runtime.cwd, config);
       result = await runCheck({ cwd: runtime.cwd, base, head, policyText });
     } catch (error) {
       io.stderr(`RepoBelt check failed: ${formatError(error)}`);
@@ -255,6 +261,11 @@ function getFlagValue(args: string[], flag: string): string | undefined {
   return index >= 0 ? args[index + 1] : undefined;
 }
 
+function isMissingFlagValue(args: string[], flag: string): boolean {
+  const index = args.indexOf(flag);
+  return index >= 0 && (args[index + 1] === undefined || args[index + 1]?.startsWith('--') === true);
+}
+
 function getInitPreset(args: string[], io: CliIo): InitPreset | undefined {
   const presetIndex = args.indexOf('--preset');
   if (presetIndex >= 0 && (args[presetIndex + 1] === undefined || args[presetIndex + 1]?.startsWith('--'))) {
@@ -304,6 +315,11 @@ async function readOptionalText(path: string): Promise<string | undefined> {
     }
     throw error;
   }
+}
+
+async function readPolicyText(cwd: string, config: string | undefined): Promise<string | undefined> {
+  const configPath = config === undefined ? join(cwd, '.repobelt.yml') : resolveOutputPath(cwd, config);
+  return config === undefined ? readOptionalText(configPath) : readFile(configPath, 'utf8');
 }
 
 function formatError(error: unknown): string {

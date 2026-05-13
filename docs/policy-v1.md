@@ -367,6 +367,8 @@ Exit code:
 
 Use `repobelt check --fail-on-warn` when you want stricter CI behavior. With that flag, RepoBelt still reports status `warn` in text, Markdown, JSON, and SARIF output, but exits `1` so the CI job fails.
 
+Use `repobelt check --config <path>` to load a policy file other than `.repobelt.yml`. Relative paths are resolved from the current working directory, and absolute paths are accepted. This is useful for monorepos, strict-mode experiments, or comparing generated policy files before replacing the default policy.
+
 ### `fail`
 
 Returned when:

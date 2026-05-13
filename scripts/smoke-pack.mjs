@@ -70,6 +70,9 @@ try {
   expectIncludes('repobelt --help', helpOutput, 'Usage: repobelt <command>');
   expectIncludes('repobelt --help', helpOutput, '--list-presets');
 
+  const checkHelpOutput = run('npx', ['repobelt', 'check', '--help'], { cwd: appDir });
+  expectIncludes('repobelt check --help', checkHelpOutput, '--config <path>');
+
   const presetListOutput = run('npx', ['repobelt', 'init', '--list-presets'], { cwd: appDir });
   expectIncludes('repobelt init --list-presets', presetListOutput, 'Available RepoBelt init presets:');
   expectIncludes('repobelt init --list-presets', presetListOutput, 'monorepo Workspace repositories');
@@ -98,6 +101,28 @@ try {
     cwd: appDir,
   });
   expectIncludes('repobelt check --fail-on-warn', strictCheckOutput, 'RepoBelt check passed with warnings');
+
+  writeFileSync(
+    join(appDir, 'strict.repobelt.yml'),
+    `version: 1
+protected_paths:
+  - custom-secret.txt
+risky_paths:
+  docs/**: require_review
+required_checks:
+  - custom-check
+allowlist:
+  paths: []
+`,
+  );
+  writeFileSync(join(appDir, 'custom-secret.txt'), 'safe fixture\n');
+  const customConfigOutput = runExpectFailure(
+    'npx',
+    ['repobelt', 'check', '--base', 'HEAD', '--head', 'worktree', '--config', 'strict.repobelt.yml'],
+    { cwd: appDir },
+  );
+  expectIncludes('repobelt check --config', customConfigOutput, 'Blocked: custom-secret.txt matched custom-secret.txt');
+  expectIncludes('repobelt check --config', customConfigOutput, 'Required checks: custom-check');
 
   console.log('\nRepoBelt packaged CLI smoke test passed.');
 } finally {

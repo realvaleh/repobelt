@@ -149,6 +149,12 @@ By default, risky-path warnings exit `0` so CI can pass while reviewers still se
 npx repobelt check --base HEAD --head worktree --fail-on-warn
 ```
 
+Run with a non-default policy file for monorepos, experiments, or generated policy comparisons:
+
+```bash
+npx repobelt check --base HEAD --head worktree --config policies/strict.repobelt.yml
+```
+
 ## Example policy
 
 ```yaml

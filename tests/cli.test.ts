@@ -43,6 +43,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(writes.join('\n')).toContain('Usage: repobelt check');
     expect(writes.join('\n')).toContain('--format <text|markdown|json|sarif>');
     expect(writes.join('\n')).toContain('--output <path>');
+    expect(writes.join('\n')).toContain('--config <path>');
     expect(writes.join('\n')).toContain('--fail-on-warn');
   });
 
@@ -413,6 +414,62 @@ describe('RepoBelt CLI foundation', () => {
       await rm(dir, { recursive: true, force: true });
       await rm(outputDir, { recursive: true, force: true });
     }
+  });
+
+  it('uses a custom policy file when --config is provided', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-config-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(
+        join(dir, 'custom.repobelt.yml'),
+        `version: 1
+protected_paths:
+  - custom-secret.txt
+risky_paths:
+  docs/**: require_review
+required_checks:
+  - custom-check
+allowlist:
+  paths: []
+`,
+      );
+      await execFileAsync('git', ['init'], { cwd: dir });
+      await execFileAsync('git', ['config', 'user.email', 'test@example.com'], { cwd: dir });
+      await execFileAsync('git', ['config', 'user.name', 'RepoBelt Test'], { cwd: dir });
+      await writeFile(join(dir, 'README.md'), '# demo\n');
+      await execFileAsync('git', ['add', '.'], { cwd: dir });
+      await execFileAsync('git', ['commit', '-m', 'initial'], { cwd: dir });
+      await writeFile(join(dir, 'custom-secret.txt'), 'safe fixture\n');
+
+      const result = await runCli(
+        ['check', '--base', 'HEAD', '--head', 'worktree', '--config', 'custom.repobelt.yml'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(1);
+      const output = writes.join('\n');
+      expect(output).toContain('Blocked: custom-secret.txt matched custom-secret.txt');
+      expect(output).toContain('Required checks: custom-check');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects check --config when no config path is provided', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['check', '--config'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Missing value for --config');
   });
 
   it('exits 1 for risky-path warnings when --fail-on-warn is provided', async () => {
