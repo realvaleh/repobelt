@@ -416,6 +416,8 @@ Use `repobelt check --print-config` to print the resolved check configuration as
 
 Use `repobelt check --explain <path>` to explain how one path is classified without running git diff discovery. The output includes the resulting status plus the exact `.repobeltignore`, `protected_paths`, `allowlist.paths`, `risky_paths`, and CODEOWNERS matches for that path. This is useful for policy debugging and reviewer questions such as why a file is ignored, blocked, risky, or allowed. Add `--format json` for bot and editor integrations that need to consume the explanation programmatically.
 
+Use `repobelt check --explain-from <path>` to explain a newline-delimited list of paths from a file. Text output prints one explanation block per path; `--format json` emits an array of explanation objects. Blank lines and duplicate paths are ignored, matching explicit changed-file list parsing.
+
 ### `fail`
 
 Returned when:

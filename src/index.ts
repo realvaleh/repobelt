@@ -55,6 +55,7 @@ Options:
   --summary <path>                 Also write a Markdown summary to a file
   --print-config                   Print resolved policy, limits, sources, and CLI overrides
   --explain <path>                 Explain how one path matches ignore, policy, and CODEOWNERS rules
+  --explain-from <path>            Explain newline-delimited paths from a file
   --config <path>                  Policy file path. Default: .repobelt.yml
   --baseline <path>                JSON baseline report; matching existing findings are ignored
   --changed-files <path>           Newline-delimited changed-file list instead of git diff discovery
@@ -128,6 +129,7 @@ export async function runCli(
     const config = getFlagValue(args, '--config');
     const baselinePath = getFlagValue(args, '--baseline');
     const explainPath = getFlagValue(args, '--explain');
+    const explainFromPath = getFlagValue(args, '--explain-from');
     const printConfig = args.includes('--print-config');
     const changedFilesPath = getFlagValue(args, '--changed-files');
     const readChangedFilesFromStdin = args.includes('--stdin-changed-files');
@@ -145,6 +147,14 @@ export async function runCli(
     }
     if (isMissingFlagValue(args, '--explain')) {
       io.stderr('Missing value for --explain');
+      return { exitCode: 1 };
+    }
+    if (isMissingFlagValue(args, '--explain-from')) {
+      io.stderr('Missing value for --explain-from');
+      return { exitCode: 1 };
+    }
+    if (explainPath !== undefined && explainFromPath !== undefined) {
+      io.stderr('Use only one of --explain or --explain-from');
       return { exitCode: 1 };
     }
     if (isMissingFlagValue(args, '--changed-files')) {
@@ -213,6 +223,12 @@ export async function runCli(
       if (explainPath !== undefined) {
         const policy = loadPolicyFromText(policyText);
         io.stdout(await renderPathExplanation(runtime.cwd, explainPath, policy, format));
+        return { exitCode: 0 };
+      }
+      if (explainFromPath !== undefined) {
+        const policy = loadPolicyFromText(policyText);
+        const paths = await readChangedFilesList(runtime.cwd, explainFromPath);
+        io.stdout(await renderPathExplanations(runtime.cwd, paths, policy, format));
         return { exitCode: 0 };
       }
       const changedFiles = await readChangedFilesOverride(runtime, changedFilesPath, readChangedFilesFromStdin);
@@ -451,7 +467,18 @@ async function renderPathExplanation(cwd: string, path: string, policy: RepoBelt
   if (format === 'json') {
     return `${JSON.stringify(explanation, null, 2)}\n`;
   }
+  return renderPathExplanationText(explanation);
+}
 
+async function renderPathExplanations(cwd: string, paths: string[], policy: RepoBeltPolicy, format: string): Promise<string> {
+  const explanations = await Promise.all(paths.map((path) => getPathExplanation(cwd, path, policy)));
+  if (format === 'json') {
+    return `${JSON.stringify(explanations, null, 2)}\n`;
+  }
+  return explanations.map(renderPathExplanationText).join('\n');
+}
+
+function renderPathExplanationText(explanation: PathExplanation): string {
   const lines = [
     `RepoBelt explain: ${explanation.path}`,
     `Status: ${explanation.status}`,

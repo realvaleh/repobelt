@@ -83,6 +83,7 @@ try {
   expectIncludes('repobelt check --help', checkHelpOutput, '--summary <path>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--print-config');
   expectIncludes('repobelt check --help', checkHelpOutput, '--explain <path>');
+  expectIncludes('repobelt check --help', checkHelpOutput, '--explain-from <path>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--format <text|markdown|json|sarif|github>');
 
   const presetListOutput = run('npx', ['repobelt', 'init', '--list-presets'], { cwd: appDir });
@@ -221,6 +222,13 @@ allowlist:
   });
   expectIncludes('repobelt check --explain --format json', explainJsonOutput, '"status": "warn"');
   expectIncludes('repobelt check --explain --format json', explainJsonOutput, '"matchedPattern": "auth/**"');
+
+  writeFileSync(join(appDir, 'explain-files.txt'), 'auth/login.ts\ngenerated/.env\n');
+  const explainFromJsonOutput = run('npx', ['repobelt', 'check', '--explain-from', 'explain-files.txt', '--format', 'json'], {
+    cwd: appDir,
+  });
+  expectIncludes('repobelt check --explain-from --format json', explainFromJsonOutput, '"path": "auth/login.ts"');
+  expectIncludes('repobelt check --explain-from --format json', explainFromJsonOutput, '"status": "ignored"');
 
   run('npx', ['repobelt', 'check', '--changed-files', 'oversized-files.txt', '--format', 'github', '--summary', 'reports/summary.md'], {
     cwd: appDir,
