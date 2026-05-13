@@ -153,7 +153,8 @@ jobs:
           npx repobelt check \
             --base "origin/$GITHUB_BASE_REF" \
             --head "$GITHUB_SHA" \
-            --format markdown | tee "$GITHUB_STEP_SUMMARY"
+            --format github \
+            --summary "$GITHUB_STEP_SUMMARY"
 `,
   };
 }

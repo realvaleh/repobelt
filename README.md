@@ -249,7 +249,7 @@ Do not merge until blocked findings are resolved.
 
 ## GitHub Actions
 
-The generated workflow runs RepoBelt on pull requests and writes the Markdown report to GitHub's step summary:
+The generated workflow runs RepoBelt on pull requests, emits inline GitHub annotations, and writes a Markdown report to GitHub's step summary:
 
 ```yaml
 - name: Run RepoBelt
@@ -257,7 +257,8 @@ The generated workflow runs RepoBelt on pull requests and writes the Markdown re
     npx repobelt check \
       --base "origin/$GITHUB_BASE_REF" \
       --head "$GITHUB_SHA" \
-      --format markdown | tee "$GITHUB_STEP_SUMMARY"
+      --format github \
+      --summary "$GITHUB_STEP_SUMMARY"
 ```
 
 See [`docs/github-action.md`](docs/github-action.md).

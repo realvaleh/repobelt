@@ -33,8 +33,9 @@ describe('repobelt init', () => {
     expect(files['.github/workflows/repobelt.yml']).toContain('actions/setup-node@v6');
     expect(files['.github/workflows/repobelt.yml']).not.toContain('actions/checkout@v4');
     expect(files['.github/workflows/repobelt.yml']).not.toContain('actions/setup-node@v4');
-    expect(files['.github/workflows/repobelt.yml']).toContain('--format markdown');
-    expect(files['.github/workflows/repobelt.yml']).toContain('$GITHUB_STEP_SUMMARY');
+    expect(files['.github/workflows/repobelt.yml']).toContain('--format github');
+    expect(files['.github/workflows/repobelt.yml']).toContain('--summary "$GITHUB_STEP_SUMMARY"');
+    expect(files['.github/workflows/repobelt.yml']).not.toContain('| tee "$GITHUB_STEP_SUMMARY"');
   });
 
   it('generates a web preset policy with frontend and API review paths', () => {

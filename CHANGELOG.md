@@ -30,6 +30,7 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 
 ### Changed since release
 
+- Generated GitHub Actions workflows now emit inline annotations with `--format github` while writing readable Markdown step summaries with `--summary "$GITHUB_STEP_SUMMARY"`.
 - Explicit changed-file inputs now deduplicate paths before count and risky-file guardrails run.
 - Init presets are now backed by a data-driven registry that also powers CLI validation and help text.
 
