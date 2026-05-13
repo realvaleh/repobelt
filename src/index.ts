@@ -450,10 +450,11 @@ async function readChangedFilesOverride(
 }
 
 function parseChangedFilesText(text: string): string[] {
-  return text
+  return Array.from(new Set(text
     .split(/\r?\n/)
     .map((line) => line.trim())
-    .filter((line) => line.length > 0);
+    .filter((line) => line.length > 0)))
+    .sort();
 }
 
 async function readStdin(runtime: CliRuntime): Promise<string> {

@@ -604,6 +604,44 @@ allowlist:
     }
   });
 
+  it('deduplicates explicit changed-file lists before applying count guardrails', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-changed-files-dedupe-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths:
+  - custom-secret.txt
+risky_paths:
+  auth/**: require_review
+required_checks: []
+allowlist:
+  paths: []
+`);
+      await mkdir(join(dir, 'auth'), { recursive: true });
+      await writeFile(join(dir, 'auth', 'login.ts'), 'export const login = true;\n');
+      await writeFile(join(dir, 'changed-files.txt'), 'auth/login.ts\nauth/login.ts\n');
+
+      const result = await runCli(
+        ['check', '--changed-files', 'changed-files.txt', '--max-files', '1', '--max-risky', '1'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(0);
+      const output = writes.join('\n');
+      expect(output).toContain('RepoBelt check passed with warnings');
+      expect(output).toContain('Risky: auth/login.ts matched auth/**');
+      expect(output).not.toContain('Too many changed files');
+      expect(output).not.toContain('Too many risky files');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it('rejects check --changed-files when no file list path is provided', async () => {
     const errors: string[] = [];
 

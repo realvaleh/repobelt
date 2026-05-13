@@ -162,6 +162,12 @@ allowlist:
   });
   expectIncludes('repobelt check --format github', githubFormatOutput, '::warning file=auth/login.ts,title=RepoBelt risky path::auth/login.ts matched auth/** and requires review');
 
+  writeFileSync(join(appDir, 'duplicated-files.txt'), 'auth/login.ts\nauth/login.ts\n');
+  const dedupedFilesOutput = run('npx', ['repobelt', 'check', '--changed-files', 'duplicated-files.txt', '--max-files', '1', '--max-risky', '1'], {
+    cwd: appDir,
+  });
+  expectIncludes('repobelt check dedupes explicit files', dedupedFilesOutput, 'RepoBelt check passed with warnings');
+
   console.log('\nRepoBelt packaged CLI smoke test passed.');
 } finally {
   if (process.env.REPOBELT_KEEP_SMOKE_TMP !== '1') {
