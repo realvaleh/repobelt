@@ -47,6 +47,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(writes.join('\n')).toContain('--changed-files <path>');
     expect(writes.join('\n')).toContain('--stdin-changed-files');
     expect(writes.join('\n')).toContain('--max-files <n>');
+    expect(writes.join('\n')).toContain('--max-risky <n>');
     expect(writes.join('\n')).toContain('--fail-on-warn');
   });
 
@@ -417,6 +418,57 @@ describe('RepoBelt CLI foundation', () => {
       await rm(dir, { recursive: true, force: true });
       await rm(outputDir, { recursive: true, force: true });
     }
+  });
+
+  it('fails when risky finding count exceeds --max-risky', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-max-risky-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths:
+  - custom-secret.txt
+risky_paths:
+  auth/**: require_review
+required_checks:
+  - max-risky-check
+allowlist:
+  paths: []
+`);
+      await mkdir(join(dir, 'auth'), { recursive: true });
+      await writeFile(join(dir, 'auth', 'login.ts'), 'export const login = true;\n');
+      await writeFile(join(dir, 'auth', 'session.ts'), 'export const session = true;\n');
+      await writeFile(join(dir, 'changed-files.txt'), 'auth/login.ts\nauth/session.ts\n');
+
+      const result = await runCli(
+        ['check', '--changed-files', 'changed-files.txt', '--max-risky', '1'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(1);
+      const output = writes.join('\n');
+      expect(output).toContain('RepoBelt check failed');
+      expect(output).toContain('Too many risky files: 2 exceeds max 1');
+      expect(output).toContain('Required checks: max-risky-check');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects check --max-risky when the value is not a non-negative integer', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['check', '--max-risky', '-1'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Invalid value for --max-risky: -1');
   });
 
   it('fails when changed file count exceeds --max-files', async () => {

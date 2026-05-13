@@ -173,6 +173,12 @@ Fail oversized PRs automatically with a changed-file count limit:
 npx repobelt check --max-files 50
 ```
 
+Fail PRs that touch too many risky review paths while still allowing small warnings:
+
+```bash
+npx repobelt check --max-risky 3
+```
+
 ## Example policy
 
 ```yaml

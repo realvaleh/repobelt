@@ -375,6 +375,8 @@ Use `repobelt check --stdin-changed-files` to read that same newline-delimited c
 
 Use `repobelt check --max-files <n>` to fail PRs that change more than `n` files. The value must be a positive integer. This gives teams a simple size guardrail for AI-generated pull requests before reviewers spend time on oversized diffs.
 
+Use `repobelt check --max-risky <n>` to fail PRs that produce more than `n` risky-path findings. The value must be a non-negative integer, so `--max-risky 0` means any risky file fails while still preserving normal protected-path and secret-finding behavior.
+
 ### `fail`
 
 Returned when:

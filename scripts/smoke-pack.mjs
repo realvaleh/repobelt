@@ -77,6 +77,7 @@ try {
   expectIncludes('repobelt check --help', checkHelpOutput, '--changed-files <path>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--stdin-changed-files');
   expectIncludes('repobelt check --help', checkHelpOutput, '--max-files <n>');
+  expectIncludes('repobelt check --help', checkHelpOutput, '--max-risky <n>');
 
   const presetListOutput = run('npx', ['repobelt', 'init', '--list-presets'], { cwd: appDir });
   expectIncludes('repobelt init --list-presets', presetListOutput, 'Available RepoBelt init presets:');
@@ -149,6 +150,11 @@ allowlist:
     cwd: appDir,
   });
   expectIncludes('repobelt check --max-files', maxFilesOutput, 'Too many changed files: 2 exceeds max 1');
+
+  const maxRiskyOutput = runExpectFailure('npx', ['repobelt', 'check', '--changed-files', 'oversized-files.txt', '--max-risky', '0'], {
+    cwd: appDir,
+  });
+  expectIncludes('repobelt check --max-risky', maxRiskyOutput, 'Too many risky files: 1 exceeds max 0');
 
   console.log('\nRepoBelt packaged CLI smoke test passed.');
 } finally {
