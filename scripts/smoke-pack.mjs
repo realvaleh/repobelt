@@ -216,6 +216,12 @@ allowlist:
   expectIncludes('repobelt check --explain', explainOutput, 'RepoBelt explain: auth/login.ts');
   expectIncludes('repobelt check --explain', explainOutput, 'Risky: auth/** -> require_review');
 
+  const explainJsonOutput = run('npx', ['repobelt', 'check', '--explain', 'auth/login.ts', '--format', 'json'], {
+    cwd: appDir,
+  });
+  expectIncludes('repobelt check --explain --format json', explainJsonOutput, '"status": "warn"');
+  expectIncludes('repobelt check --explain --format json', explainJsonOutput, '"matchedPattern": "auth/**"');
+
   run('npx', ['repobelt', 'check', '--changed-files', 'oversized-files.txt', '--format', 'github', '--summary', 'reports/summary.md'], {
     cwd: appDir,
   });

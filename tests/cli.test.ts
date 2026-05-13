@@ -245,6 +245,57 @@ allowlist:
     }
   });
 
+  it('prints JSON explanation when --explain is combined with --format json', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-explain-json-'));
+    const writes: string[] = [];
+
+    try {
+      await mkdir(join(dir, '.github'), { recursive: true });
+      await writeFile(join(dir, '.github', 'CODEOWNERS'), 'auth/** @security-team\n');
+      await writeFile(join(dir, '.repobeltignore'), 'generated/**\n');
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths:
+  - secrets/**
+risky_paths:
+  auth/**: require_review
+required_checks: []
+allowlist:
+  paths: []
+`);
+
+      const result = await runCli(
+        ['check', '--explain', 'auth/login.ts', '--format', 'json'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(0);
+      const parsed = JSON.parse(writes.join('\n')) as {
+        path: string;
+        status: string;
+        ignore: { matchedPattern: string | null };
+        protected: { matchedPattern: string | null };
+        allowlist: { matchedPattern: string | null };
+        risky: { matchedPattern: string | null; action: string | null };
+        codeowners: { matchedPattern: string | null; owners: string[] };
+      };
+      expect(parsed).toEqual({
+        path: 'auth/login.ts',
+        status: 'warn',
+        ignore: { matchedPattern: null },
+        protected: { matchedPattern: null },
+        allowlist: { matchedPattern: null },
+        risky: { matchedPattern: 'auth/**', action: 'require_review' },
+        codeowners: { matchedPattern: 'auth/**', owners: ['@security-team'] },
+      });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it('explains ignored paths before policy status', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-explain-ignore-'));
     const writes: string[] = [];

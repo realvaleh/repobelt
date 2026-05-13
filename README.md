@@ -240,6 +240,12 @@ Explain exactly how one path matches RepoBelt policy, ignore, and CODEOWNERS rul
 npx repobelt check --explain auth/login.ts
 ```
 
+For bots and editor integrations, explanations can also be emitted as JSON:
+
+```bash
+npx repobelt check --explain auth/login.ts --format json
+```
+
 ## Example policy
 
 ```yaml

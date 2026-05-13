@@ -212,7 +212,7 @@ export async function runCli(
       }
       if (explainPath !== undefined) {
         const policy = loadPolicyFromText(policyText);
-        io.stdout(await renderPathExplanation(runtime.cwd, explainPath, policy));
+        io.stdout(await renderPathExplanation(runtime.cwd, explainPath, policy, format));
         return { exitCode: 0 };
       }
       const changedFiles = await readChangedFilesOverride(runtime, changedFilesPath, readChangedFilesFromStdin);
@@ -436,7 +436,35 @@ function deriveStatus(blockedCount: number, riskyCount: number, secretCount: num
   return 'pass';
 }
 
-async function renderPathExplanation(cwd: string, path: string, policy: RepoBeltPolicy): Promise<string> {
+interface PathExplanation {
+  path: string;
+  status: 'ignored' | 'fail' | 'warn' | 'pass';
+  ignore: { matchedPattern: string | null };
+  protected: { matchedPattern: string | null };
+  allowlist: { matchedPattern: string | null };
+  risky: { matchedPattern: string | null; action: string | null };
+  codeowners: { matchedPattern: string | null; owners: string[] };
+}
+
+async function renderPathExplanation(cwd: string, path: string, policy: RepoBeltPolicy, format: string): Promise<string> {
+  const explanation = await getPathExplanation(cwd, path, policy);
+  if (format === 'json') {
+    return `${JSON.stringify(explanation, null, 2)}\n`;
+  }
+
+  const lines = [
+    `RepoBelt explain: ${explanation.path}`,
+    `Status: ${explanation.status}`,
+    `Ignore: ${explanation.ignore.matchedPattern ?? 'no match'}`,
+    `Protected: ${explanation.protected.matchedPattern ?? 'no match'}`,
+    `Allowlist: ${explanation.allowlist.matchedPattern ?? 'no match'}`,
+    `Risky: ${explanation.risky.matchedPattern === null ? 'no match' : `${explanation.risky.matchedPattern} -> ${explanation.risky.action}`}`,
+    `CODEOWNERS: ${explanation.codeowners.matchedPattern === null ? 'no match' : `${explanation.codeowners.matchedPattern} -> ${explanation.codeowners.owners.join(', ')}`}`,
+  ];
+  return `${lines.join('\n')}\n`;
+}
+
+async function getPathExplanation(cwd: string, path: string, policy: RepoBeltPolicy): Promise<PathExplanation> {
   const ignoreText = await readOptionalText(join(cwd, '.repobeltignore'));
   const codeownersText = await readCodeownersText(cwd);
   const ignoreMatch = firstMatchingIgnorePattern(path, ignoreText);
@@ -452,16 +480,15 @@ async function renderPathExplanation(cwd: string, path: string, policy: RepoBelt
         ? 'warn'
         : 'pass';
 
-  const lines = [
-    `RepoBelt explain: ${path}`,
-    `Status: ${status}`,
-    `Ignore: ${ignoreMatch ?? 'no match'}`,
-    `Protected: ${protectedMatch ?? 'no match'}`,
-    `Allowlist: ${allowlistMatch ?? 'no match'}`,
-    `Risky: ${riskyMatch === undefined ? 'no match' : `${riskyMatch.pattern} -> ${riskyMatch.action}`}`,
-    `CODEOWNERS: ${codeownerHint === undefined ? 'no match' : `${codeownerHint.matchedPattern} -> ${codeownerHint.owners.join(', ')}`}`,
-  ];
-  return `${lines.join('\n')}\n`;
+  return {
+    path,
+    status,
+    ignore: { matchedPattern: ignoreMatch ?? null },
+    protected: { matchedPattern: protectedMatch ?? null },
+    allowlist: { matchedPattern: allowlistMatch ?? null },
+    risky: { matchedPattern: riskyMatch?.pattern ?? null, action: riskyMatch?.action ?? null },
+    codeowners: { matchedPattern: codeownerHint?.matchedPattern ?? null, owners: codeownerHint?.owners ?? [] },
+  };
 }
 
 function firstMatchingGlob(path: string, patterns: string[]): string | undefined {
