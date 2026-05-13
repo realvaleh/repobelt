@@ -272,6 +272,36 @@ describe('RepoBelt CLI foundation', () => {
     }
   });
 
+  it('writes --output to an absolute path when one is provided', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-output-absolute-'));
+    const outputDir = await mkdtemp(join(tmpdir(), 'repobelt-cli-output-target-'));
+    const outputPath = join(outputDir, 'repobelt.json');
+
+    try {
+      await runCli(['init'], { stdout: () => undefined, stderr: () => undefined }, { cwd: dir });
+      await execFileAsync('git', ['init'], { cwd: dir });
+      await execFileAsync('git', ['config', 'user.email', 'test@example.com'], { cwd: dir });
+      await execFileAsync('git', ['config', 'user.name', 'RepoBelt Test'], { cwd: dir });
+      await writeFile(join(dir, 'README.md'), '# demo\n');
+      await execFileAsync('git', ['add', '.'], { cwd: dir });
+      await execFileAsync('git', ['commit', '-m', 'initial'], { cwd: dir });
+      await writeFile(join(dir, '.env'), 'SECRET=value\n');
+
+      const result = await runCli(
+        ['check', '--base', 'HEAD', '--head', 'worktree', '--format', 'json', '--output', outputPath],
+        { stdout: () => undefined, stderr: () => undefined },
+        { cwd: dir },
+      );
+
+      const parsed = JSON.parse(await readFile(outputPath, 'utf8')) as { status: string };
+      expect(result.exitCode).toBe(1);
+      expect(parsed.status).toBe('fail');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+      await rm(outputDir, { recursive: true, force: true });
+    }
+  });
+
   it('prints CODEOWNERS reviewer hints in default text output', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-codeowners-'));
     const writes: string[] = [];

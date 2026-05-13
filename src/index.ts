@@ -1,5 +1,5 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { dirname, isAbsolute, join } from 'node:path';
 import { generateInitFiles, writeInitFiles } from './commands/init.js';
 import { runCheck } from './check/run-check.js';
 import { renderJsonReport } from './report/json.js';
@@ -106,7 +106,7 @@ export async function runCli(
     }
 
     if (output !== undefined) {
-      await writeOutputFile(join(runtime.cwd, output), renderCheckOutput(result, format));
+      await writeOutputFile(resolveOutputPath(runtime.cwd, output), renderCheckOutput(result, format));
       io.stdout(`Wrote RepoBelt report to ${output}`);
       return { exitCode: result.status === 'fail' ? 1 : 0 };
     }
@@ -197,6 +197,10 @@ function renderTextReport(result: Awaited<ReturnType<typeof runCheck>>): string 
     lines.push(`Reviewer: ${hint.path} matched ${hint.matchedPattern} -> ${hint.owners.join(', ')}`);
   }
   return `${lines.join('\n')}\n`;
+}
+
+function resolveOutputPath(cwd: string, output: string): string {
+  return isAbsolute(output) ? output : join(cwd, output);
 }
 
 async function writeOutputFile(path: string, content: string): Promise<void> {
