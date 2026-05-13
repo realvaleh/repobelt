@@ -12,6 +12,8 @@ If the repository has `.github/CODEOWNERS`, `CODEOWNERS`, or `docs/CODEOWNERS`, 
 
 If the repository has `.repobeltignore`, ignored paths are removed before annotations, summaries, secret scanning, CODEOWNERS hints, and count guardrails run.
 
+Use `npx repobelt check --explain <path>` locally or in CI logs to troubleshoot why one path is ignored, blocked, risky, allowed, or assigned to CODEOWNERS before changing policy.
+
 ## Generated workflow
 
 ```yaml

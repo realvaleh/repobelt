@@ -8,6 +8,9 @@ import { renderGitHubActionsReport } from './report/github-actions.js';
 import { renderJsonReport } from './report/json.js';
 import { renderMarkdownReport } from './report/markdown.js';
 import { renderSarifReport } from './report/sarif.js';
+import { findCodeOwnerHints } from './rules/codeowners.js';
+import { firstMatchingIgnorePattern } from './rules/ignore.js';
+import { matchesGlob } from './rules/path-policy.js';
 
 export interface CliIo {
   stdout: (message: string) => void;
@@ -51,6 +54,7 @@ Options:
   --output <path>                  Write report to a file instead of stdout
   --summary <path>                 Also write a Markdown summary to a file
   --print-config                   Print resolved policy, limits, sources, and CLI overrides
+  --explain <path>                 Explain how one path matches ignore, policy, and CODEOWNERS rules
   --config <path>                  Policy file path. Default: .repobelt.yml
   --baseline <path>                JSON baseline report; matching existing findings are ignored
   --changed-files <path>           Newline-delimited changed-file list instead of git diff discovery
@@ -123,6 +127,7 @@ export async function runCli(
     const summary = getFlagValue(args, '--summary');
     const config = getFlagValue(args, '--config');
     const baselinePath = getFlagValue(args, '--baseline');
+    const explainPath = getFlagValue(args, '--explain');
     const printConfig = args.includes('--print-config');
     const changedFilesPath = getFlagValue(args, '--changed-files');
     const readChangedFilesFromStdin = args.includes('--stdin-changed-files');
@@ -136,6 +141,10 @@ export async function runCli(
     }
     if (isMissingFlagValue(args, '--baseline')) {
       io.stderr('Missing value for --baseline');
+      return { exitCode: 1 };
+    }
+    if (isMissingFlagValue(args, '--explain')) {
+      io.stderr('Missing value for --explain');
       return { exitCode: 1 };
     }
     if (isMissingFlagValue(args, '--changed-files')) {
@@ -199,6 +208,11 @@ export async function runCli(
           maxSecrets,
           failOnWarn,
         }));
+        return { exitCode: 0 };
+      }
+      if (explainPath !== undefined) {
+        const policy = loadPolicyFromText(policyText);
+        io.stdout(await renderPathExplanation(runtime.cwd, explainPath, policy));
         return { exitCode: 0 };
       }
       const changedFiles = await readChangedFilesOverride(runtime, changedFilesPath, readChangedFilesFromStdin);
@@ -420,6 +434,52 @@ function deriveStatus(blockedCount: number, riskyCount: number, secretCount: num
     return 'warn';
   }
   return 'pass';
+}
+
+async function renderPathExplanation(cwd: string, path: string, policy: RepoBeltPolicy): Promise<string> {
+  const ignoreText = await readOptionalText(join(cwd, '.repobeltignore'));
+  const codeownersText = await readCodeownersText(cwd);
+  const ignoreMatch = firstMatchingIgnorePattern(path, ignoreText);
+  const protectedMatch = firstMatchingGlob(path, policy.protectedPaths);
+  const allowlistMatch = firstMatchingGlob(path, policy.allowlist.paths);
+  const riskyMatch = firstMatchingRisky(path, policy.riskyPaths);
+  const codeownerHint = findCodeOwnerHints({ changedFiles: [path], codeownersText })[0];
+  const status = ignoreMatch !== undefined
+    ? 'ignored'
+    : protectedMatch !== undefined
+      ? 'fail'
+      : riskyMatch !== undefined && allowlistMatch === undefined
+        ? 'warn'
+        : 'pass';
+
+  const lines = [
+    `RepoBelt explain: ${path}`,
+    `Status: ${status}`,
+    `Ignore: ${ignoreMatch ?? 'no match'}`,
+    `Protected: ${protectedMatch ?? 'no match'}`,
+    `Allowlist: ${allowlistMatch ?? 'no match'}`,
+    `Risky: ${riskyMatch === undefined ? 'no match' : `${riskyMatch.pattern} -> ${riskyMatch.action}`}`,
+    `CODEOWNERS: ${codeownerHint === undefined ? 'no match' : `${codeownerHint.matchedPattern} -> ${codeownerHint.owners.join(', ')}`}`,
+  ];
+  return `${lines.join('\n')}\n`;
+}
+
+function firstMatchingGlob(path: string, patterns: string[]): string | undefined {
+  return patterns.find((pattern) => matchesGlob(path, pattern));
+}
+
+function firstMatchingRisky(path: string, riskyPaths: RepoBeltPolicy['riskyPaths']): { pattern: string; action: string } | undefined {
+  for (const [pattern, action] of Object.entries(riskyPaths)) {
+    if (matchesGlob(path, pattern)) {
+      return { pattern, action };
+    }
+  }
+  return undefined;
+}
+
+async function readCodeownersText(cwd: string): Promise<string | undefined> {
+  const codeownersPath = await findCodeownersPath(cwd);
+  return codeownersPath === null ? undefined : readOptionalText(join(cwd, codeownersPath));
 }
 
 async function renderResolvedConfig(options: {

@@ -12,12 +12,11 @@ export function parseIgnorePatterns(text: string | undefined): string[] {
 }
 
 export function filterIgnoredPaths(paths: string[], ignoreText: string | undefined): string[] {
-  const patterns = parseIgnorePatterns(ignoreText);
-  if (patterns.length === 0) {
-    return paths;
-  }
+  return paths.filter((path) => firstMatchingIgnorePattern(path, ignoreText) === undefined);
+}
 
-  return paths.filter((path) => !patterns.some((pattern) => matchesIgnorePattern(path, pattern)));
+export function firstMatchingIgnorePattern(path: string, ignoreText: string | undefined): string | undefined {
+  return parseIgnorePatterns(ignoreText).find((pattern) => matchesIgnorePattern(path, pattern));
 }
 
 function matchesIgnorePattern(path: string, pattern: string): boolean {

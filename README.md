@@ -234,6 +234,12 @@ Print the fully resolved check configuration for CI debugging:
 npx repobelt check --print-config --config policies/strict.repobelt.yml
 ```
 
+Explain exactly how one path matches RepoBelt policy, ignore, and CODEOWNERS rules:
+
+```bash
+npx repobelt check --explain auth/login.ts
+```
+
 ## Example policy
 
 ```yaml
@@ -346,6 +352,7 @@ Options:
   --output <path>                  Write report to a file instead of stdout
   --summary <path>                 Also write a Markdown summary to a file
   --print-config                   Print resolved policy, limits, sources, and CLI overrides
+  --explain <path>                 Explain how one path matches ignore, policy, and CODEOWNERS rules
   --config <path>                  Policy file path. Default: .repobelt.yml
   --baseline <path>                JSON baseline report; matching existing findings are ignored
   --changed-files <path>           Newline-delimited changed-file list instead of git diff discovery

@@ -45,6 +45,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(writes.join('\n')).toContain('--output <path>');
     expect(writes.join('\n')).toContain('--summary <path>');
     expect(writes.join('\n')).toContain('--print-config');
+    expect(writes.join('\n')).toContain('--explain <path>');
     expect(writes.join('\n')).toContain('--config <path>');
     expect(writes.join('\n')).toContain('--baseline <path>');
     expect(writes.join('\n')).toContain('--changed-files <path>');
@@ -199,6 +200,95 @@ describe('RepoBelt CLI foundation', () => {
 
     expect(result.exitCode).toBe(1);
     expect(errors.join('\n')).toContain('Missing value for --preset');
+  });
+
+  it('explains how a single path matches ignore, policy, and CODEOWNERS rules', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-explain-'));
+    const writes: string[] = [];
+
+    try {
+      await mkdir(join(dir, '.github'), { recursive: true });
+      await writeFile(join(dir, '.github', 'CODEOWNERS'), '* @core-team\nauth/** @security-team\n');
+      await writeFile(join(dir, '.repobeltignore'), 'generated/**\n');
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths:
+  - generated/.env
+  - secrets/**
+risky_paths:
+  auth/**: require_review
+required_checks: []
+allowlist:
+  paths:
+    - docs/**
+`);
+
+      const result = await runCli(
+        ['check', '--explain', 'auth/login.ts'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(0);
+      const output = writes.join('\n');
+      expect(output).toContain('RepoBelt explain: auth/login.ts');
+      expect(output).toContain('Status: warn');
+      expect(output).toContain('Ignore: no match');
+      expect(output).toContain('Protected: no match');
+      expect(output).toContain('Allowlist: no match');
+      expect(output).toContain('Risky: auth/** -> require_review');
+      expect(output).toContain('CODEOWNERS: auth/** -> @security-team');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('explains ignored paths before policy status', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-explain-ignore-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobeltignore'), 'generated/**\n');
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths:
+  - generated/.env
+risky_paths: {}
+required_checks: []
+allowlist:
+  paths: []
+`);
+
+      const result = await runCli(
+        ['check', '--explain', 'generated/.env'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(0);
+      const output = writes.join('\n');
+      expect(output).toContain('Status: ignored');
+      expect(output).toContain('Ignore: generated/**');
+      expect(output).toContain('Protected: generated/.env');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects check --explain when no path is provided', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['check', '--explain'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Missing value for --explain');
   });
 
   it('prints the resolved check configuration without running a diff', async () => {

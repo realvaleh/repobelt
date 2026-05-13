@@ -414,6 +414,8 @@ Use `repobelt check --summary <path>` to write an additional Markdown report sid
 
 Use `repobelt check --print-config` to print the resolved check configuration as JSON without running git diff discovery or scanning files. The output includes the policy path, CODEOWNERS source if present, loaded policy, CLI overrides, and effective limits after CLI overrides are applied.
 
+Use `repobelt check --explain <path>` to explain how one path is classified without running git diff discovery. The output includes the resulting status plus the exact `.repobeltignore`, `protected_paths`, `allowlist.paths`, `risky_paths`, and CODEOWNERS matches for that path. This is useful for policy debugging and reviewer questions such as why a file is ignored, blocked, risky, or allowed.
+
 ### `fail`
 
 Returned when:

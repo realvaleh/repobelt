@@ -82,6 +82,7 @@ try {
   expectIncludes('repobelt check --help', checkHelpOutput, '--max-secrets <n>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--summary <path>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--print-config');
+  expectIncludes('repobelt check --help', checkHelpOutput, '--explain <path>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--format <text|markdown|json|sarif|github>');
 
   const presetListOutput = run('npx', ['repobelt', 'init', '--list-presets'], { cwd: appDir });
@@ -208,6 +209,12 @@ allowlist:
     cwd: appDir,
   });
   expectIncludes('repobelt check with .repobeltignore', ignoreOutput, 'RepoBelt check passed with warnings');
+
+  const explainOutput = run('npx', ['repobelt', 'check', '--explain', 'auth/login.ts'], {
+    cwd: appDir,
+  });
+  expectIncludes('repobelt check --explain', explainOutput, 'RepoBelt explain: auth/login.ts');
+  expectIncludes('repobelt check --explain', explainOutput, 'Risky: auth/** -> require_review');
 
   run('npx', ['repobelt', 'check', '--changed-files', 'oversized-files.txt', '--format', 'github', '--summary', 'reports/summary.md'], {
     cwd: appDir,

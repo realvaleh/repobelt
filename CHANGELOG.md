@@ -8,6 +8,7 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 
 ### Added since release
 
+- `check --explain <path>` for explaining one path's `.repobeltignore`, protected-path, allowlist, risky-path, and CODEOWNERS matches without running git diff discovery.
 - `check --baseline <path>` for ignoring findings already present in a prior JSON report so teams can adopt RepoBelt incrementally while still failing on new findings.
 - `.repobeltignore` support for filtering generated, vendored, build-output, snapshot, or fixture paths before policy checks, secret scanning, CODEOWNERS hints, reports, and count guardrails run.
 - `check --print-config` for debugging resolved policy/config, CODEOWNERS source, CLI overrides, and effective limits without scanning a diff.
