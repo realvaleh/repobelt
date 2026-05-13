@@ -46,6 +46,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(writes.join('\n')).toContain('--config <path>');
     expect(writes.join('\n')).toContain('--changed-files <path>');
     expect(writes.join('\n')).toContain('--stdin-changed-files');
+    expect(writes.join('\n')).toContain('--max-files <n>');
     expect(writes.join('\n')).toContain('--fail-on-warn');
   });
 
@@ -416,6 +417,56 @@ describe('RepoBelt CLI foundation', () => {
       await rm(dir, { recursive: true, force: true });
       await rm(outputDir, { recursive: true, force: true });
     }
+  });
+
+  it('fails when changed file count exceeds --max-files', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-max-files-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths:
+  - custom-secret.txt
+risky_paths:
+  docs/**: require_review
+required_checks:
+  - max-files-check
+allowlist:
+  paths: []
+`);
+      await writeFile(join(dir, 'a.ts'), 'export const a = true;\n');
+      await writeFile(join(dir, 'b.ts'), 'export const b = true;\n');
+      await writeFile(join(dir, 'changed-files.txt'), 'a.ts\nb.ts\n');
+
+      const result = await runCli(
+        ['check', '--changed-files', 'changed-files.txt', '--max-files', '1'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(1);
+      const output = writes.join('\n');
+      expect(output).toContain('RepoBelt check failed');
+      expect(output).toContain('Too many changed files: 2 exceeds max 1');
+      expect(output).toContain('Required checks: max-files-check');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects check --max-files when the value is not a positive integer', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['check', '--max-files', '0'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Invalid value for --max-files: 0');
   });
 
   it('uses changed files from stdin when --stdin-changed-files is provided', async () => {

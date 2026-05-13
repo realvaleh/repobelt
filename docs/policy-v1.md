@@ -373,6 +373,8 @@ Use `repobelt check --changed-files <path>` to load a newline-delimited list of 
 
 Use `repobelt check --stdin-changed-files` to read that same newline-delimited changed-file list from stdin. This is useful when a CI step or bot can pipe paths directly, and it avoids creating a temporary file. Do not combine it with `--changed-files`.
 
+Use `repobelt check --max-files <n>` to fail PRs that change more than `n` files. The value must be a positive integer. This gives teams a simple size guardrail for AI-generated pull requests before reviewers spend time on oversized diffs.
+
 ### `fail`
 
 Returned when:

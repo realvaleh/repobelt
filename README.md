@@ -167,6 +167,12 @@ Or pipe changed paths through stdin without creating a temporary file:
 git diff --name-only origin/main...HEAD | npx repobelt check --stdin-changed-files
 ```
 
+Fail oversized PRs automatically with a changed-file count limit:
+
+```bash
+npx repobelt check --max-files 50
+```
+
 ## Example policy
 
 ```yaml
