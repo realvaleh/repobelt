@@ -58,6 +58,22 @@ describe('RepoBelt CLI foundation', () => {
     expect(writes.join('\n')).toContain('.github/workflows/repobelt.yml');
   });
 
+  it('lists available init presets with descriptions', async () => {
+    const writes: string[] = [];
+
+    const result = await runCli(['init', '--list-presets'], {
+      stdout: (message) => writes.push(message),
+      stderr: (message) => writes.push(`ERR:${message}`),
+    });
+
+    expect(result.exitCode).toBe(0);
+    const output = writes.join('\n');
+    expect(output).toContain('Available RepoBelt init presets:');
+    expect(output).toContain('default  Baseline policy for any repository');
+    expect(output).toContain('web      Frontend and full-stack web apps with API routes and build checks');
+    expect(output).toContain('monorepo Workspace repositories with shared tooling, package boundaries, and affected checks');
+  });
+
   it('creates starter files for init in the provided working directory', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-init-'));
     const writes: string[] = [];

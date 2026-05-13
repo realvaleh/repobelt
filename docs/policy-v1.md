@@ -57,7 +57,13 @@ allowlist:
 
 ## Init presets
 
-`repobelt init` supports policy presets:
+`repobelt init` supports policy presets. List them with descriptions before choosing one:
+
+```bash
+repobelt init --list-presets
+```
+
+Then initialize with a preset:
 
 ```bash
 repobelt init --preset default

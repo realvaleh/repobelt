@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join } from 'node:path';
-import { generateInitFiles, supportedInitPresets, writeInitFiles, type InitPreset } from './commands/init.js';
+import { describeInitPresets, generateInitFiles, supportedInitPresets, writeInitFiles, type InitPreset } from './commands/init.js';
 import { runCheck } from './check/run-check.js';
 import { renderJsonReport } from './report/json.js';
 import { renderMarkdownReport } from './report/markdown.js';
@@ -30,6 +30,7 @@ Commands:
 
 Options:
   --preset <${formatInitPresetChoices()}>  Policy preset for init. Default: default
+  --list-presets          List available init presets
   -h, --help              Show this help message
 `;
 }
@@ -70,6 +71,11 @@ export async function runCli(
     for (const path of Object.keys(files)) {
       io.stdout(`- ${path}`);
     }
+    return { exitCode: 0 };
+  }
+
+  if (command === 'init' && args.includes('--list-presets')) {
+    io.stdout(formatInitPresetDescriptions());
     return { exitCode: 0 };
   }
 
@@ -267,6 +273,13 @@ function formatInitPresetChoices(): string {
 
 function formatInitPresetList(): string {
   return supportedInitPresets.join(', ');
+}
+
+function formatInitPresetDescriptions(): string {
+  const presets = describeInitPresets();
+  const nameWidth = Math.max(...presets.map((preset) => preset.name.length));
+  const lines = presets.map((preset) => `${preset.name.padEnd(nameWidth)} ${preset.description}`);
+  return ['Available RepoBelt init presets:', ...lines].join('\n');
 }
 
 function isSupportedFormat(format: string): boolean {

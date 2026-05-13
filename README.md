@@ -59,6 +59,12 @@ npx repobelt init
 npx repobelt check --base HEAD --head worktree
 ```
 
+To discover the built-in policy presets:
+
+```bash
+npx repobelt init --list-presets
+```
+
 For web apps, start with the web preset:
 
 ```bash

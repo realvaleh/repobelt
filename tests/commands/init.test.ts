@@ -2,11 +2,22 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { generateInitFiles, supportedInitPresets, writeInitFiles } from '../../src/commands/init.js';
+import { describeInitPresets, generateInitFiles, supportedInitPresets, writeInitFiles } from '../../src/commands/init.js';
 
 describe('repobelt init', () => {
   it('exposes supported preset names from the preset registry', () => {
     expect(supportedInitPresets).toEqual(['default', 'web', 'node', 'python', 'infra', 'monorepo']);
+  });
+
+  it('describes supported presets for CLI discovery', () => {
+    expect(describeInitPresets()).toEqual([
+      { name: 'default', description: 'Baseline policy for any repository' },
+      { name: 'web', description: 'Frontend and full-stack web apps with API routes and build checks' },
+      { name: 'node', description: 'Node.js and TypeScript packages with package, CLI, and script review paths' },
+      { name: 'python', description: 'Python services and packages with dependency and migration review paths' },
+      { name: 'infra', description: 'Infrastructure-as-code repositories with Terraform, Kubernetes, Docker, and plan checks' },
+      { name: 'monorepo', description: 'Workspace repositories with shared tooling, package boundaries, and affected checks' },
+    ]);
   });
 
   it('generates the starter policy and GitHub Action files', () => {

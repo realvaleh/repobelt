@@ -17,16 +17,19 @@ const packageRiskyPaths = ['package.json: require_review', 'pnpm-lock.yaml: requ
 const baseRequiredChecks = ['test', 'lint', 'typecheck'];
 
 type InitPresetDefinition = {
+  description: string;
   riskyPaths: string[];
   requiredChecks: string[];
 };
 
 const presetDefinitions = {
   default: {
+    description: 'Baseline policy for any repository',
     riskyPaths: [],
     requiredChecks: [],
   },
   web: {
+    description: 'Frontend and full-stack web apps with API routes and build checks',
     riskyPaths: [
       ...packageRiskyPaths,
       'app/api/**: require_review',
@@ -39,6 +42,7 @@ const presetDefinitions = {
     requiredChecks: ['build'],
   },
   node: {
+    description: 'Node.js and TypeScript packages with package, CLI, and script review paths',
     riskyPaths: [
       ...packageRiskyPaths,
       'tsconfig*.json: require_review',
@@ -49,6 +53,7 @@ const presetDefinitions = {
     requiredChecks: ['build'],
   },
   python: {
+    description: 'Python services and packages with dependency and migration review paths',
     riskyPaths: [
       'pyproject.toml: require_review',
       'requirements*.txt: require_review',
@@ -62,6 +67,7 @@ const presetDefinitions = {
     requiredChecks: ['build'],
   },
   infra: {
+    description: 'Infrastructure-as-code repositories with Terraform, Kubernetes, Docker, and plan checks',
     riskyPaths: [
       '**/*.tf: require_review',
       '**/*.tfvars: require_review',
@@ -78,6 +84,7 @@ const presetDefinitions = {
     requiredChecks: ['plan'],
   },
   monorepo: {
+    description: 'Workspace repositories with shared tooling, package boundaries, and affected checks',
     riskyPaths: [
       ...packageRiskyPaths,
       'pnpm-workspace.yaml: require_review',
@@ -99,8 +106,17 @@ export const supportedInitPresets = Object.keys(presetDefinitions) as InitPreset
 
 export type InitPreset = keyof typeof presetDefinitions;
 
+export interface InitPresetDescription {
+  name: InitPreset;
+  description: string;
+}
+
 export interface InitOptions {
   preset?: InitPreset;
+}
+
+export function describeInitPresets(): InitPresetDescription[] {
+  return supportedInitPresets.map((name) => ({ name, description: presetDefinitions[name].description }));
 }
 
 export function generateInitFiles(options: InitOptions = {}): Record<string, string> {

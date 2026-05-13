@@ -47,6 +47,11 @@ try {
 
   const helpOutput = run('npx', ['repobelt', '--help'], { cwd: appDir });
   expectIncludes('repobelt --help', helpOutput, 'Usage: repobelt <command>');
+  expectIncludes('repobelt --help', helpOutput, '--list-presets');
+
+  const presetListOutput = run('npx', ['repobelt', 'init', '--list-presets'], { cwd: appDir });
+  expectIncludes('repobelt init --list-presets', presetListOutput, 'Available RepoBelt init presets:');
+  expectIncludes('repobelt init --list-presets', presetListOutput, 'monorepo Workspace repositories');
 
   const dryRunOutput = run('npx', ['repobelt', 'init', '--dry-run'], { cwd: appDir });
   expectIncludes('repobelt init --dry-run', dryRunOutput, '.repobelt.yml');
