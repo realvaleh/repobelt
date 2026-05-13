@@ -8,6 +8,7 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 
 ### Added since release
 
+- `check --print-config` for debugging resolved policy/config, CODEOWNERS source, CLI overrides, and effective limits without scanning a diff.
 - Policy `limits` for storing `max_files`, `max_risky`, and `max_secrets` guardrails in `.repobelt.yml`.
 - `check --summary <path>` for writing a Markdown sidecar report while preserving the primary output format.
 - `check --max-secrets <n>` for failing PRs that exceed a secret-finding budget.

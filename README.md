@@ -208,6 +208,12 @@ limits:
 
 CLI flags override policy limits for one-off stricter or looser runs.
 
+Print the fully resolved check configuration for CI debugging:
+
+```bash
+npx repobelt check --print-config --config policies/strict.repobelt.yml
+```
+
 ## Example policy
 
 ```yaml

@@ -44,6 +44,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(writes.join('\n')).toContain('--format <text|markdown|json|sarif|github>');
     expect(writes.join('\n')).toContain('--output <path>');
     expect(writes.join('\n')).toContain('--summary <path>');
+    expect(writes.join('\n')).toContain('--print-config');
     expect(writes.join('\n')).toContain('--config <path>');
     expect(writes.join('\n')).toContain('--changed-files <path>');
     expect(writes.join('\n')).toContain('--stdin-changed-files');
@@ -197,6 +198,58 @@ describe('RepoBelt CLI foundation', () => {
 
     expect(result.exitCode).toBe(1);
     expect(errors.join('\n')).toContain('Missing value for --preset');
+  });
+
+  it('prints the resolved check configuration without running a diff', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-print-config-'));
+    const writes: string[] = [];
+
+    try {
+      await mkdir(join(dir, '.github'), { recursive: true });
+      await writeFile(join(dir, '.github', 'CODEOWNERS'), 'auth/** @security-team\n');
+      await writeFile(join(dir, 'strict.repobelt.yml'), `version: 1
+protected_paths:
+  - .env
+risky_paths:
+  auth/**: require_review
+required_checks:
+  - test
+limits:
+  max_files: 5
+  max_risky: 1
+  max_secrets: 0
+allowlist:
+  paths:
+    - docs/**
+`);
+
+      const result = await runCli(
+        ['check', '--print-config', '--config', 'strict.repobelt.yml', '--max-files', '3', '--fail-on-warn'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(0);
+      const parsed = JSON.parse(writes.join('\n')) as {
+        policyPath: string;
+        codeownersPath: string | null;
+        policy: { protectedPaths: string[]; riskyPaths: Record<string, string>; limits: { maxFiles: number; maxRisky: number; maxSecrets: number } };
+        cliOverrides: { maxFiles: number; failOnWarn: boolean };
+        effectiveLimits: { maxFiles: number; maxRisky: number; maxSecrets: number };
+      };
+      expect(parsed.policyPath).toBe('strict.repobelt.yml');
+      expect(parsed.codeownersPath).toBe('.github/CODEOWNERS');
+      expect(parsed.policy.protectedPaths).toEqual(['.env']);
+      expect(parsed.policy.riskyPaths).toEqual({ 'auth/**': 'require_review' });
+      expect(parsed.policy.limits).toEqual({ maxFiles: 5, maxRisky: 1, maxSecrets: 0 });
+      expect(parsed.cliOverrides).toEqual({ maxFiles: 3, failOnWarn: true });
+      expect(parsed.effectiveLimits).toEqual({ maxFiles: 3, maxRisky: 1, maxSecrets: 0 });
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 
   it('runs check and exits 1 when a protected path changed', async () => {

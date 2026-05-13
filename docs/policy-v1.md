@@ -398,6 +398,8 @@ Use `repobelt check --format github` to emit GitHub Actions annotations. Protect
 
 Use `repobelt check --summary <path>` to write an additional Markdown report sidecar while keeping the primary output format on stdout or in `--output`. Relative summary paths are resolved from the current working directory, and parent directories are created automatically. This is useful for commands such as `repobelt check --format github --summary "$GITHUB_STEP_SUMMARY"`, where stdout should stay as GitHub annotations but reviewers still get a readable Markdown step summary.
 
+Use `repobelt check --print-config` to print the resolved check configuration as JSON without running git diff discovery or scanning files. The output includes the policy path, CODEOWNERS source if present, loaded policy, CLI overrides, and effective limits after CLI overrides are applied.
+
 ### `fail`
 
 Returned when:

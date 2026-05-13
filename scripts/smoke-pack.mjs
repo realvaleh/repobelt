@@ -80,6 +80,7 @@ try {
   expectIncludes('repobelt check --help', checkHelpOutput, '--max-risky <n>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--max-secrets <n>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--summary <path>');
+  expectIncludes('repobelt check --help', checkHelpOutput, '--print-config');
   expectIncludes('repobelt check --help', checkHelpOutput, '--format <text|markdown|json|sarif|github>');
 
   const presetListOutput = run('npx', ['repobelt', 'init', '--list-presets'], { cwd: appDir });
@@ -132,6 +133,12 @@ allowlist:
   );
   expectIncludes('repobelt check --config', customConfigOutput, 'Blocked: custom-secret.txt matched custom-secret.txt');
   expectIncludes('repobelt check --config', customConfigOutput, 'Required checks: custom-check');
+
+  const printConfigOutput = run('npx', ['repobelt', 'check', '--config', 'strict.repobelt.yml', '--print-config', '--max-files', '10'], {
+    cwd: appDir,
+  });
+  expectIncludes('repobelt check --print-config', printConfigOutput, '"policyPath": "strict.repobelt.yml"');
+  expectIncludes('repobelt check --print-config', printConfigOutput, '"maxFiles": 10');
 
   writeFileSync(join(appDir, 'changed-files.txt'), '\ncustom-secret.txt\n\n');
   const explicitFilesOutput = runExpectFailure(

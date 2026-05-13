@@ -2,6 +2,8 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join } from 'node:path';
 import { describeInitPresets, generateInitFiles, supportedInitPresets, writeInitFiles, type InitPreset } from './commands/init.js';
 import { runCheck } from './check/run-check.js';
+import { loadPolicyFromText } from './policy/load-policy.js';
+import type { RepoBeltPolicy } from './policy/schema.js';
 import { renderGitHubActionsReport } from './report/github-actions.js';
 import { renderJsonReport } from './report/json.js';
 import { renderMarkdownReport } from './report/markdown.js';
@@ -48,6 +50,7 @@ Options:
   --format <text|markdown|json|sarif|github>   Output format. Default: text
   --output <path>                  Write report to a file instead of stdout
   --summary <path>                 Also write a Markdown summary to a file
+  --print-config                   Print resolved policy, limits, sources, and CLI overrides
   --config <path>                  Policy file path. Default: .repobelt.yml
   --changed-files <path>           Newline-delimited changed-file list instead of git diff discovery
   --stdin-changed-files            Read newline-delimited changed-file list from stdin
@@ -118,6 +121,7 @@ export async function runCli(
     const output = getFlagValue(args, '--output');
     const summary = getFlagValue(args, '--summary');
     const config = getFlagValue(args, '--config');
+    const printConfig = args.includes('--print-config');
     const changedFilesPath = getFlagValue(args, '--changed-files');
     const readChangedFilesFromStdin = args.includes('--stdin-changed-files');
     const maxFilesValue = getFlagValue(args, '--max-files');
@@ -178,6 +182,19 @@ export async function runCli(
     let result;
     try {
       const policyText = await readPolicyText(runtime.cwd, config);
+      if (printConfig) {
+        const policy = loadPolicyFromText(policyText);
+        io.stdout(await renderResolvedConfig({
+          cwd: runtime.cwd,
+          config,
+          policy,
+          maxFiles,
+          maxRisky,
+          maxSecrets,
+          failOnWarn,
+        }));
+        return { exitCode: 0 };
+      }
       const changedFiles = await readChangedFilesOverride(runtime, changedFilesPath, readChangedFilesFromStdin);
       result = await runCheck({
         cwd: runtime.cwd,
@@ -333,6 +350,49 @@ function renderCheckOutput(result: Awaited<ReturnType<typeof runCheck>>, format:
     return renderGitHubActionsReport(result);
   }
   return renderTextReport(result);
+}
+
+async function renderResolvedConfig(options: {
+  cwd: string;
+  config: string | undefined;
+  policy: RepoBeltPolicy;
+  maxFiles: number | undefined;
+  maxRisky: number | undefined;
+  maxSecrets: number | undefined;
+  failOnWarn: boolean;
+}): Promise<string> {
+  const codeownersPath = await findCodeownersPath(options.cwd);
+  const cliOverrides = withoutUndefined({
+    maxFiles: options.maxFiles,
+    maxRisky: options.maxRisky,
+    maxSecrets: options.maxSecrets,
+    failOnWarn: options.failOnWarn ? true : undefined,
+  });
+
+  return `${JSON.stringify({
+    policyPath: options.config ?? '.repobelt.yml',
+    codeownersPath,
+    policy: options.policy,
+    cliOverrides,
+    effectiveLimits: {
+      maxFiles: options.maxFiles ?? options.policy.limits.maxFiles,
+      maxRisky: options.maxRisky ?? options.policy.limits.maxRisky,
+      maxSecrets: options.maxSecrets ?? options.policy.limits.maxSecrets,
+    },
+  }, null, 2)}\n`;
+}
+
+async function findCodeownersPath(cwd: string): Promise<string | null> {
+  for (const path of ['.github/CODEOWNERS', 'CODEOWNERS', 'docs/CODEOWNERS']) {
+    if (await readOptionalText(join(cwd, path)) !== undefined) {
+      return path;
+    }
+  }
+  return null;
+}
+
+function withoutUndefined<T extends Record<string, unknown>>(value: T): Partial<T> {
+  return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== undefined)) as Partial<T>;
 }
 
 function renderTextReport(result: Awaited<ReturnType<typeof runCheck>>): string {
