@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join } from 'node:path';
 import { describeInitPresets, generateInitFiles, supportedInitPresets, writeInitFiles, type InitPreset } from './commands/init.js';
 import { runCheck } from './check/run-check.js';
+import { renderGitHubActionsReport } from './report/github-actions.js';
 import { renderJsonReport } from './report/json.js';
 import { renderMarkdownReport } from './report/markdown.js';
 import { renderSarifReport } from './report/sarif.js';
@@ -44,7 +45,7 @@ Usage: repobelt check [options]
 Options:
   --base <ref>                    Base git ref. Default: HEAD
   --head <ref|worktree>           Head git ref or worktree. Default: worktree
-  --format <text|markdown|json|sarif>   Output format. Default: text
+  --format <text|markdown|json|sarif|github>   Output format. Default: text
   --output <path>                  Write report to a file instead of stdout
   --config <path>                  Policy file path. Default: .repobelt.yml
   --changed-files <path>           Newline-delimited changed-file list instead of git diff discovery
@@ -153,7 +154,7 @@ export async function runCli(
     }
     if (!isSupportedFormat(format)) {
       io.stderr(`Unsupported format: ${format}`);
-      io.stderr('Supported formats: text, markdown, json, sarif');
+      io.stderr('Supported formats: text, markdown, json, sarif, github');
       return { exitCode: 1 };
     }
     let result;
@@ -190,6 +191,11 @@ export async function runCli(
 
     if (format === 'sarif') {
       io.stdout(renderSarifReport(result));
+      return { exitCode: getCheckExitCode(result, failOnWarn, maxFiles, maxRisky) };
+    }
+
+    if (format === 'github') {
+      io.stdout(renderGitHubActionsReport(result));
       return { exitCode: getCheckExitCode(result, failOnWarn, maxFiles, maxRisky) };
     }
 
@@ -282,6 +288,9 @@ function renderCheckOutput(result: Awaited<ReturnType<typeof runCheck>>, format:
   }
   if (format === 'sarif') {
     return renderSarifReport(result);
+  }
+  if (format === 'github') {
+    return renderGitHubActionsReport(result);
   }
   return renderTextReport(result);
 }
@@ -381,7 +390,7 @@ function formatInitPresetDescriptions(): string {
 }
 
 function isSupportedFormat(format: string): boolean {
-  return ['text', 'markdown', 'json', 'sarif'].includes(format);
+  return ['text', 'markdown', 'json', 'sarif', 'github'].includes(format);
 }
 
 function parseMaxFiles(value: string | undefined): number | undefined {

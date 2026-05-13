@@ -274,7 +274,7 @@ required_checks:
   - typecheck
 ```
 
-Current behavior: this field is loaded and included in text, Markdown, and JSON reports as reviewer context. RepoBelt does not yet execute commands or verify GitHub check-run status; `required_checks` is a deterministic reminder of the validation commands reviewers expect before merge.
+Current behavior: this field is loaded and included in text, Markdown, JSON, and GitHub Actions annotation reports as reviewer context. RepoBelt does not yet execute commands or verify GitHub check-run status; `required_checks` is a deterministic reminder of the validation commands reviewers expect before merge.
 
 ### `allowlist.paths`
 
@@ -376,6 +376,8 @@ Use `repobelt check --stdin-changed-files` to read that same newline-delimited c
 Use `repobelt check --max-files <n>` to fail PRs that change more than `n` files. The value must be a positive integer. This gives teams a simple size guardrail for AI-generated pull requests before reviewers spend time on oversized diffs.
 
 Use `repobelt check --max-risky <n>` to fail PRs that produce more than `n` risky-path findings. The value must be a non-negative integer, so `--max-risky 0` means any risky file fails while still preserving normal protected-path and secret-finding behavior.
+
+Use `repobelt check --format github` to emit GitHub Actions annotations. Protected paths and secret findings become `error` annotations, risky paths become `warning` annotations, and CODEOWNERS/required-check reminders become `notice` annotations. The exit-code rules are the same as other report formats.
 
 ### `fail`
 

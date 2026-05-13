@@ -78,6 +78,7 @@ try {
   expectIncludes('repobelt check --help', checkHelpOutput, '--stdin-changed-files');
   expectIncludes('repobelt check --help', checkHelpOutput, '--max-files <n>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--max-risky <n>');
+  expectIncludes('repobelt check --help', checkHelpOutput, '--format <text|markdown|json|sarif|github>');
 
   const presetListOutput = run('npx', ['repobelt', 'init', '--list-presets'], { cwd: appDir });
   expectIncludes('repobelt init --list-presets', presetListOutput, 'Available RepoBelt init presets:');
@@ -155,6 +156,11 @@ allowlist:
     cwd: appDir,
   });
   expectIncludes('repobelt check --max-risky', maxRiskyOutput, 'Too many risky files: 1 exceeds max 0');
+
+  const githubFormatOutput = run('npx', ['repobelt', 'check', '--changed-files', 'oversized-files.txt', '--format', 'github'], {
+    cwd: appDir,
+  });
+  expectIncludes('repobelt check --format github', githubFormatOutput, '::warning file=auth/login.ts,title=RepoBelt risky path::auth/login.ts matched auth/** and requires review');
 
   console.log('\nRepoBelt packaged CLI smoke test passed.');
 } finally {

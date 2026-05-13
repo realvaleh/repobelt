@@ -41,7 +41,7 @@ describe('RepoBelt CLI foundation', () => {
 
     expect(result.exitCode).toBe(0);
     expect(writes.join('\n')).toContain('Usage: repobelt check');
-    expect(writes.join('\n')).toContain('--format <text|markdown|json|sarif>');
+    expect(writes.join('\n')).toContain('--format <text|markdown|json|sarif|github>');
     expect(writes.join('\n')).toContain('--output <path>');
     expect(writes.join('\n')).toContain('--config <path>');
     expect(writes.join('\n')).toContain('--changed-files <path>');

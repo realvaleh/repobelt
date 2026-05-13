@@ -8,6 +8,7 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 
 ### Added since release
 
+- `check --format github` for emitting GitHub Actions annotations (`error`, `warning`, and `notice`) from RepoBelt findings.
 - `check --max-risky <n>` for failing PRs that exceed a risky-file warning budget.
 - `check --max-files <n>` for failing oversized PRs by changed-file count.
 - `check --stdin-changed-files` for reading an explicit newline-delimited changed-file list from stdin.

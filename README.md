@@ -48,7 +48,7 @@ It is a **seatbelt**, not an autopilot.
   - high-entropy `.env` assignments
 - CODEOWNERS reviewer hints from `.github/CODEOWNERS`, `CODEOWNERS`, or `docs/CODEOWNERS`
 - Required check reminders from policy, such as `test`, `lint`, and `typecheck`
-- Text, Markdown, JSON, and SARIF reports for CI and bots
+- Text, Markdown, JSON, SARIF, and GitHub Actions annotation reports for CI and bots
 
 ## Quickstart
 
@@ -135,6 +135,12 @@ Generate SARIF for security/code-scanning style consumers:
 
 ```bash
 npx repobelt check --base HEAD --head worktree --format sarif
+```
+
+Generate GitHub Actions annotations:
+
+```bash
+npx repobelt check --base HEAD --head worktree --format github
 ```
 
 Write any report format to a file:
