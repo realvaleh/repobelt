@@ -4,6 +4,7 @@ import { generateInitFiles, writeInitFiles } from './commands/init.js';
 import { runCheck } from './check/run-check.js';
 import { renderJsonReport } from './report/json.js';
 import { renderMarkdownReport } from './report/markdown.js';
+import { renderSarifReport } from './report/sarif.js';
 
 export interface CliIo {
   stdout: (message: string) => void;
@@ -40,7 +41,7 @@ Usage: repobelt check [options]
 Options:
   --base <ref>                    Base git ref. Default: HEAD
   --head <ref|worktree>           Head git ref or worktree. Default: worktree
-  --format <text|markdown|json>   Output format. Default: text
+  --format <text|markdown|json|sarif>   Output format. Default: text
   -h, --help                      Show this help message
 `;
 }
@@ -90,7 +91,7 @@ export async function runCli(
     const format = getFlagValue(args, '--format') ?? 'text';
     if (!isSupportedFormat(format)) {
       io.stderr(`Unsupported format: ${format}`);
-      io.stderr('Supported formats: text, markdown, json');
+      io.stderr('Supported formats: text, markdown, json, sarif');
       return { exitCode: 1 };
     }
     const policyText = await readOptionalText(join(runtime.cwd, '.repobelt.yml'));
@@ -109,6 +110,11 @@ export async function runCli(
 
     if (format === 'json') {
       io.stdout(renderJsonReport(result));
+      return { exitCode: result.status === 'fail' ? 1 : 0 };
+    }
+
+    if (format === 'sarif') {
+      io.stdout(renderSarifReport(result));
       return { exitCode: result.status === 'fail' ? 1 : 0 };
     }
 
@@ -160,7 +166,7 @@ function getFlagValue(args: string[], flag: string): string | undefined {
 }
 
 function isSupportedFormat(format: string): boolean {
-  return ['text', 'markdown', 'json'].includes(format);
+  return ['text', 'markdown', 'json', 'sarif'].includes(format);
 }
 
 async function readOptionalText(path: string): Promise<string | undefined> {

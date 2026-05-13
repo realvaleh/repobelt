@@ -107,3 +107,38 @@ repobelt check --base HEAD --head worktree --format json
   "reviewerHints": []
 }
 ```
+
+## SARIF output
+
+```bash
+repobelt check --base HEAD --head worktree --format sarif
+```
+
+SARIF output uses stable RepoBelt rule IDs for code-scanning style consumers:
+
+```json
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "RepoBelt",
+          "rules": [
+            { "id": "repobelt/protected-path" },
+            { "id": "repobelt/risky-path" },
+            { "id": "repobelt/secret-finding" }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "repobelt/protected-path",
+          "level": "error",
+          "message": { "text": "Protected path matched .env" }
+        }
+      ]
+    }
+  ]
+}
+```

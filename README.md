@@ -47,7 +47,7 @@ It is a **seatbelt**, not an autopilot.
   - AWS access key IDs
   - high-entropy `.env` assignments
 - CODEOWNERS reviewer hints from `.github/CODEOWNERS`, `CODEOWNERS`, or `docs/CODEOWNERS`
-- Markdown and JSON reports for CI and bots
+- Text, Markdown, JSON, and SARIF reports for CI and bots
 
 ## Quickstart
 
@@ -82,6 +82,12 @@ Generate machine-readable JSON:
 
 ```bash
 npx repobelt check --base HEAD --head worktree --format json
+```
+
+Generate SARIF for security/code-scanning style consumers:
+
+```bash
+npx repobelt check --base HEAD --head worktree --format sarif
 ```
 
 ## Example policy
@@ -152,7 +158,7 @@ See [`docs/github-action.md`](docs/github-action.md).
 ## Examples
 
 - [`examples/basic`](examples/basic) shows a small policy with safe and risky files.
-- [`docs/example-reports.md`](docs/example-reports.md) shows PASS, WARN, FAIL, and JSON output examples.
+- [`docs/example-reports.md`](docs/example-reports.md) shows PASS, WARN, FAIL, JSON, and SARIF output examples.
 
 ## Policy
 
@@ -176,7 +182,7 @@ Usage: repobelt check [options]
 Options:
   --base <ref>                    Base git ref. Default: HEAD
   --head <ref|worktree>           Head git ref or worktree. Default: worktree
-  --format <text|markdown|json>   Output format. Default: text
+  --format <text|markdown|json|sarif>   Output format. Default: text
   -h, --help                      Show this help message
 ```
 
@@ -197,7 +203,7 @@ RepoBelt is early but functional:
 - protected/risky path checks: done
 - secret scanning: done
 - CODEOWNERS reviewer hints: done
-- text/Markdown/JSON reports: done
+- text/Markdown/JSON/SARIF reports: done
 - GitHub Action template: done
 - CI workflow: done
 
@@ -208,7 +214,6 @@ Near-term:
 - Better policy documentation
 - More CLI validation
 - PR comment mode
-- SARIF output
 - richer CODEOWNERS validation and reviewer routing
 
 Later:
