@@ -56,6 +56,27 @@ describe('runCheck', () => {
     expect(result.changedFiles).toEqual(['src/app.ts']);
   });
 
+  it('includes required checks from policy for reviewer context', async () => {
+    const result = await runCheck({
+      cwd: '/repo',
+      base: 'main',
+      head: 'HEAD',
+      policyText: `
+version: 1
+protected_paths: []
+risky_paths: {}
+required_checks:
+  - test
+  - typecheck
+allowlist:
+  paths: []
+`,
+      changedFilesProvider: async () => ['src/app.ts'],
+    });
+
+    expect(result.requiredChecks).toEqual(['test', 'typecheck']);
+  });
+
   it('returns fail when changed file content contains a secret', async () => {
     const result = await runCheck({
       cwd: '/repo',

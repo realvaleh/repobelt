@@ -134,7 +134,7 @@ required_checks:
   - typecheck
 ```
 
-Current status: this field is loaded and reported as part of the policy model, but RepoBelt does not yet execute or verify these commands. It is reserved for near-term validation/reporting behavior.
+Current behavior: this field is loaded and included in text, Markdown, and JSON reports as reviewer context. RepoBelt does not yet execute commands or verify GitHub check-run status; `required_checks` is a deterministic reminder of the validation commands reviewers expect before merge.
 
 ### `allowlist.paths`
 

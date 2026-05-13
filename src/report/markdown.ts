@@ -46,6 +46,15 @@ export function renderMarkdownReport(result: CheckResult): string {
     lines.push('');
   }
 
+  if (result.requiredChecks.length > 0) {
+    lines.push('## Required checks');
+    lines.push('');
+    for (const check of result.requiredChecks) {
+      lines.push(`- \`${check}\``);
+    }
+    lines.push('');
+  }
+
   if (result.status === 'pass') {
     lines.push('No blocked paths, risky paths, or secrets found.');
     lines.push('');

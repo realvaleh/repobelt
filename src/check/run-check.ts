@@ -22,6 +22,7 @@ export interface CheckResult {
   pathPolicy: PathPolicyResult;
   secretFindings: SecretFinding[];
   reviewerHints: CodeOwnerHint[];
+  requiredChecks: string[];
 }
 
 export async function runCheck(options: RunCheckOptions): Promise<CheckResult> {
@@ -40,6 +41,7 @@ export async function runCheck(options: RunCheckOptions): Promise<CheckResult> {
     pathPolicy,
     secretFindings,
     reviewerHints,
+    requiredChecks: policy.requiredChecks,
   };
 }
 

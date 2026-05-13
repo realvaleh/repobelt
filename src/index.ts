@@ -135,6 +135,7 @@ export async function runCli(
         io.stdout(`Secret: ${finding.path}:${finding.line} ${finding.kind} matched ${finding.matchedPattern}`);
       }
       writeReviewerHints(result, io);
+      writeRequiredChecks(result, io);
       return { exitCode: 1 };
     }
 
@@ -144,11 +145,13 @@ export async function runCli(
         io.stdout(`Risky: ${finding.path} matched ${finding.matchedPattern}`);
       }
       writeReviewerHints(result, io);
+      writeRequiredChecks(result, io);
       return { exitCode: 0 };
     }
 
     io.stdout('RepoBelt check passed');
     writeReviewerHints(result, io);
+    writeRequiredChecks(result, io);
     return { exitCode: 0 };
   }
 
@@ -196,6 +199,9 @@ function renderTextReport(result: Awaited<ReturnType<typeof runCheck>>): string 
   for (const hint of result.reviewerHints) {
     lines.push(`Reviewer: ${hint.path} matched ${hint.matchedPattern} -> ${hint.owners.join(', ')}`);
   }
+  if (result.requiredChecks.length > 0) {
+    lines.push(`Required checks: ${result.requiredChecks.join(', ')}`);
+  }
   return `${lines.join('\n')}\n`;
 }
 
@@ -211,6 +217,12 @@ async function writeOutputFile(path: string, content: string): Promise<void> {
 function writeReviewerHints(result: Awaited<ReturnType<typeof runCheck>>, io: CliIo): void {
   for (const hint of result.reviewerHints) {
     io.stdout(`Reviewer: ${hint.path} matched ${hint.matchedPattern} -> ${hint.owners.join(', ')}`);
+  }
+}
+
+function writeRequiredChecks(result: Awaited<ReturnType<typeof runCheck>>, io: CliIo): void {
+  if (result.requiredChecks.length > 0) {
+    io.stdout(`Required checks: ${result.requiredChecks.join(', ')}`);
   }
 }
 

@@ -47,6 +47,7 @@ It is a **seatbelt**, not an autopilot.
   - AWS access key IDs
   - high-entropy `.env` assignments
 - CODEOWNERS reviewer hints from `.github/CODEOWNERS`, `CODEOWNERS`, or `docs/CODEOWNERS`
+- Required check reminders from policy, such as `test`, `lint`, and `typecheck`
 - Text, Markdown, JSON, and SARIF reports for CI and bots
 
 ## Quickstart
@@ -141,6 +142,12 @@ Changed files: 2
 
 - `src/config.ts:1` `github_token` matched GitHub token
 
+## Required checks
+
+- `test`
+- `lint`
+- `typecheck`
+
 ## Reviewer action
 
 Do not merge until blocked findings are resolved.
@@ -210,6 +217,7 @@ RepoBelt is early but functional:
 - protected/risky path checks: done
 - secret scanning: done
 - CODEOWNERS reviewer hints: done
+- required check reminders: done
 - text/Markdown/JSON/SARIF reports: done
 - GitHub Action template: done
 - CI workflow: done

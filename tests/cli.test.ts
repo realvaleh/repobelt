@@ -335,6 +335,36 @@ describe('RepoBelt CLI foundation', () => {
     }
   });
 
+  it('prints required checks in default text output', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-required-checks-'));
+    const writes: string[] = [];
+
+    try {
+      await runCli(['init'], { stdout: () => undefined, stderr: () => undefined }, { cwd: dir });
+      await execFileAsync('git', ['init'], { cwd: dir });
+      await execFileAsync('git', ['config', 'user.email', 'test@example.com'], { cwd: dir });
+      await execFileAsync('git', ['config', 'user.name', 'RepoBelt Test'], { cwd: dir });
+      await writeFile(join(dir, 'README.md'), '# demo\n');
+      await execFileAsync('git', ['add', '.'], { cwd: dir });
+      await execFileAsync('git', ['commit', '-m', 'initial'], { cwd: dir });
+      await writeFile(join(dir, 'src.ts'), 'export const ok = true;\n');
+
+      const result = await runCli(
+        ['check', '--base', 'HEAD', '--head', 'worktree'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(0);
+      expect(writes.join('\n')).toContain('Required checks: test, lint, typecheck');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it('rejects unsupported check formats before running git', async () => {
     const errors: string[] = [];
 

@@ -13,6 +13,7 @@ const result: CheckResult = {
   },
   secretFindings: [{ path: 'src/config.ts', line: 3, kind: 'github_token', matchedPattern: 'GitHub token' }],
   reviewerHints: [{ path: 'auth/login.ts', matchedPattern: 'auth/**', owners: ['@security-team'] }],
+  requiredChecks: [],
 };
 
 describe('SARIF report rendering', () => {

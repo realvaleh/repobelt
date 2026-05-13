@@ -14,6 +14,7 @@ function baseResult(overrides: Partial<CheckResult> = {}): CheckResult {
     },
     secretFindings: [],
     reviewerHints: [],
+    requiredChecks: [],
     ...overrides,
   };
 }
@@ -84,5 +85,13 @@ describe('markdown report rendering', () => {
 
     expect(markdown).toContain('## Reviewer hints');
     expect(markdown).toContain('- `auth/login.ts` matched `/auth/`: @security-team, @backend-lead');
+  });
+
+  it('renders required checks from policy when present', () => {
+    const markdown = renderMarkdownReport(baseResult({ requiredChecks: ['test', 'typecheck'] }));
+
+    expect(markdown).toContain('## Required checks');
+    expect(markdown).toContain('- `test`');
+    expect(markdown).toContain('- `typecheck`');
   });
 });
