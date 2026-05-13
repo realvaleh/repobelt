@@ -58,6 +58,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(writes.join('\n')).toContain('--max-risky <n>');
     expect(writes.join('\n')).toContain('--max-secrets <n>');
     expect(writes.join('\n')).toContain('--fail-on-warn');
+    expect(writes.join('\n')).toContain('--codeowners-diagnostics-fail');
   });
 
   it('prints planned init files for init --dry-run', async () => {
@@ -1005,6 +1006,73 @@ allowlist:
       expect(summary).toContain('# RepoBelt Report');
       expect(summary).toContain('- `auth/login.ts` matched `auth/**` and requires review');
       expect(summary).toContain('- `summary-check`');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('keeps CODEOWNERS diagnostics non-failing by default', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-codeowners-diagnostics-default-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths: []
+risky_paths: {}
+required_checks: []
+allowlist:
+  paths: []
+`);
+      await mkdir(join(dir, '.github'), { recursive: true });
+      await writeFile(join(dir, '.github', 'CODEOWNERS'), 'src/**\nsrc/** @app-team\nsrc/** @platform-team\n');
+      await writeFile(join(dir, 'changed-files.txt'), 'src/app.ts\n');
+
+      const result = await runCli(
+        ['check', '--changed-files', 'changed-files.txt', '--format', 'markdown'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(0);
+      expect(writes.join('\n')).toContain('## CODEOWNERS diagnostics');
+      expect(writes.join('\n')).toContain('ownerless_rule');
+      expect(writes.join('\n')).toContain('duplicate_pattern');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('exits 1 for CODEOWNERS diagnostics when --codeowners-diagnostics-fail is set', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-codeowners-diagnostics-fail-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths: []
+risky_paths: {}
+required_checks: []
+allowlist:
+  paths: []
+`);
+      await mkdir(join(dir, '.github'), { recursive: true });
+      await writeFile(join(dir, '.github', 'CODEOWNERS'), 'src/**\nsrc/** @app-team\n');
+      await writeFile(join(dir, 'changed-files.txt'), 'src/app.ts\n');
+
+      const result = await runCli(
+        ['check', '--changed-files', 'changed-files.txt', '--codeowners-diagnostics-fail'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(1);
+      expect(writes.join('\n')).toContain('RepoBelt check failed');
+      expect(writes.join('\n')).toContain('CODEOWNERS diagnostics: 1');
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

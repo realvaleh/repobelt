@@ -81,6 +81,7 @@ Options:
   --max-risky <n>                  Fail when risky file count exceeds n
   --max-secrets <n>                Fail when secret finding count exceeds n
   --fail-on-warn                  Exit 1 when risky paths produce warnings
+  --codeowners-diagnostics-fail   Exit 1 when CODEOWNERS diagnostics are present
   -h, --help                      Show this help message
 `;
 }
@@ -156,6 +157,7 @@ export async function runCli(
     const maxRiskyValue = getFlagValue(args, '--max-risky');
     const maxSecretsValue = getFlagValue(args, '--max-secrets');
     const failOnWarn = args.includes('--fail-on-warn');
+    const failOnCodeownersDiagnostics = args.includes('--codeowners-diagnostics-fail');
     if (isMissingFlagValue(args, '--config')) {
       io.stderr('Missing value for --config');
       return { exitCode: 1 };
@@ -252,6 +254,7 @@ export async function runCli(
           maxRisky,
           maxSecrets,
           failOnWarn,
+          failOnCodeownersDiagnostics,
         }));
         return { exitCode: 0 };
       }
@@ -314,27 +317,27 @@ export async function runCli(
     if (output !== undefined) {
       await writeOutputFile(resolveOutputPath(runtime.cwd, output), renderCheckOutput(result, format));
       io.stdout(`Wrote RepoBelt report to ${output}`);
-      return { exitCode: getCheckExitCode(result, failOnWarn, effectiveMaxFiles, effectiveMaxRisky, effectiveMaxSecrets) };
+      return { exitCode: getCheckExitCode(result, failOnWarn, failOnCodeownersDiagnostics, effectiveMaxFiles, effectiveMaxRisky, effectiveMaxSecrets) };
     }
 
     if (format === 'markdown') {
       io.stdout(renderMarkdownReport(result));
-      return { exitCode: getCheckExitCode(result, failOnWarn, effectiveMaxFiles, effectiveMaxRisky, effectiveMaxSecrets) };
+      return { exitCode: getCheckExitCode(result, failOnWarn, failOnCodeownersDiagnostics, effectiveMaxFiles, effectiveMaxRisky, effectiveMaxSecrets) };
     }
 
     if (format === 'json') {
       io.stdout(renderJsonReport(result));
-      return { exitCode: getCheckExitCode(result, failOnWarn, effectiveMaxFiles, effectiveMaxRisky, effectiveMaxSecrets) };
+      return { exitCode: getCheckExitCode(result, failOnWarn, failOnCodeownersDiagnostics, effectiveMaxFiles, effectiveMaxRisky, effectiveMaxSecrets) };
     }
 
     if (format === 'sarif') {
       io.stdout(renderSarifReport(result));
-      return { exitCode: getCheckExitCode(result, failOnWarn, effectiveMaxFiles, effectiveMaxRisky, effectiveMaxSecrets) };
+      return { exitCode: getCheckExitCode(result, failOnWarn, failOnCodeownersDiagnostics, effectiveMaxFiles, effectiveMaxRisky, effectiveMaxSecrets) };
     }
 
     if (format === 'github') {
       io.stdout(renderGitHubActionsReport(result));
-      return { exitCode: getCheckExitCode(result, failOnWarn, effectiveMaxFiles, effectiveMaxRisky, effectiveMaxSecrets) };
+      return { exitCode: getCheckExitCode(result, failOnWarn, failOnCodeownersDiagnostics, effectiveMaxFiles, effectiveMaxRisky, effectiveMaxSecrets) };
     }
 
     if (isMaxFilesExceeded(result, effectiveMaxFiles)) {
@@ -361,6 +364,14 @@ export async function runCli(
       return { exitCode: 1 };
     }
 
+    if (isCodeownersDiagnosticsFailure(result, failOnCodeownersDiagnostics)) {
+      io.stdout('RepoBelt check failed');
+      io.stdout(`CODEOWNERS diagnostics: ${result.codeownerDiagnostics.length}`);
+      writeReviewerHints(result, io);
+      writeRequiredChecks(result, io);
+      return { exitCode: 1 };
+    }
+
     if (result.status === 'fail') {
       io.stdout('RepoBelt check failed');
       for (const finding of result.pathPolicy.blocked) {
@@ -381,7 +392,7 @@ export async function runCli(
       }
       writeReviewerHints(result, io);
       writeRequiredChecks(result, io);
-      return { exitCode: getCheckExitCode(result, failOnWarn, effectiveMaxFiles, effectiveMaxRisky, effectiveMaxSecrets) };
+      return { exitCode: getCheckExitCode(result, failOnWarn, failOnCodeownersDiagnostics, effectiveMaxFiles, effectiveMaxRisky, effectiveMaxSecrets) };
     }
 
     io.stdout('RepoBelt check passed');
@@ -403,6 +414,7 @@ const defaultIo: CliIo = {
 function getCheckExitCode(
   result: Awaited<ReturnType<typeof runCheck>>,
   failOnWarn: boolean,
+  failOnCodeownersDiagnostics: boolean,
   maxFiles?: number,
   maxRisky?: number,
   maxSecrets?: number,
@@ -410,6 +422,7 @@ function getCheckExitCode(
   if (
     result.status === 'fail' ||
     (failOnWarn && result.status === 'warn') ||
+    isCodeownersDiagnosticsFailure(result, failOnCodeownersDiagnostics) ||
     isMaxFilesExceeded(result, maxFiles) ||
     isMaxRiskyExceeded(result, maxRisky) ||
     isMaxSecretsExceeded(result, maxSecrets)
@@ -429,6 +442,10 @@ function isMaxRiskyExceeded(result: Awaited<ReturnType<typeof runCheck>>, maxRis
 
 function isMaxSecretsExceeded(result: Awaited<ReturnType<typeof runCheck>>, maxSecrets: number | undefined): boolean {
   return maxSecrets !== undefined && result.secretFindings.length > maxSecrets;
+}
+
+function isCodeownersDiagnosticsFailure(result: Awaited<ReturnType<typeof runCheck>>, failOnCodeownersDiagnostics: boolean): boolean {
+  return failOnCodeownersDiagnostics && result.codeownerDiagnostics.length > 0;
 }
 
 function renderCheckOutput(result: CheckResult, format: string): string {
@@ -640,6 +657,7 @@ async function renderResolvedConfig(options: {
   maxRisky: number | undefined;
   maxSecrets: number | undefined;
   failOnWarn: boolean;
+  failOnCodeownersDiagnostics: boolean;
 }): Promise<string> {
   const codeownersPath = await findCodeownersPath(options.cwd);
   const cliOverrides = withoutUndefined({
@@ -647,6 +665,7 @@ async function renderResolvedConfig(options: {
     maxRisky: options.maxRisky,
     maxSecrets: options.maxSecrets,
     failOnWarn: options.failOnWarn ? true : undefined,
+    failOnCodeownersDiagnostics: options.failOnCodeownersDiagnostics ? true : undefined,
   });
 
   return `${JSON.stringify({

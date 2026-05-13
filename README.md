@@ -269,6 +269,12 @@ npx repobelt check --pr-comment 123
 npx repobelt check --pr-comment auto
 ```
 
+Make CODEOWNERS diagnostics fail CI when owner routing hygiene is mandatory:
+
+```bash
+npx repobelt check --codeowners-diagnostics-fail
+```
+
 ## Example policy
 
 ```yaml

@@ -81,6 +81,7 @@ try {
   expectIncludes('repobelt check --help', checkHelpOutput, '--max-files <n>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--max-risky <n>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--max-secrets <n>');
+  expectIncludes('repobelt check --help', checkHelpOutput, '--codeowners-diagnostics-fail');
   expectIncludes('repobelt check --help', checkHelpOutput, '--summary <path>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--pr-comment <number|auto>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--print-config');
