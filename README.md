@@ -161,6 +161,12 @@ Feed RepoBelt an explicit newline-delimited file list instead of asking it to di
 npx repobelt check --changed-files changed-files.txt
 ```
 
+Or pipe changed paths through stdin without creating a temporary file:
+
+```bash
+git diff --name-only origin/main...HEAD | npx repobelt check --stdin-changed-files
+```
+
 ## Example policy
 
 ```yaml

@@ -371,6 +371,8 @@ Use `repobelt check --config <path>` to load a policy file other than `.repobelt
 
 Use `repobelt check --changed-files <path>` to load a newline-delimited list of changed files instead of running git diff discovery. Blank lines are ignored, and relative list paths are resolved from the current working directory. This is useful for CI systems or bots that already computed an exact file list.
 
+Use `repobelt check --stdin-changed-files` to read that same newline-delimited changed-file list from stdin. This is useful when a CI step or bot can pipe paths directly, and it avoids creating a temporary file. Do not combine it with `--changed-files`.
+
 ### `fail`
 
 Returned when:

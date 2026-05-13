@@ -13,6 +13,7 @@ function run(command, args, options = {}) {
   return execFileSync(command, args, {
     cwd: options.cwd ?? projectRoot,
     encoding: 'utf8',
+    input: options.input,
     stdio: options.stdio ?? 'pipe',
     env: {
       ...process.env,
@@ -30,6 +31,7 @@ function runExpectFailure(command, args, options = {}) {
     execFileSync(command, args, {
       cwd: options.cwd ?? projectRoot,
       encoding: 'utf8',
+      input: options.input,
       stdio: 'pipe',
       env: {
         ...process.env,
@@ -73,6 +75,7 @@ try {
   const checkHelpOutput = run('npx', ['repobelt', 'check', '--help'], { cwd: appDir });
   expectIncludes('repobelt check --help', checkHelpOutput, '--config <path>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--changed-files <path>');
+  expectIncludes('repobelt check --help', checkHelpOutput, '--stdin-changed-files');
 
   const presetListOutput = run('npx', ['repobelt', 'init', '--list-presets'], { cwd: appDir });
   expectIncludes('repobelt init --list-presets', presetListOutput, 'Available RepoBelt init presets:');
@@ -132,6 +135,13 @@ allowlist:
     { cwd: appDir },
   );
   expectIncludes('repobelt check --changed-files', explicitFilesOutput, 'Blocked: custom-secret.txt matched custom-secret.txt');
+
+  const stdinFilesOutput = runExpectFailure(
+    'npx',
+    ['repobelt', 'check', '--config', 'strict.repobelt.yml', '--stdin-changed-files'],
+    { cwd: appDir, input: '\ncustom-secret.txt\n\n' },
+  );
+  expectIncludes('repobelt check --stdin-changed-files', stdinFilesOutput, 'Blocked: custom-secret.txt matched custom-secret.txt');
 
   console.log('\nRepoBelt packaged CLI smoke test passed.');
 } finally {

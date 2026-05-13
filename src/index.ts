@@ -17,6 +17,7 @@ export interface CliResult {
 
 export interface CliRuntime {
   cwd: string;
+  stdin?: () => Promise<string>;
 }
 
 export function getHelpText(): string {
@@ -47,6 +48,7 @@ Options:
   --output <path>                  Write report to a file instead of stdout
   --config <path>                  Policy file path. Default: .repobelt.yml
   --changed-files <path>           Newline-delimited changed-file list instead of git diff discovery
+  --stdin-changed-files            Read newline-delimited changed-file list from stdin
   --fail-on-warn                  Exit 1 when risky paths produce warnings
   -h, --help                      Show this help message
 `;
@@ -111,6 +113,7 @@ export async function runCli(
     const output = getFlagValue(args, '--output');
     const config = getFlagValue(args, '--config');
     const changedFilesPath = getFlagValue(args, '--changed-files');
+    const readChangedFilesFromStdin = args.includes('--stdin-changed-files');
     const failOnWarn = args.includes('--fail-on-warn');
     if (isMissingFlagValue(args, '--config')) {
       io.stderr('Missing value for --config');
@@ -118,6 +121,10 @@ export async function runCli(
     }
     if (isMissingFlagValue(args, '--changed-files')) {
       io.stderr('Missing value for --changed-files');
+      return { exitCode: 1 };
+    }
+    if (changedFilesPath !== undefined && readChangedFilesFromStdin) {
+      io.stderr('Use only one of --changed-files or --stdin-changed-files');
       return { exitCode: 1 };
     }
     if (!isSupportedFormat(format)) {
@@ -128,7 +135,7 @@ export async function runCli(
     let result;
     try {
       const policyText = await readPolicyText(runtime.cwd, config);
-      const changedFiles = changedFilesPath === undefined ? undefined : await readChangedFilesList(runtime.cwd, changedFilesPath);
+      const changedFiles = await readChangedFilesOverride(runtime, changedFilesPath, readChangedFilesFromStdin);
       result = await runCheck({
         cwd: runtime.cwd,
         base,
@@ -337,10 +344,41 @@ async function readPolicyText(cwd: string, config: string | undefined): Promise<
 
 async function readChangedFilesList(cwd: string, changedFilesPath: string): Promise<string[]> {
   const text = await readFile(resolveOutputPath(cwd, changedFilesPath), 'utf8');
+  return parseChangedFilesText(text);
+}
+
+async function readChangedFilesOverride(
+  runtime: CliRuntime,
+  changedFilesPath: string | undefined,
+  readChangedFilesFromStdin: boolean,
+): Promise<string[] | undefined> {
+  if (changedFilesPath !== undefined) {
+    return readChangedFilesList(runtime.cwd, changedFilesPath);
+  }
+  if (readChangedFilesFromStdin) {
+    return parseChangedFilesText(await readStdin(runtime));
+  }
+  return undefined;
+}
+
+function parseChangedFilesText(text: string): string[] {
   return text
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
+}
+
+async function readStdin(runtime: CliRuntime): Promise<string> {
+  if (runtime.stdin !== undefined) {
+    return runtime.stdin();
+  }
+
+  let text = '';
+  process.stdin.setEncoding('utf8');
+  for await (const chunk of process.stdin) {
+    text += chunk;
+  }
+  return text;
 }
 
 function formatError(error: unknown): string {
