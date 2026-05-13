@@ -44,6 +44,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(writes.join('\n')).toContain('--format <text|markdown|json|sarif>');
     expect(writes.join('\n')).toContain('--output <path>');
     expect(writes.join('\n')).toContain('--config <path>');
+    expect(writes.join('\n')).toContain('--changed-files <path>');
     expect(writes.join('\n')).toContain('--fail-on-warn');
   });
 
@@ -414,6 +415,54 @@ describe('RepoBelt CLI foundation', () => {
       await rm(dir, { recursive: true, force: true });
       await rm(outputDir, { recursive: true, force: true });
     }
+  });
+
+  it('uses an explicit changed file list when --changed-files is provided', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-changed-files-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths:
+  - custom-secret.txt
+risky_paths:
+  docs/**: require_review
+required_checks:
+  - explicit-list-check
+allowlist:
+  paths: []
+`);
+      await writeFile(join(dir, 'custom-secret.txt'), 'safe fixture\n');
+      await writeFile(join(dir, 'changed-files.txt'), '\ncustom-secret.txt\n\n');
+
+      const result = await runCli(
+        ['check', '--changed-files', 'changed-files.txt'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(1);
+      const output = writes.join('\n');
+      expect(output).toContain('Blocked: custom-secret.txt matched custom-secret.txt');
+      expect(output).toContain('Required checks: explicit-list-check');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects check --changed-files when no file list path is provided', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['check', '--changed-files'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Missing value for --changed-files');
   });
 
   it('uses a custom policy file when --config is provided', async () => {

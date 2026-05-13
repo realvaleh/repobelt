@@ -72,6 +72,7 @@ try {
 
   const checkHelpOutput = run('npx', ['repobelt', 'check', '--help'], { cwd: appDir });
   expectIncludes('repobelt check --help', checkHelpOutput, '--config <path>');
+  expectIncludes('repobelt check --help', checkHelpOutput, '--changed-files <path>');
 
   const presetListOutput = run('npx', ['repobelt', 'init', '--list-presets'], { cwd: appDir });
   expectIncludes('repobelt init --list-presets', presetListOutput, 'Available RepoBelt init presets:');
@@ -123,6 +124,14 @@ allowlist:
   );
   expectIncludes('repobelt check --config', customConfigOutput, 'Blocked: custom-secret.txt matched custom-secret.txt');
   expectIncludes('repobelt check --config', customConfigOutput, 'Required checks: custom-check');
+
+  writeFileSync(join(appDir, 'changed-files.txt'), '\ncustom-secret.txt\n\n');
+  const explicitFilesOutput = runExpectFailure(
+    'npx',
+    ['repobelt', 'check', '--config', 'strict.repobelt.yml', '--changed-files', 'changed-files.txt'],
+    { cwd: appDir },
+  );
+  expectIncludes('repobelt check --changed-files', explicitFilesOutput, 'Blocked: custom-secret.txt matched custom-secret.txt');
 
   console.log('\nRepoBelt packaged CLI smoke test passed.');
 } finally {

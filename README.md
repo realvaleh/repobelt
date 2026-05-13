@@ -155,6 +155,12 @@ Run with a non-default policy file for monorepos, experiments, or generated poli
 npx repobelt check --base HEAD --head worktree --config policies/strict.repobelt.yml
 ```
 
+Feed RepoBelt an explicit newline-delimited file list instead of asking it to discover changed files from git:
+
+```bash
+npx repobelt check --changed-files changed-files.txt
+```
+
 ## Example policy
 
 ```yaml

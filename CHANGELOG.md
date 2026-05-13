@@ -8,6 +8,7 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 
 ### Added since release
 
+- `check --changed-files <path>` for checking an explicit newline-delimited file list instead of discovering changes with git.
 - `check --config <path>` for running checks with a non-default policy file.
 - `check --fail-on-warn` for stricter CI that exits 1 when risky paths produce warnings.
 - `init --list-presets` for discovering built-in policy presets and descriptions from the CLI.

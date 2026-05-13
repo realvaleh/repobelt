@@ -46,6 +46,7 @@ Options:
   --format <text|markdown|json|sarif>   Output format. Default: text
   --output <path>                  Write report to a file instead of stdout
   --config <path>                  Policy file path. Default: .repobelt.yml
+  --changed-files <path>           Newline-delimited changed-file list instead of git diff discovery
   --fail-on-warn                  Exit 1 when risky paths produce warnings
   -h, --help                      Show this help message
 `;
@@ -109,9 +110,14 @@ export async function runCli(
     const format = getFlagValue(args, '--format') ?? 'text';
     const output = getFlagValue(args, '--output');
     const config = getFlagValue(args, '--config');
+    const changedFilesPath = getFlagValue(args, '--changed-files');
     const failOnWarn = args.includes('--fail-on-warn');
     if (isMissingFlagValue(args, '--config')) {
       io.stderr('Missing value for --config');
+      return { exitCode: 1 };
+    }
+    if (isMissingFlagValue(args, '--changed-files')) {
+      io.stderr('Missing value for --changed-files');
       return { exitCode: 1 };
     }
     if (!isSupportedFormat(format)) {
@@ -122,7 +128,14 @@ export async function runCli(
     let result;
     try {
       const policyText = await readPolicyText(runtime.cwd, config);
-      result = await runCheck({ cwd: runtime.cwd, base, head, policyText });
+      const changedFiles = changedFilesPath === undefined ? undefined : await readChangedFilesList(runtime.cwd, changedFilesPath);
+      result = await runCheck({
+        cwd: runtime.cwd,
+        base,
+        head,
+        policyText,
+        changedFilesProvider: changedFiles === undefined ? undefined : async () => changedFiles,
+      });
     } catch (error) {
       io.stderr(`RepoBelt check failed: ${formatError(error)}`);
       return { exitCode: 1 };
@@ -320,6 +333,14 @@ async function readOptionalText(path: string): Promise<string | undefined> {
 async function readPolicyText(cwd: string, config: string | undefined): Promise<string | undefined> {
   const configPath = config === undefined ? join(cwd, '.repobelt.yml') : resolveOutputPath(cwd, config);
   return config === undefined ? readOptionalText(configPath) : readFile(configPath, 'utf8');
+}
+
+async function readChangedFilesList(cwd: string, changedFilesPath: string): Promise<string[]> {
+  const text = await readFile(resolveOutputPath(cwd, changedFilesPath), 'utf8');
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
 }
 
 function formatError(error: unknown): string {
