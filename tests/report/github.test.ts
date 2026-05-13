@@ -53,7 +53,9 @@ describe('GitHub Actions report rendering', () => {
           risky: [{ path: 'auth/login.ts', matchedPattern: 'auth/**', action: 'require_review' }],
           allowed: [],
         },
-        reviewerHints: [{ path: 'auth/login.ts', matchedPattern: '/auth/', owners: ['@security-team'] }],
+        reviewerHints: [
+          { path: 'auth/login.ts', matchedPattern: '/auth/', owners: ['@security-team'], matchedRules: [{ pattern: '/auth/', owners: ['@security-team'] }] },
+        ],
         requiredChecks: ['test'],
       }),
     );

@@ -41,7 +41,12 @@ export function renderMarkdownReport(result: CheckResult): string {
     lines.push('## Reviewer hints');
     lines.push('');
     for (const hint of result.reviewerHints) {
-      lines.push(`- \`${hint.path}\` matched \`${hint.matchedPattern}\`: ${hint.owners.join(', ')}`);
+      lines.push(`- \`${hint.path}\` effective owners from \`${hint.matchedPattern}\`: ${hint.owners.join(', ')}`);
+      if (hint.matchedRules.length > 1) {
+        for (const rule of hint.matchedRules) {
+          lines.push(`  - matched \`${rule.pattern}\`: ${rule.owners.join(', ')}`);
+        }
+      }
     }
     lines.push('');
   }

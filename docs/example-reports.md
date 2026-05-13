@@ -46,7 +46,9 @@ Changed files: 1
 
 ## Reviewer hints
 
-- `auth/login.ts` matched `auth/**`: @security-team
+- `auth/login.ts` effective owners from `auth/**`: @security-team
+  - matched `*`: @core-team
+  - matched `auth/**`: @security-team
 
 ## Required checks
 

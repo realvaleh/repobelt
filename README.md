@@ -46,7 +46,7 @@ It is a **seatbelt**, not an autopilot.
   - Anthropic-style tokens
   - AWS access key IDs
   - high-entropy `.env` assignments
-- CODEOWNERS reviewer hints from `.github/CODEOWNERS`, `CODEOWNERS`, or `docs/CODEOWNERS`
+- CODEOWNERS reviewer hints from `.github/CODEOWNERS`, `CODEOWNERS`, or `docs/CODEOWNERS`, including all matched rules in JSON and Markdown reports
 - `.repobeltignore` filtering for generated files, vendored folders, build outputs, snapshots, and fixtures
 - Required check reminders from policy, such as `test`, `lint`, and `typecheck`
 - Text, Markdown, JSON, SARIF, and GitHub Actions annotation reports for CI and bots

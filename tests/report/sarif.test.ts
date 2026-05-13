@@ -12,7 +12,9 @@ const result: CheckResult = {
     allowed: ['src/config.ts'],
   },
   secretFindings: [{ path: 'src/config.ts', line: 3, kind: 'github_token', matchedPattern: 'GitHub token' }],
-  reviewerHints: [{ path: 'auth/login.ts', matchedPattern: 'auth/**', owners: ['@security-team'] }],
+  reviewerHints: [
+    { path: 'auth/login.ts', matchedPattern: 'auth/**', owners: ['@security-team'], matchedRules: [{ pattern: 'auth/**', owners: ['@security-team'] }] },
+  ],
   requiredChecks: [],
   limits: {},
 };

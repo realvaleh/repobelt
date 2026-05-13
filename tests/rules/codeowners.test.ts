@@ -14,9 +14,25 @@ describe('CODEOWNERS reviewer hints', () => {
     });
 
     expect(hints).toEqual([
-      { path: 'auth/login.ts', matchedPattern: '/auth/', owners: ['@security-team', '@backend-lead'] },
-      { path: 'docs/readme.md', matchedPattern: '*.md', owners: ['@docs-team'] },
-      { path: 'src/app.ts', matchedPattern: '*', owners: ['@core-team'] },
+      {
+        path: 'auth/login.ts',
+        matchedPattern: '/auth/',
+        owners: ['@security-team', '@backend-lead'],
+        matchedRules: [
+          { pattern: '*', owners: ['@core-team'] },
+          { pattern: '/auth/', owners: ['@security-team', '@backend-lead'] },
+        ],
+      },
+      {
+        path: 'docs/readme.md',
+        matchedPattern: '*.md',
+        owners: ['@docs-team'],
+        matchedRules: [
+          { pattern: '*', owners: ['@core-team'] },
+          { pattern: '*.md', owners: ['@docs-team'] },
+        ],
+      },
+      { path: 'src/app.ts', matchedPattern: '*', owners: ['@core-team'], matchedRules: [{ pattern: '*', owners: ['@core-team'] }] },
     ]);
   });
 
@@ -31,7 +47,12 @@ payments/** @payments-team
     });
 
     expect(hints).toEqual([
-      { path: 'payments/checkout.ts', matchedPattern: 'payments/**', owners: ['@payments-team'] },
+      {
+        path: 'payments/checkout.ts',
+        matchedPattern: 'payments/**',
+        owners: ['@payments-team'],
+        matchedRules: [{ pattern: 'payments/**', owners: ['@payments-team'] }],
+      },
     ]);
   });
 });

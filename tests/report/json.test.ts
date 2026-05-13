@@ -12,7 +12,17 @@ const result: CheckResult = {
     allowed: ['src/config.ts'],
   },
   secretFindings: [{ path: 'src/config.ts', line: 1, kind: 'github_token', matchedPattern: 'GitHub token' }],
-  reviewerHints: [{ path: 'src/config.ts', matchedPattern: '*', owners: ['@core-team'] }],
+  reviewerHints: [
+    {
+      path: 'src/config.ts',
+      matchedPattern: 'src/**',
+      owners: ['@app-team'],
+      matchedRules: [
+        { pattern: '*', owners: ['@core-team'] },
+        { pattern: 'src/**', owners: ['@app-team'] },
+      ],
+    },
+  ],
   requiredChecks: ['test', 'typecheck'],
   limits: {},
 };

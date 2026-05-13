@@ -80,12 +80,24 @@ describe('markdown report rendering', () => {
     const markdown = renderMarkdownReport(
       baseResult({
         changedFiles: ['auth/login.ts'],
-        reviewerHints: [{ path: 'auth/login.ts', matchedPattern: '/auth/', owners: ['@security-team', '@backend-lead'] }],
+        reviewerHints: [
+          {
+            path: 'auth/login.ts',
+            matchedPattern: '/auth/',
+            owners: ['@security-team', '@backend-lead'],
+            matchedRules: [
+              { pattern: '*', owners: ['@core-team'] },
+              { pattern: '/auth/', owners: ['@security-team', '@backend-lead'] },
+            ],
+          },
+        ],
       }),
     );
 
     expect(markdown).toContain('## Reviewer hints');
-    expect(markdown).toContain('- `auth/login.ts` matched `/auth/`: @security-team, @backend-lead');
+    expect(markdown).toContain('- `auth/login.ts` effective owners from `/auth/`: @security-team, @backend-lead');
+    expect(markdown).toContain('  - matched `*`: @core-team');
+    expect(markdown).toContain('  - matched `/auth/`: @security-team, @backend-lead');
   });
 
   it('renders required checks from policy when present', () => {

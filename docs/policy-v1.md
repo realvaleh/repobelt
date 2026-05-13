@@ -337,16 +337,17 @@ RepoBelt also looks for CODEOWNERS files in this order:
 2. `CODEOWNERS`
 3. `docs/CODEOWNERS`
 
-When a changed file matches a CODEOWNERS rule, reports include a `reviewerHints` entry with the file, matched CODEOWNERS pattern, and owners. These hints do not change `PASS`, `WARN`, or `FAIL` status; they are routing context for the human reviewer.
+When a changed file matches a CODEOWNERS rule, reports include a `reviewerHints` entry with the file, final effective CODEOWNERS pattern, and owners. Markdown summaries and JSON reports also include `matchedRules`, the ordered list of every matching CODEOWNERS rule for that path. These hints do not change `PASS`, `WARN`, or `FAIL` status; they are routing context for the human reviewer.
 
 Example:
 
 ```text
+* @core-team
 auth/** @security-team @backend-lead
 *.md @docs-team
 ```
 
-Rules are evaluated with last-match-wins behavior, matching GitHub's CODEOWNERS precedence model. Blank lines, comments, and entries without owners are ignored.
+Rules are evaluated with last-match-wins behavior, matching GitHub's CODEOWNERS precedence model. In the example above, `auth/login.ts` reports `@security-team @backend-lead` as the effective owners while still showing that `* @core-team` also matched earlier. Blank lines, comments, and entries without owners are ignored.
 
 ## Status rules
 

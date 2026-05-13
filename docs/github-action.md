@@ -14,7 +14,7 @@ npx repobelt init --pr-comment
 
 The workflow runs on pull requests, emits inline GitHub annotations, and writes a Markdown report to GitHub's step summary. To also maintain one persistent report comment on each PR, add `--pr-comment auto` and give the workflow `issues: write` permission.
 
-If the repository has `.github/CODEOWNERS`, `CODEOWNERS`, or `docs/CODEOWNERS`, the report also includes reviewer hints for changed files that match CODEOWNERS rules.
+If the repository has `.github/CODEOWNERS`, `CODEOWNERS`, or `docs/CODEOWNERS`, the report also includes reviewer hints for changed files that match CODEOWNERS rules. Markdown summaries and JSON reports include the final effective owners plus every CODEOWNERS rule that matched the path, so reviewers can see why ownership was overridden.
 
 If the repository has `.repobeltignore`, ignored paths are removed before annotations, summaries, secret scanning, CODEOWNERS hints, and count guardrails run. Use ordered `!` negation patterns to re-include important files inside broad ignored folders, such as `!dist/manifest.json`.
 

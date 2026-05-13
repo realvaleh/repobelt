@@ -1,7 +1,13 @@
+export interface CodeOwnerMatchedRule {
+  pattern: string;
+  owners: string[];
+}
+
 export interface CodeOwnerHint {
   path: string;
   matchedPattern: string;
   owners: string[];
+  matchedRules: CodeOwnerMatchedRule[];
 }
 
 interface CodeOwnerRule {
@@ -17,9 +23,15 @@ export function findCodeOwnerHints(options: { changedFiles: string[]; codeowners
 
   const hints: CodeOwnerHint[] = [];
   for (const path of options.changedFiles.slice().sort()) {
-    const rule = lastMatchingRule(path, rules);
-    if (rule !== undefined) {
-      hints.push({ path, matchedPattern: rule.pattern, owners: rule.owners });
+    const matchedRules = matchingRules(path, rules);
+    const effectiveRule = matchedRules.at(-1);
+    if (effectiveRule !== undefined) {
+      hints.push({
+        path,
+        matchedPattern: effectiveRule.pattern,
+        owners: effectiveRule.owners,
+        matchedRules: matchedRules.map((rule) => ({ pattern: rule.pattern, owners: rule.owners })),
+      });
     }
   }
 
@@ -57,14 +69,8 @@ function stripInlineComment(line: string): string {
   return line.slice(0, commentIndex).trimEnd();
 }
 
-function lastMatchingRule(path: string, rules: CodeOwnerRule[]): CodeOwnerRule | undefined {
-  let match: CodeOwnerRule | undefined;
-  for (const rule of rules) {
-    if (matchesCodeOwnerPattern(path, rule.pattern)) {
-      match = rule;
-    }
-  }
-  return match;
+function matchingRules(path: string, rules: CodeOwnerRule[]): CodeOwnerRule[] {
+  return rules.filter((rule) => matchesCodeOwnerPattern(path, rule.pattern));
 }
 
 function matchesCodeOwnerPattern(path: string, pattern: string): boolean {

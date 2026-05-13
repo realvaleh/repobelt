@@ -149,8 +149,16 @@ allowlist:
     });
 
     expect(result.reviewerHints).toEqual([
-      { path: 'auth/login.ts', matchedPattern: '/auth/', owners: ['@security-team'] },
-      { path: 'src/app.ts', matchedPattern: '*', owners: ['@core-team'] },
+      {
+        path: 'auth/login.ts',
+        matchedPattern: '/auth/',
+        owners: ['@security-team'],
+        matchedRules: [
+          { pattern: '*', owners: ['@core-team'] },
+          { pattern: '/auth/', owners: ['@security-team'] },
+        ],
+      },
+      { path: 'src/app.ts', matchedPattern: '*', owners: ['@core-team'], matchedRules: [{ pattern: '*', owners: ['@core-team'] }] },
     ]);
   });
 });
