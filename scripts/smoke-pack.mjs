@@ -73,6 +73,11 @@ try {
   expectIncludes('repobelt --help', helpOutput, '--list-presets');
   expectIncludes('repobelt --help', helpOutput, '--pr-comment');
   expectIncludes('repobelt --help', helpOutput, '--strict');
+  expectIncludes('repobelt --help', helpOutput, 'doctor');
+
+  const doctorHelpOutput = run('npx', ['repobelt', 'doctor', '--help'], { cwd: appDir });
+  expectIncludes('repobelt doctor --help', doctorHelpOutput, 'Usage: repobelt doctor');
+  expectIncludes('repobelt doctor --help', doctorHelpOutput, '--config <path>');
 
   const checkHelpOutput = run('npx', ['repobelt', 'check', '--help'], { cwd: appDir });
   expectIncludes('repobelt check --help', checkHelpOutput, '--config <path>');
@@ -152,6 +157,11 @@ try {
   run('git', ['config', 'user.name', 'RepoBelt Smoke Test'], { cwd: appDir });
   run('git', ['config', 'user.email', 'smoke@example.com'], { cwd: appDir });
   run('npx', ['repobelt', 'init'], { cwd: appDir });
+  const doctorOutput = run('npx', ['repobelt', 'doctor'], { cwd: appDir });
+  expectIncludes('repobelt doctor', doctorOutput, 'RepoBelt doctor passed');
+  expectIncludes('repobelt doctor', doctorOutput, 'OK git repository');
+  expectIncludes('repobelt doctor', doctorOutput, 'OK policy .repobelt.yml');
+  expectIncludes('repobelt doctor', doctorOutput, 'Next commands:');
   writeFileSync(join(appDir, '.gitignore'), 'node_modules/\n');
   writeFileSync(join(appDir, 'README.md'), '# Smoke test app\n');
   run('git', ['add', '.'], { cwd: appDir });

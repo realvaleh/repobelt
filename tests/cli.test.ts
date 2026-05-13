@@ -19,6 +19,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(help).toContain('--pr-comment');
     expect(help).toContain('--strict');
     expect(help).toContain('check');
+    expect(help).toContain('doctor');
   });
 
   it('prints help and exits successfully for --help', async () => {
@@ -63,6 +64,101 @@ describe('RepoBelt CLI foundation', () => {
     expect(writes.join('\n')).toContain('--max-secrets <n>');
     expect(writes.join('\n')).toContain('--fail-on-warn');
     expect(writes.join('\n')).toContain('--codeowners-diagnostics-fail');
+  });
+
+  it('prints doctor-specific help for doctor --help', async () => {
+    const writes: string[] = [];
+
+    const result = await runCli(['doctor', '--help'], {
+      stdout: (message) => writes.push(message),
+      stderr: (message) => writes.push(`ERR:${message}`),
+    });
+
+    expect(result.exitCode).toBe(0);
+    const output = writes.join('\n');
+    expect(output).toContain('Usage: repobelt doctor');
+    expect(output).toContain('--config <path>');
+  });
+
+  it('reports healthy local setup for doctor', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-doctor-healthy-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths:
+  - .env
+risky_paths:
+  auth/**: require_review
+required_checks:
+  - test
+allowlist:
+  paths: []
+`);
+      await writeFile(join(dir, '.repobeltignore'), 'generated/**\n!generated/keep.txt\n');
+      await mkdir(join(dir, '.github'), { recursive: true });
+      await writeFile(join(dir, '.github', 'CODEOWNERS'), 'auth/** @security-team\n');
+
+      const result = await runCli(
+        ['doctor'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        {
+          cwd: dir,
+          execFile: async (command, args) => {
+            expect(command).toBe('git');
+            expect(args).toEqual(['rev-parse', '--is-inside-work-tree']);
+            return { stdout: 'true\n', stderr: '' };
+          },
+        },
+      );
+
+      expect(result.exitCode).toBe(0);
+      const output = writes.join('\n');
+      expect(output).toContain('RepoBelt doctor passed');
+      expect(output).toContain('OK git repository');
+      expect(output).toContain('OK policy .repobelt.yml');
+      expect(output).toContain('OK .repobeltignore 2 patterns');
+      expect(output).toContain('OK CODEOWNERS .github/CODEOWNERS');
+      expect(output).toContain('Next commands:');
+      expect(output).toContain('repobelt check --since-main');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('fails doctor for invalid policy and CODEOWNERS diagnostics', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-doctor-unhealthy-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), 'version: 2\n');
+      await mkdir(join(dir, '.github'), { recursive: true });
+      await writeFile(join(dir, '.github', 'CODEOWNERS'), 'auth/**\n');
+
+      const result = await runCli(
+        ['doctor'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        {
+          cwd: dir,
+          execFile: async () => ({ stdout: 'true\n', stderr: '' }),
+        },
+      );
+
+      expect(result.exitCode).toBe(1);
+      const output = writes.join('\n');
+      expect(output).toContain('RepoBelt doctor found issues');
+      expect(output).toContain('FAIL policy .repobelt.yml: Unsupported RepoBelt policy version: 2');
+      expect(output).toContain('WARN CODEOWNERS .github/CODEOWNERS: 1 diagnostic');
+      expect(output).toContain('line 1 ownerless_rule auth/**');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 
   it('prints planned init files for init --dry-run', async () => {

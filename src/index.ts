@@ -10,8 +10,8 @@ import { renderGitHubActionsReport } from './report/github-actions.js';
 import { renderJsonReport } from './report/json.js';
 import { renderMarkdownReport } from './report/markdown.js';
 import { renderSarifReport } from './report/sarif.js';
-import { findCodeOwnerHints } from './rules/codeowners.js';
-import { firstMatchingIgnorePattern } from './rules/ignore.js';
+import { findCodeOwnerDiagnostics, findCodeOwnerHints } from './rules/codeowners.js';
+import { firstMatchingIgnorePattern, parseIgnorePatterns } from './rules/ignore.js';
 import { matchesGlob } from './rules/path-policy.js';
 
 export interface CliIo {
@@ -48,6 +48,7 @@ Usage: repobelt <command>
 Commands:
   init     Create a starter .repobelt.yml and GitHub Action workflow
   check    Check a git diff against the RepoBelt policy
+  doctor   Validate local RepoBelt setup and policy health
 
 Options:
   --preset <${formatInitPresetChoices()}>  Policy preset for init. Default: default
@@ -87,6 +88,17 @@ Options:
   --fail-on-warn                  Exit 1 when risky paths produce warnings
   --codeowners-diagnostics-fail   Exit 1 when CODEOWNERS diagnostics are present
   -h, --help                      Show this help message
+`;
+}
+
+export function getDoctorHelpText(): string {
+  return `RepoBelt doctor — validate local setup and policy health.
+
+Usage: repobelt doctor [options]
+
+Options:
+  --config <path>  Policy file path. Default: .repobelt.yml
+  -h, --help       Show this help message
 `;
 }
 
@@ -135,6 +147,21 @@ export async function runCli(
       io.stderr(`RepoBelt init failed: ${error instanceof Error ? error.message : String(error)}`);
       return { exitCode: 1 };
     }
+  }
+
+  if (command === 'doctor') {
+    if (args.includes('--help') || args.includes('-h')) {
+      io.stdout(getDoctorHelpText());
+      return { exitCode: 0 };
+    }
+    if (isMissingFlagValue(args, '--config')) {
+      io.stderr('Missing value for --config');
+      return { exitCode: 1 };
+    }
+    const config = getFlagValue(args, '--config');
+    const output = await renderDoctorReport({ cwd: runtime.cwd, config, execFile: runtime.execFile ?? defaultExecFile });
+    io.stdout(output.text);
+    return { exitCode: output.hasFailures ? 1 : 0 };
   }
 
   if (command === 'check') {
@@ -436,6 +463,102 @@ const defaultIo: CliIo = {
   stdout: (message) => process.stdout.write(`${message}\n`),
   stderr: (message) => process.stderr.write(`${message}\n`),
 };
+
+interface DoctorFinding {
+  level: 'OK' | 'WARN' | 'FAIL';
+  message: string;
+  details?: string[];
+}
+
+async function renderDoctorReport(options: { cwd: string; config: string | undefined; execFile: ExecFileRunner }): Promise<{ text: string; hasFailures: boolean }> {
+  const findings: DoctorFinding[] = [];
+  findings.push(await inspectGitRepository(options.cwd, options.execFile));
+  findings.push(await inspectPolicy(options.cwd, options.config));
+  findings.push(await inspectIgnoreFile(options.cwd));
+  findings.push(await inspectCodeowners(options.cwd));
+
+  const hasIssues = findings.some((finding) => finding.level !== 'OK');
+  const lines = [hasIssues ? 'RepoBelt doctor found issues' : 'RepoBelt doctor passed'];
+  for (const finding of findings) {
+    lines.push(`${finding.level} ${finding.message}`);
+    for (const detail of finding.details ?? []) {
+      lines.push(`  - ${detail}`);
+    }
+  }
+  lines.push('Next commands:');
+  lines.push('  repobelt check --since-main');
+  lines.push('  repobelt check --print-config');
+  lines.push('  repobelt init --strict');
+  return { text: `${lines.join('\n')}\n`, hasFailures: hasIssues };
+}
+
+async function inspectGitRepository(cwd: string, execFile: ExecFileRunner): Promise<DoctorFinding> {
+  try {
+    const result = await execFile('git', ['rev-parse', '--is-inside-work-tree'], { cwd });
+    if (result.stdout.trim() === 'true') {
+      return { level: 'OK', message: 'git repository' };
+    }
+    return { level: 'FAIL', message: 'git repository: not inside a work tree' };
+  } catch (error) {
+    return { level: 'FAIL', message: `git repository: ${formatError(error)}` };
+  }
+}
+
+async function inspectPolicy(cwd: string, config: string | undefined): Promise<DoctorFinding> {
+  const policyPath = config ?? '.repobelt.yml';
+  try {
+    const text = await readPolicyText(cwd, config);
+    if (text === undefined) {
+      return { level: 'FAIL', message: `policy ${policyPath}: missing` };
+    }
+    const policy = loadPolicyFromText(text);
+    return {
+      level: 'OK',
+      message: `policy ${policyPath}`,
+      details: [
+        `${policy.protectedPaths.length} protected path pattern${policy.protectedPaths.length === 1 ? '' : 's'}`,
+        `${Object.keys(policy.riskyPaths).length} risky path pattern${Object.keys(policy.riskyPaths).length === 1 ? '' : 's'}`,
+        `${policy.requiredChecks.length} required check${policy.requiredChecks.length === 1 ? '' : 's'}`,
+      ],
+    };
+  } catch (error) {
+    return { level: 'FAIL', message: `policy ${policyPath}: ${formatError(error)}` };
+  }
+}
+
+async function inspectIgnoreFile(cwd: string): Promise<DoctorFinding> {
+  try {
+    const text = await readOptionalText(join(cwd, '.repobeltignore'));
+    const patterns = parseIgnorePatterns(text);
+    if (text === undefined) {
+      return { level: 'OK', message: '.repobeltignore not present' };
+    }
+    return { level: 'OK', message: `.repobeltignore ${patterns.length} pattern${patterns.length === 1 ? '' : 's'}` };
+  } catch (error) {
+    return { level: 'FAIL', message: `.repobeltignore: ${formatError(error)}` };
+  }
+}
+
+async function inspectCodeowners(cwd: string): Promise<DoctorFinding> {
+  const codeownersPath = await findCodeownersPath(cwd);
+  if (codeownersPath === null) {
+    return { level: 'OK', message: 'CODEOWNERS not present' };
+  }
+  try {
+    const text = await readOptionalText(join(cwd, codeownersPath));
+    const diagnostics = findCodeOwnerDiagnostics(text);
+    if (diagnostics.length === 0) {
+      return { level: 'OK', message: `CODEOWNERS ${codeownersPath}` };
+    }
+    return {
+      level: 'WARN',
+      message: `CODEOWNERS ${codeownersPath}: ${diagnostics.length} diagnostic${diagnostics.length === 1 ? '' : 's'}`,
+      details: diagnostics.map((diagnostic) => `line ${diagnostic.line} ${diagnostic.kind} ${diagnostic.pattern}: ${diagnostic.message}`),
+    };
+  } catch (error) {
+    return { level: 'FAIL', message: `CODEOWNERS ${codeownersPath}: ${formatError(error)}` };
+  }
+}
 
 function getCheckExitCode(
   result: Awaited<ReturnType<typeof runCheck>>,

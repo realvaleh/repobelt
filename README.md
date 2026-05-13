@@ -58,8 +58,11 @@ Run without installing globally:
 
 ```bash
 npx repobelt init
+npx repobelt doctor
 npx repobelt check --base HEAD --head worktree
 ```
+
+`doctor` validates the local setup before CI depends on it: git repository status, `.repobelt.yml` presence/parsing, `.repobeltignore` pattern loading, CODEOWNERS diagnostics, and next suggested commands.
 
 To generate the GitHub Actions workflow with persistent PR report comments enabled from the start:
 
@@ -387,11 +390,22 @@ Usage: repobelt <command>
 Commands:
   init     Create a starter .repobelt.yml and GitHub Action workflow
   check    Check a git diff against the RepoBelt policy
+  doctor   Validate local RepoBelt setup and policy health
 
 Options:
   --preset <default|web|node|python|infra|monorepo>  Policy preset for init. Default: default
   --pr-comment            Add persistent PR comment support to generated GitHub Action
+  --strict                Generate stricter CI defaults and policy limits
+  --list-presets          List available init presets
   -h, --help              Show this help message
+```
+
+```text
+Usage: repobelt doctor [options]
+
+Options:
+  --config <path>  Policy file path. Default: .repobelt.yml
+  -h, --help       Show this help message
 ```
 
 ```text
@@ -400,6 +414,9 @@ Usage: repobelt check [options]
 Options:
   --base <ref>                    Base git ref. Default: HEAD
   --head <ref|worktree>           Head git ref or worktree. Default: worktree
+  --diff <base...head>            Git diff range shorthand; cannot be combined with --base/--head
+  --against <branch>              Compare branch...HEAD without writing the full diff range
+  --since-main                    Compare origin/main...HEAD
   --format <text|markdown|json|sarif|github>   Output format. Default: text
   --output <path>                  Write report to a file instead of stdout
   --summary <path>                 Also write a Markdown summary to a file
@@ -416,6 +433,7 @@ Options:
   --max-risky <n>                  Fail when risky file count exceeds n
   --max-secrets <n>                Fail when secret finding count exceeds n
   --fail-on-warn                  Exit 1 when risky paths produce warnings
+  --codeowners-diagnostics-fail   Exit 1 when CODEOWNERS diagnostics are present
   -h, --help                      Show this help message
 ```
 
@@ -431,6 +449,7 @@ RepoBelt is early but functional:
 
 - CLI scaffold: done
 - `init`: done
+- `doctor`: done
 - policy loading: done
 - changed-file detection: done
 - protected/risky path checks: done
