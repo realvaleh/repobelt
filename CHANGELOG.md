@@ -6,6 +6,10 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 
 ## [0.1.0] - 2026-05-10
 
+### Added since release
+
+- CODEOWNERS reviewer hints in check results, text output, Markdown reports, and JSON reports.
+
 ### Added
 
 - Initial `repobelt` CLI with `init` and `check` commands.

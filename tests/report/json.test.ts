@@ -12,6 +12,7 @@ const result: CheckResult = {
     allowed: ['src/config.ts'],
   },
   secretFindings: [{ path: 'src/config.ts', line: 1, kind: 'github_token', matchedPattern: 'GitHub token' }],
+  reviewerHints: [{ path: 'src/config.ts', matchedPattern: '*', owners: ['@core-team'] }],
 };
 
 describe('JSON report rendering', () => {

@@ -46,6 +46,7 @@ It is a **seatbelt**, not an autopilot.
   - Anthropic-style tokens
   - AWS access key IDs
   - high-entropy `.env` assignments
+- CODEOWNERS reviewer hints from `.github/CODEOWNERS`, `CODEOWNERS`, or `docs/CODEOWNERS`
 - Markdown and JSON reports for CI and bots
 
 ## Quickstart
@@ -195,6 +196,7 @@ RepoBelt is early but functional:
 - changed-file detection: done
 - protected/risky path checks: done
 - secret scanning: done
+- CODEOWNERS reviewer hints: done
 - text/Markdown/JSON reports: done
 - GitHub Action template: done
 - CI workflow: done
@@ -207,7 +209,7 @@ Near-term:
 - More CLI validation
 - PR comment mode
 - SARIF output
-- CODEOWNERS/reviewer hints
+- richer CODEOWNERS validation and reviewer routing
 
 Later:
 

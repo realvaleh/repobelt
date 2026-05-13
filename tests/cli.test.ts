@@ -205,6 +205,39 @@ describe('RepoBelt CLI foundation', () => {
     }
   });
 
+  it('prints CODEOWNERS reviewer hints in default text output', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-codeowners-'));
+    const writes: string[] = [];
+
+    try {
+      await runCli(['init'], { stdout: () => undefined, stderr: () => undefined }, { cwd: dir });
+      await execFileAsync('git', ['init'], { cwd: dir });
+      await execFileAsync('git', ['config', 'user.email', 'test@example.com'], { cwd: dir });
+      await execFileAsync('git', ['config', 'user.name', 'RepoBelt Test'], { cwd: dir });
+      await mkdir(join(dir, '.github'), { recursive: true });
+      await writeFile(join(dir, '.github', 'CODEOWNERS'), 'auth/** @security-team\n');
+      await writeFile(join(dir, 'README.md'), '# demo\n');
+      await execFileAsync('git', ['add', '.'], { cwd: dir });
+      await execFileAsync('git', ['commit', '-m', 'initial'], { cwd: dir });
+      await mkdir(join(dir, 'auth'), { recursive: true });
+      await writeFile(join(dir, 'auth', 'login.ts'), 'export const login = true;\n');
+
+      const result = await runCli(
+        ['check', '--base', 'HEAD', '--head', 'worktree'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(0);
+      expect(writes.join('\n')).toContain('Reviewer: auth/login.ts matched auth/** -> @security-team');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it('rejects unsupported check formats before running git', async () => {
     const errors: string[] = [];
 

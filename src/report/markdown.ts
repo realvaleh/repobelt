@@ -37,8 +37,18 @@ export function renderMarkdownReport(result: CheckResult): string {
     lines.push('');
   }
 
+  if (result.reviewerHints.length > 0) {
+    lines.push('## Reviewer hints');
+    lines.push('');
+    for (const hint of result.reviewerHints) {
+      lines.push(`- \`${hint.path}\` matched \`${hint.matchedPattern}\`: ${hint.owners.join(', ')}`);
+    }
+    lines.push('');
+  }
+
   if (result.status === 'pass') {
     lines.push('No blocked paths, risky paths, or secrets found.');
+    lines.push('');
   }
 
   lines.push('## Reviewer action');

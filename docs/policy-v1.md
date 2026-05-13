@@ -174,6 +174,25 @@ secrets/**    # matches secrets/prod.key and secrets/nested/token.txt
 auth/**       # matches auth/login.ts and auth/server/session.ts
 ```
 
+## CODEOWNERS reviewer hints
+
+RepoBelt also looks for CODEOWNERS files in this order:
+
+1. `.github/CODEOWNERS`
+2. `CODEOWNERS`
+3. `docs/CODEOWNERS`
+
+When a changed file matches a CODEOWNERS rule, reports include a `reviewerHints` entry with the file, matched CODEOWNERS pattern, and owners. These hints do not change `PASS`, `WARN`, or `FAIL` status; they are routing context for the human reviewer.
+
+Example:
+
+```text
+auth/** @security-team @backend-lead
+*.md @docs-team
+```
+
+Rules are evaluated with last-match-wins behavior, matching GitHub's CODEOWNERS precedence model. Blank lines, comments, and entries without owners are ignored.
+
 ## Status rules
 
 RepoBelt combines path policy results and secret scanning results.

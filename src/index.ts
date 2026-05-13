@@ -120,6 +120,7 @@ export async function runCli(
       for (const finding of result.secretFindings) {
         io.stdout(`Secret: ${finding.path}:${finding.line} ${finding.kind} matched ${finding.matchedPattern}`);
       }
+      writeReviewerHints(result, io);
       return { exitCode: 1 };
     }
 
@@ -128,10 +129,12 @@ export async function runCli(
       for (const finding of result.pathPolicy.risky) {
         io.stdout(`Risky: ${finding.path} matched ${finding.matchedPattern}`);
       }
+      writeReviewerHints(result, io);
       return { exitCode: 0 };
     }
 
     io.stdout('RepoBelt check passed');
+    writeReviewerHints(result, io);
     return { exitCode: 0 };
   }
 
@@ -144,6 +147,12 @@ const defaultIo: CliIo = {
   stdout: (message) => process.stdout.write(`${message}\n`),
   stderr: (message) => process.stderr.write(`${message}\n`),
 };
+
+function writeReviewerHints(result: Awaited<ReturnType<typeof runCheck>>, io: CliIo): void {
+  for (const hint of result.reviewerHints) {
+    io.stdout(`Reviewer: ${hint.path} matched ${hint.matchedPattern} -> ${hint.owners.join(', ')}`);
+  }
+}
 
 function getFlagValue(args: string[], flag: string): string | undefined {
   const index = args.indexOf(flag);

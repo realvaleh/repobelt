@@ -44,6 +44,10 @@ Changed files: 1
 
 - `auth/login.ts` matched `auth/**` and requires review
 
+## Reviewer hints
+
+- `auth/login.ts` matched `auth/**`: @security-team
+
 ## Reviewer action
 
 Review risky files before merging.
@@ -99,6 +103,7 @@ repobelt check --base HEAD --head worktree --format json
     "risky": [],
     "allowed": []
   },
-  "secretFindings": []
+  "secretFindings": [],
+  "reviewerHints": []
 }
 ```

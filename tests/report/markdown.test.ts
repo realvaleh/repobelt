@@ -13,6 +13,7 @@ function baseResult(overrides: Partial<CheckResult> = {}): CheckResult {
       allowed: ['src/app.ts'],
     },
     secretFindings: [],
+    reviewerHints: [],
     ...overrides,
   };
 }
@@ -25,6 +26,7 @@ describe('markdown report rendering', () => {
     expect(markdown).toContain('**Status:** PASS');
     expect(markdown).toContain('Changed files: 1');
     expect(markdown).toContain('No blocked paths, risky paths, or secrets found.');
+    expect(markdown).toContain('No blocked paths, risky paths, or secrets found.\n\n## Reviewer action');
   });
 
   it('renders blocked paths and secret findings for failed checks', () => {
@@ -70,5 +72,17 @@ describe('markdown report rendering', () => {
     expect(markdown).toContain('## Risky files');
     expect(markdown).toContain('- `auth/login.ts` matched `auth/**` and requires review');
     expect(markdown).toContain('Review risky files before merging.');
+  });
+
+  it('renders CODEOWNERS reviewer hints when present', () => {
+    const markdown = renderMarkdownReport(
+      baseResult({
+        changedFiles: ['auth/login.ts'],
+        reviewerHints: [{ path: 'auth/login.ts', matchedPattern: '/auth/', owners: ['@security-team', '@backend-lead'] }],
+      }),
+    );
+
+    expect(markdown).toContain('## Reviewer hints');
+    expect(markdown).toContain('- `auth/login.ts` matched `/auth/`: @security-team, @backend-lead');
   });
 });

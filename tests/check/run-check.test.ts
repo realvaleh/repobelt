@@ -71,4 +71,23 @@ describe('runCheck', () => {
       { path: 'src/config.ts', line: 1, kind: 'github_token', matchedPattern: 'GitHub token' },
     ]);
   });
+
+  it('includes CODEOWNERS reviewer hints when a CODEOWNERS file is available', async () => {
+    const result = await runCheck({
+      cwd: '/repo',
+      base: 'main',
+      head: 'HEAD',
+      policyText,
+      changedFilesProvider: async () => ['auth/login.ts', 'src/app.ts'],
+      codeownersText: `
+* @core-team
+/auth/ @security-team
+`,
+    });
+
+    expect(result.reviewerHints).toEqual([
+      { path: 'auth/login.ts', matchedPattern: '/auth/', owners: ['@security-team'] },
+      { path: 'src/app.ts', matchedPattern: '*', owners: ['@core-team'] },
+    ]);
+  });
 });

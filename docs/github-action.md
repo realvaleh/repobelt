@@ -8,6 +8,8 @@ npx repobelt init
 
 The workflow runs on pull requests and writes a Markdown report to GitHub's step summary.
 
+If the repository has `.github/CODEOWNERS`, `CODEOWNERS`, or `docs/CODEOWNERS`, the report also includes reviewer hints for changed files that match CODEOWNERS rules.
+
 ## Generated workflow
 
 ```yaml
