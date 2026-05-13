@@ -76,6 +76,14 @@ repobelt init --preset monorepo
 
 Use `repobelt init --strict` when a repository should start with stronger CI defaults. It adds policy limits (`max_files: 50`, `max_risky: 0`, `max_secrets: 0`) and generates a workflow that runs with `--since-default`, `--fail-on-warn`, `--codeowners-diagnostics-fail`, and explicit count budgets.
 
+Strict budgets can be tuned during init for larger repositories without editing YAML by hand:
+
+```bash
+repobelt init --strict --max-files 100 --max-risky 2 --max-secrets 0
+```
+
+Those values are written to both `.repobelt.yml` `limits` and the generated workflow flags.
+
 The `default` preset is the baseline policy shown above.
 
 The `web` preset keeps the baseline safeguards and adds review routing for common web-app risk surfaces:

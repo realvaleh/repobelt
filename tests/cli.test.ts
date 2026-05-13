@@ -18,6 +18,9 @@ describe('RepoBelt CLI foundation', () => {
     expect(help).toContain('--preset <default|web|node|python|infra|monorepo>');
     expect(help).toContain('--pr-comment');
     expect(help).toContain('--strict');
+    expect(help).toContain('--max-files <n>');
+    expect(help).toContain('--max-risky <n>');
+    expect(help).toContain('--max-secrets <n>');
     expect(help).toContain('check');
     expect(help).toContain('doctor');
   });
@@ -251,6 +254,54 @@ allowlist:
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  });
+
+  it('creates starter files with custom strict budgets for init --strict budget flags', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-init-strict-budgets-'));
+
+    try {
+      const result = await runCli(
+        ['init', '--strict', '--max-files', '100', '--max-risky', '2', '--max-secrets', '1'],
+        { stdout: () => undefined, stderr: () => undefined },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(0);
+      const policy = await readFile(join(dir, '.repobelt.yml'), 'utf8');
+      const workflow = await readFile(join(dir, '.github/workflows/repobelt.yml'), 'utf8');
+      expect(policy).toContain('max_files: 100');
+      expect(policy).toContain('max_risky: 2');
+      expect(policy).toContain('max_secrets: 1');
+      expect(workflow).toContain('--max-files 100');
+      expect(workflow).toContain('--max-risky 2');
+      expect(workflow).toContain('--max-secrets 1');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects init budget flags without --strict', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['init', '--max-risky', '1'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Use --max-files, --max-risky, or --max-secrets with init --strict');
+  });
+
+  it('rejects invalid init strict budget values', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['init', '--strict', '--max-files', '0'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Invalid value for --max-files: 0');
   });
 
   it('creates web preset files for init --preset web', async () => {

@@ -73,6 +73,9 @@ try {
   expectIncludes('repobelt --help', helpOutput, '--list-presets');
   expectIncludes('repobelt --help', helpOutput, '--pr-comment');
   expectIncludes('repobelt --help', helpOutput, '--strict');
+  expectIncludes('repobelt --help', helpOutput, '--max-files <n>');
+  expectIncludes('repobelt --help', helpOutput, '--max-risky <n>');
+  expectIncludes('repobelt --help', helpOutput, '--max-secrets <n>');
   expectIncludes('repobelt --help', helpOutput, 'doctor');
 
   const doctorHelpOutput = run('npx', ['repobelt', 'doctor', '--help'], { cwd: appDir });
@@ -134,6 +137,18 @@ try {
   expectIncludes('repobelt init --strict', strictWorkflow, '--max-files 50');
   expectIncludes('repobelt init --strict', strictWorkflow, '--max-risky 0');
   expectIncludes('repobelt init --strict', strictWorkflow, '--max-secrets 0');
+
+  const customStrictInitDir = join(appDir, 'custom-strict-init');
+  mkdirSync(customStrictInitDir, { recursive: true });
+  run('npx', ['repobelt', 'init', '--strict', '--max-files', '100', '--max-risky', '2', '--max-secrets', '1'], { cwd: customStrictInitDir });
+  const customStrictPolicy = run('node', ['-e', "process.stdout.write(require('node:fs').readFileSync('.repobelt.yml', 'utf8'))"], { cwd: customStrictInitDir });
+  const customStrictWorkflow = run('node', ['-e', "process.stdout.write(require('node:fs').readFileSync('.github/workflows/repobelt.yml', 'utf8'))"], { cwd: customStrictInitDir });
+  expectIncludes('repobelt init --strict custom budgets', customStrictPolicy, 'max_files: 100');
+  expectIncludes('repobelt init --strict custom budgets', customStrictPolicy, 'max_risky: 2');
+  expectIncludes('repobelt init --strict custom budgets', customStrictPolicy, 'max_secrets: 1');
+  expectIncludes('repobelt init --strict custom budgets', customStrictWorkflow, '--max-files 100');
+  expectIncludes('repobelt init --strict custom budgets', customStrictWorkflow, '--max-risky 2');
+  expectIncludes('repobelt init --strict custom budgets', customStrictWorkflow, '--max-secrets 1');
 
   const diffRangeDir = join(appDir, 'diff-range');
   mkdirSync(diffRangeDir, { recursive: true });

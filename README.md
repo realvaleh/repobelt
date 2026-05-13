@@ -76,6 +76,14 @@ For stricter CI defaults from day one, generate policy limits and workflow flags
 npx repobelt init --strict
 ```
 
+For larger but still guarded repositories, keep strict mode while tuning the generated budgets:
+
+```bash
+npx repobelt init --strict --max-files 100 --max-risky 2 --max-secrets 0
+```
+
+The custom values are written into both `.repobelt.yml` `limits` and the generated workflow's explicit `repobelt check` flags, so CI and local policy stay aligned without manual YAML editing.
+
 To discover the built-in policy presets:
 
 ```bash

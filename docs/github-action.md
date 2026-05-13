@@ -52,8 +52,7 @@ jobs:
       - name: Run RepoBelt
         run: |
           npx repobelt check \
-            --base "origin/$GITHUB_BASE_REF" \
-            --head "$GITHUB_SHA" \
+            --diff "origin/$GITHUB_BASE_REF...$GITHUB_SHA" \
             --format github \
             --summary "$GITHUB_STEP_SUMMARY"
 ```
@@ -66,11 +65,30 @@ Optional persistent PR comment mode:
           GH_TOKEN: ${{ github.token }}
         run: |
           npx repobelt check \
-            --base "origin/$GITHUB_BASE_REF" \
-            --head "$GITHUB_SHA" \
+            --diff "origin/$GITHUB_BASE_REF...$GITHUB_SHA" \
             --format github \
             --summary "$GITHUB_STEP_SUMMARY" \
             --pr-comment auto
+```
+
+Strict generated workflow mode uses the remote default branch and explicit budgets:
+
+```bash
+npx repobelt init --strict --max-files 100 --max-risky 2 --max-secrets 0
+```
+
+```yaml
+      - name: Run RepoBelt
+        run: |
+          npx repobelt check \
+            --since-default \
+            --format github \
+            --summary "$GITHUB_STEP_SUMMARY" \
+            --fail-on-warn \
+            --codeowners-diagnostics-fail \
+            --max-files 100 \
+            --max-risky 2 \
+            --max-secrets 0
 ```
 
 ## Exit behavior

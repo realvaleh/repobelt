@@ -88,6 +88,19 @@ describe('repobelt init', () => {
     expect(workflow).not.toContain('--since-main');
   });
 
+  it('can customize strict budgets in generated policy and workflow flags', () => {
+    const files = generateInitFiles({ strict: true, maxFiles: 100, maxRisky: 2, maxSecrets: 1 });
+    const policy = files['.repobelt.yml'];
+    const workflow = files['.github/workflows/repobelt.yml'];
+
+    expect(policy).toContain('  max_files: 100');
+    expect(policy).toContain('  max_risky: 2');
+    expect(policy).toContain('  max_secrets: 1');
+    expect(workflow).toContain('            --max-files 100 \\');
+    expect(workflow).toContain('            --max-risky 2 \\');
+    expect(workflow).toContain('            --max-secrets 1');
+  });
+
   it('generates a web preset policy with frontend and API review paths', () => {
     const files = generateInitFiles({ preset: 'web' });
 

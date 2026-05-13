@@ -2,7 +2,7 @@ import { execFile as nodeExecFile } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join } from 'node:path';
 import { promisify } from 'node:util';
-import { describeInitPresets, generateInitFiles, supportedInitPresets, writeInitFiles, type InitPreset } from './commands/init.js';
+import { describeInitPresets, generateInitFiles, supportedInitPresets, writeInitFiles, type InitOptions, type InitPreset } from './commands/init.js';
 import { runCheck, type CheckResult } from './check/run-check.js';
 import { loadPolicyFromText } from './policy/load-policy.js';
 import type { RepoBeltPolicy } from './policy/schema.js';
@@ -54,6 +54,9 @@ Options:
   --preset <${formatInitPresetChoices()}>  Policy preset for init. Default: default
   --pr-comment            Add persistent PR comment support to generated GitHub Action
   --strict                Generate stricter CI defaults and policy limits
+  --max-files <n>         Override init --strict changed-file budget. Default: 50
+  --max-risky <n>         Override init --strict risky-file budget. Default: 0
+  --max-secrets <n>       Override init --strict secret-finding budget. Default: 0
   --list-presets          List available init presets
   -h, --help              Show this help message
 `;
@@ -116,11 +119,11 @@ export async function runCli(
   }
 
   if (command === 'init' && args.includes('--dry-run')) {
-    const preset = getInitPreset(args, io);
-    if (preset === undefined) {
+    const initOptions = getInitOptions(args, io);
+    if (initOptions === undefined) {
       return { exitCode: 1 };
     }
-    const files = generateInitFiles({ preset, prComment: args.includes('--pr-comment'), strict: args.includes('--strict') });
+    const files = generateInitFiles(initOptions);
     io.stdout('RepoBelt would create:');
     for (const path of Object.keys(files)) {
       io.stdout(`- ${path}`);
@@ -134,12 +137,12 @@ export async function runCli(
   }
 
   if (command === 'init') {
-    const preset = getInitPreset(args, io);
-    if (preset === undefined) {
+    const initOptions = getInitOptions(args, io);
+    if (initOptions === undefined) {
       return { exitCode: 1 };
     }
     try {
-      const result = await writeInitFiles(runtime.cwd, { preset, prComment: args.includes('--pr-comment'), strict: args.includes('--strict') });
+      const result = await writeInitFiles(runtime.cwd, initOptions);
       for (const path of result.created) {
         io.stdout(`Created ${path}`);
       }
@@ -947,6 +950,64 @@ async function detectOriginDefaultBranch(cwd: string, execFile: ExecFileRunner):
 function isMissingFlagValue(args: string[], flag: string): boolean {
   const index = args.indexOf(flag);
   return index >= 0 && (args[index + 1] === undefined || args[index + 1]?.startsWith('--') === true);
+}
+
+function getInitOptions(args: string[], io: CliIo): InitOptions | undefined {
+  const preset = getInitPreset(args, io);
+  if (preset === undefined) {
+    return undefined;
+  }
+
+  if (isMissingFlagValue(args, '--max-files')) {
+    io.stderr('Missing value for --max-files');
+    return undefined;
+  }
+  if (isMissingFlagValue(args, '--max-risky')) {
+    io.stderr('Missing value for --max-risky');
+    return undefined;
+  }
+  if (isMissingFlagValue(args, '--max-secrets')) {
+    io.stderr('Missing value for --max-secrets');
+    return undefined;
+  }
+
+  const strict = args.includes('--strict');
+  const hasBudgetOverride = hasFlag(args, '--max-files') || hasFlag(args, '--max-risky') || hasFlag(args, '--max-secrets');
+  if (!strict && hasBudgetOverride) {
+    io.stderr('Use --max-files, --max-risky, or --max-secrets with init --strict');
+    return undefined;
+  }
+
+  const maxFilesValue = getFlagValue(args, '--max-files');
+  const maxRiskyValue = getFlagValue(args, '--max-risky');
+  const maxSecretsValue = getFlagValue(args, '--max-secrets');
+  const maxFiles = parseMaxFiles(maxFilesValue);
+  if (maxFilesValue !== undefined && maxFiles === undefined) {
+    io.stderr(`Invalid value for --max-files: ${maxFilesValue}`);
+    io.stderr('--max-files must be a positive integer');
+    return undefined;
+  }
+  const maxRisky = parseMaxRisky(maxRiskyValue);
+  if (maxRiskyValue !== undefined && maxRisky === undefined) {
+    io.stderr(`Invalid value for --max-risky: ${maxRiskyValue}`);
+    io.stderr('--max-risky must be a non-negative integer');
+    return undefined;
+  }
+  const maxSecrets = parseNonNegativeInteger(maxSecretsValue);
+  if (maxSecretsValue !== undefined && maxSecrets === undefined) {
+    io.stderr(`Invalid value for --max-secrets: ${maxSecretsValue}`);
+    io.stderr('--max-secrets must be a non-negative integer');
+    return undefined;
+  }
+
+  return {
+    preset,
+    prComment: args.includes('--pr-comment'),
+    strict,
+    maxFiles,
+    maxRisky,
+    maxSecrets,
+  };
 }
 
 function getInitPreset(args: string[], io: CliIo): InitPreset | undefined {

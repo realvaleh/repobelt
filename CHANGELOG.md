@@ -8,9 +8,10 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 
 ### Added since release
 
+- `init --strict --max-files <n> --max-risky <n> --max-secrets <n>` for tuning generated strict policy limits and workflow budget flags during init without manual YAML editing.
 - `check --since-default` for comparing against `origin/HEAD` with an `origin/main` fallback, useful for repositories whose default branch is not `main`.
 - `doctor` for validating local RepoBelt setup and policy health, including git repository status, policy parsing, `.repobeltignore` loading, CODEOWNERS diagnostics, and suggested next commands.
-- `init --strict` for generating stronger first-day CI defaults: policy limits plus workflow flags for `--since-main`, `--fail-on-warn`, `--codeowners-diagnostics-fail`, and explicit file/risky/secret budgets.
+- `init --strict` for generating stronger first-day CI defaults: policy limits plus workflow flags for `--since-default`, `--fail-on-warn`, `--codeowners-diagnostics-fail`, and explicit file/risky/secret budgets.
 - `check --against <branch>` and `check --since-main` for common local branch comparisons without spelling out full git diff ranges.
 - `check --diff <base...head>` for running RepoBelt against an explicit git diff range such as `origin/main...HEAD` without separate `--base` and `--head` flags.
 - `check --codeowners-diagnostics-fail` for teams that want CODEOWNERS diagnostics to fail CI instead of remaining non-failing warnings.

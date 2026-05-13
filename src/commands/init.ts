@@ -115,6 +115,9 @@ export interface InitOptions {
   preset?: InitPreset;
   prComment?: boolean;
   strict?: boolean;
+  maxFiles?: number;
+  maxRisky?: number;
+  maxSecrets?: number;
 }
 
 export function describeInitPresets(): InitPresetDescription[] {
@@ -166,6 +169,7 @@ ${checkCommand}
 }
 
 function renderWorkflowCheckCommand(options: InitOptions): string {
+  const strictBudgets = getStrictBudgets(options);
   const lines = [
     '          npx repobelt check',
     options.strict === true ? '            --since-default' : '            --diff "origin/$GITHUB_BASE_REF...$GITHUB_SHA"',
@@ -177,9 +181,9 @@ function renderWorkflowCheckCommand(options: InitOptions): string {
     lines.push(
       '            --fail-on-warn',
       '            --codeowners-diagnostics-fail',
-      '            --max-files 50',
-      '            --max-risky 0',
-      '            --max-secrets 0',
+      `            --max-files ${strictBudgets.maxFiles}`,
+      `            --max-risky ${strictBudgets.maxRisky}`,
+      `            --max-secrets ${strictBudgets.maxSecrets}`,
     );
   }
 
@@ -204,16 +208,25 @@ export async function writeInitFiles(targetDirectory: string, options: InitOptio
   return { created };
 }
 
+function getStrictBudgets(options: InitOptions): { maxFiles: number; maxRisky: number; maxSecrets: number } {
+  return {
+    maxFiles: options.maxFiles ?? 50,
+    maxRisky: options.maxRisky ?? 0,
+    maxSecrets: options.maxSecrets ?? 0,
+  };
+}
+
 function renderPolicy(preset: InitPreset, options: InitOptions): string {
   const presetDefinition = presetDefinitions[preset];
   const presetComment = preset === 'default' ? '' : `# Preset: ${preset}\n`;
   const riskyPaths = [...baseRiskyPaths, ...presetDefinition.riskyPaths];
   const requiredChecks = [...baseRequiredChecks, ...presetDefinition.requiredChecks];
+  const strictBudgets = getStrictBudgets(options);
   const strictLimits = options.strict === true ? `
 limits:
-  max_files: 50
-  max_risky: 0
-  max_secrets: 0
+  max_files: ${strictBudgets.maxFiles}
+  max_risky: ${strictBudgets.maxRisky}
+  max_secrets: ${strictBudgets.maxSecrets}
 ` : '';
 
   return `version: 1
