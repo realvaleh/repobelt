@@ -160,5 +160,30 @@ allowlist:
       },
       { path: 'src/app.ts', matchedPattern: '*', owners: ['@core-team'], matchedRules: [{ pattern: '*', owners: ['@core-team'] }] },
     ]);
+    expect(result.codeownerDiagnostics).toEqual([]);
+  });
+
+  it('includes CODEOWNERS diagnostics without changing check status', async () => {
+    const result = await runCheck({
+      cwd: '/repo',
+      base: 'main',
+      head: 'HEAD',
+      policyText,
+      changedFilesProvider: async () => ['src/app.ts'],
+      codeownersText: `
+* @core-team
+scripts/**
+[bad] @bad-team
+src/** @app-team
+src/** @platform-team
+`,
+    });
+
+    expect(result.status).toBe('pass');
+    expect(result.codeownerDiagnostics).toEqual([
+      { line: 3, severity: 'warning', kind: 'ownerless_rule', message: 'CODEOWNERS rule has no owners', pattern: 'scripts/**' },
+      { line: 4, severity: 'warning', kind: 'unsupported_pattern', message: 'CODEOWNERS pattern uses unsupported syntax', pattern: '[bad]' },
+      { line: 6, severity: 'warning', kind: 'duplicate_pattern', message: 'CODEOWNERS pattern overrides an earlier rule on line 5', pattern: 'src/**' },
+    ]);
   });
 });

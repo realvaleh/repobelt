@@ -29,6 +29,7 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 - `check --fail-on-warn` for stricter CI that exits 1 when risky paths produce warnings.
 - `init --list-presets` for discovering built-in policy presets and descriptions from the CLI.
 - CODEOWNERS reviewer hints in check results, text output, Markdown reports, and JSON reports, with JSON/Markdown including every matched CODEOWNERS rule for each hinted path.
+- CODEOWNERS diagnostics for owner-less rules, unsupported `[`/`]` or `!` patterns, and duplicate patterns that override earlier owner routing.
 - `init --preset web` for web-app policies covering API routes, middleware, build config, package manifests, lockfiles, and a `build` required-check reminder.
 - `init --preset node` for Node.js package and CLI policies covering package metadata, lockfiles, TypeScript config, CLI/bin entrypoints, automation scripts, and a `build` required-check reminder.
 - `init --preset python` for Python package and service policies covering package metadata, dependency lockfiles, migrations, Alembic config, automation scripts, and a `build` required-check reminder.

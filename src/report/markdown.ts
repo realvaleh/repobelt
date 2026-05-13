@@ -51,6 +51,15 @@ export function renderMarkdownReport(result: CheckResult): string {
     lines.push('');
   }
 
+  if (result.codeownerDiagnostics.length > 0) {
+    lines.push('## CODEOWNERS diagnostics');
+    lines.push('');
+    for (const diagnostic of result.codeownerDiagnostics) {
+      lines.push(`- line ${diagnostic.line} \`${diagnostic.kind}\` for \`${diagnostic.pattern}\`: ${diagnostic.message}`);
+    }
+    lines.push('');
+  }
+
   if (result.requiredChecks.length > 0) {
     lines.push('## Required checks');
     lines.push('');

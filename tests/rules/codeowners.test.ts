@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { findCodeOwnerHints } from '../../src/rules/codeowners.js';
+import { findCodeOwnerDiagnostics, findCodeOwnerHints } from '../../src/rules/codeowners.js';
 
 describe('CODEOWNERS reviewer hints', () => {
   it('returns owners for changed files using the last matching CODEOWNERS pattern', () => {
@@ -53,6 +53,22 @@ payments/** @payments-team
         owners: ['@payments-team'],
         matchedRules: [{ pattern: 'payments/**', owners: ['@payments-team'] }],
       },
+    ]);
+  });
+
+  it('diagnoses owner-less, unsupported, and duplicate CODEOWNERS rules', () => {
+    const diagnostics = findCodeOwnerDiagnostics(`
+# comment
+payments/**
+[invalid] @bad-team
+src/** @app-team
+src/** @platform-team
+`);
+
+    expect(diagnostics).toEqual([
+      { line: 3, severity: 'warning', kind: 'ownerless_rule', message: 'CODEOWNERS rule has no owners', pattern: 'payments/**' },
+      { line: 4, severity: 'warning', kind: 'unsupported_pattern', message: 'CODEOWNERS pattern uses unsupported syntax', pattern: '[invalid]' },
+      { line: 6, severity: 'warning', kind: 'duplicate_pattern', message: 'CODEOWNERS pattern overrides an earlier rule on line 5', pattern: 'src/**' },
     ]);
   });
 });

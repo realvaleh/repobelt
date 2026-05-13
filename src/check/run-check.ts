@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { getChangedFiles } from '../git/changed-files.js';
 import { loadPolicyFromText } from '../policy/load-policy.js';
-import { findCodeOwnerHints, type CodeOwnerHint } from '../rules/codeowners.js';
+import { findCodeOwnerDiagnostics, findCodeOwnerHints, type CodeOwnerDiagnostic, type CodeOwnerHint } from '../rules/codeowners.js';
 import { classifyChangedFiles, type PathPolicyResult, type PathPolicyStatus } from '../rules/path-policy.js';
 import { filterIgnoredPaths } from '../rules/ignore.js';
 import { scanTextForSecrets, type SecretFinding } from '../rules/secrets.js';
@@ -24,6 +24,7 @@ export interface CheckResult {
   pathPolicy: PathPolicyResult;
   secretFindings: SecretFinding[];
   reviewerHints: CodeOwnerHint[];
+  codeownerDiagnostics: CodeOwnerDiagnostic[];
   requiredChecks: string[];
   limits: {
     maxFiles?: number;
@@ -43,6 +44,7 @@ export async function runCheck(options: RunCheckOptions): Promise<CheckResult> {
   const secretFindings = await scanChangedFilesForSecrets(changedFiles, options.cwd, fileContentProvider);
   const codeownersText = options.codeownersText ?? (await readCodeOwnersFile(options.cwd));
   const reviewerHints = findCodeOwnerHints({ changedFiles, codeownersText });
+  const codeownerDiagnostics = findCodeOwnerDiagnostics(codeownersText);
 
   return {
     status: secretFindings.length > 0 ? 'fail' : pathPolicy.status,
@@ -50,6 +52,7 @@ export async function runCheck(options: RunCheckOptions): Promise<CheckResult> {
     pathPolicy,
     secretFindings,
     reviewerHints,
+    codeownerDiagnostics,
     requiredChecks: policy.requiredChecks,
     limits: policy.limits,
   };

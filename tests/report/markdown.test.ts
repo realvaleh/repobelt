@@ -14,6 +14,7 @@ function baseResult(overrides: Partial<CheckResult> = {}): CheckResult {
     },
     secretFindings: [],
     reviewerHints: [],
+    codeownerDiagnostics: [],
     requiredChecks: [],
     limits: {},
     ...overrides,
@@ -98,6 +99,19 @@ describe('markdown report rendering', () => {
     expect(markdown).toContain('- `auth/login.ts` effective owners from `/auth/`: @security-team, @backend-lead');
     expect(markdown).toContain('  - matched `*`: @core-team');
     expect(markdown).toContain('  - matched `/auth/`: @security-team, @backend-lead');
+  });
+
+  it('renders CODEOWNERS diagnostics when present', () => {
+    const markdown = renderMarkdownReport(
+      baseResult({
+        codeownerDiagnostics: [
+          { line: 3, severity: 'warning', kind: 'ownerless_rule', message: 'CODEOWNERS rule has no owners', pattern: 'payments/**' },
+        ],
+      }),
+    );
+
+    expect(markdown).toContain('## CODEOWNERS diagnostics');
+    expect(markdown).toContain('- line 3 `ownerless_rule` for `payments/**`: CODEOWNERS rule has no owners');
   });
 
   it('renders required checks from policy when present', () => {

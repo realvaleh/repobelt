@@ -23,6 +23,9 @@ const result: CheckResult = {
       ],
     },
   ],
+  codeownerDiagnostics: [
+    { line: 7, severity: 'warning', kind: 'ownerless_rule', message: 'CODEOWNERS rule has no owners', pattern: 'scripts/**' },
+  ],
   requiredChecks: ['test', 'typecheck'],
   limits: {},
 };

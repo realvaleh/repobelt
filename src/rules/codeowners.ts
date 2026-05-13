@@ -10,13 +10,24 @@ export interface CodeOwnerHint {
   matchedRules: CodeOwnerMatchedRule[];
 }
 
+export type CodeOwnerDiagnosticKind = 'ownerless_rule' | 'unsupported_pattern' | 'duplicate_pattern';
+
+export interface CodeOwnerDiagnostic {
+  line: number;
+  severity: 'warning';
+  kind: CodeOwnerDiagnosticKind;
+  message: string;
+  pattern: string;
+}
+
 interface CodeOwnerRule {
+  line: number;
   pattern: string;
   owners: string[];
 }
 
 export function findCodeOwnerHints(options: { changedFiles: string[]; codeownersText?: string | null }): CodeOwnerHint[] {
-  const rules = parseCodeOwners(options.codeownersText);
+  const { rules } = analyzeCodeOwners(options.codeownersText);
   if (rules.length === 0) {
     return [];
   }
@@ -38,27 +49,63 @@ export function findCodeOwnerHints(options: { changedFiles: string[]; codeowners
   return hints;
 }
 
-function parseCodeOwners(text: string | undefined | null): CodeOwnerRule[] {
+export function findCodeOwnerDiagnostics(codeownersText: string | undefined | null): CodeOwnerDiagnostic[] {
+  return analyzeCodeOwners(codeownersText).diagnostics;
+}
+
+function analyzeCodeOwners(text: string | undefined | null): { rules: CodeOwnerRule[]; diagnostics: CodeOwnerDiagnostic[] } {
   if (text === undefined || text === null || text.trim() === '') {
-    return [];
+    return { rules: [], diagnostics: [] };
   }
 
   const rules: CodeOwnerRule[] = [];
-  for (const line of text.split(/\r?\n/)) {
-    const trimmed = stripInlineComment(line).trim();
+  const diagnostics: CodeOwnerDiagnostic[] = [];
+  const firstLineByPattern = new Map<string, number>();
+  const lines = text.split(/\r?\n/);
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = index + 1;
+    const trimmed = stripInlineComment(lines[index] ?? '').trim();
     if (trimmed === '') {
       continue;
     }
 
     const [pattern, ...owners] = trimmed.split(/\s+/);
-    if (pattern === undefined || owners.length === 0) {
+    if (pattern === undefined) {
       continue;
     }
 
-    rules.push({ pattern, owners });
+    if (owners.length === 0) {
+      diagnostics.push({ line, severity: 'warning', kind: 'ownerless_rule', message: 'CODEOWNERS rule has no owners', pattern });
+      continue;
+    }
+
+    if (usesUnsupportedPatternSyntax(pattern)) {
+      diagnostics.push({ line, severity: 'warning', kind: 'unsupported_pattern', message: 'CODEOWNERS pattern uses unsupported syntax', pattern });
+      continue;
+    }
+
+    const firstLine = firstLineByPattern.get(pattern);
+    if (firstLine !== undefined) {
+      diagnostics.push({
+        line,
+        severity: 'warning',
+        kind: 'duplicate_pattern',
+        message: `CODEOWNERS pattern overrides an earlier rule on line ${firstLine}`,
+        pattern,
+      });
+    } else {
+      firstLineByPattern.set(pattern, line);
+    }
+
+    rules.push({ line, pattern, owners });
   }
 
-  return rules;
+  return { rules, diagnostics };
+}
+
+function usesUnsupportedPatternSyntax(pattern: string): boolean {
+  return /[\[\]]/.test(pattern) || pattern.startsWith('!');
 }
 
 function stripInlineComment(line: string): string {

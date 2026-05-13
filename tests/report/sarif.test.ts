@@ -15,6 +15,7 @@ const result: CheckResult = {
   reviewerHints: [
     { path: 'auth/login.ts', matchedPattern: 'auth/**', owners: ['@security-team'], matchedRules: [{ pattern: 'auth/**', owners: ['@security-team'] }] },
   ],
+  codeownerDiagnostics: [],
   requiredChecks: [],
   limits: {},
 };

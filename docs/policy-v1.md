@@ -347,7 +347,15 @@ auth/** @security-team @backend-lead
 *.md @docs-team
 ```
 
-Rules are evaluated with last-match-wins behavior, matching GitHub's CODEOWNERS precedence model. In the example above, `auth/login.ts` reports `@security-team @backend-lead` as the effective owners while still showing that `* @core-team` also matched earlier. Blank lines, comments, and entries without owners are ignored.
+Rules are evaluated with last-match-wins behavior, matching GitHub's CODEOWNERS precedence model. In the example above, `auth/login.ts` reports `@security-team @backend-lead` as the effective owners while still showing that `* @core-team` also matched earlier.
+
+RepoBelt also emits CODEOWNERS diagnostics as non-failing reviewer context. Diagnostics are included in JSON reports, Markdown reports, and GitHub annotation output. Current diagnostics cover:
+
+- owner-less rules, such as `payments/**`
+- unsupported pattern syntax using `[`/`]` or leading `!`
+- duplicate patterns where a later rule overrides an earlier rule with the same pattern
+
+Blank lines and comments are ignored.
 
 ## Status rules
 

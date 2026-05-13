@@ -35,6 +35,14 @@ export function renderGitHubActionsReport(result: CheckResult): string {
     }));
   }
 
+  for (const diagnostic of result.codeownerDiagnostics) {
+    lines.push(annotation({
+      command: 'warning',
+      properties: { title: 'RepoBelt CODEOWNERS diagnostic' },
+      message: `line ${diagnostic.line} ${diagnostic.kind} for ${diagnostic.pattern}: ${diagnostic.message}`,
+    }));
+  }
+
   if (result.requiredChecks.length > 0) {
     lines.push(annotation({
       command: 'notice',
