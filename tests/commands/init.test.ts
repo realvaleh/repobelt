@@ -76,7 +76,7 @@ describe('repobelt init', () => {
     expect(policy).toContain('  max_risky: 0');
     expect(policy).toContain('  max_secrets: 0');
     expect(workflow).toContain(`          npx repobelt check \\
-            --since-main \\
+            --since-default \\
             --format github \\
             --summary "$GITHUB_STEP_SUMMARY" \\
             --fail-on-warn \\
@@ -85,6 +85,7 @@ describe('repobelt init', () => {
             --max-risky 0 \\
             --max-secrets 0
 `);
+    expect(workflow).not.toContain('--since-main');
   });
 
   it('generates a web preset policy with frontend and API review paths', () => {

@@ -125,7 +125,10 @@ try {
   expectIncludes('repobelt init --strict', strictPolicy, 'max_files: 50');
   expectIncludes('repobelt init --strict', strictPolicy, 'max_risky: 0');
   expectIncludes('repobelt init --strict', strictPolicy, 'max_secrets: 0');
-  expectIncludes('repobelt init --strict', strictWorkflow, '--since-main');
+  expectIncludes('repobelt init --strict', strictWorkflow, '--since-default');
+  if (strictWorkflow.includes('--since-main')) {
+    throw new Error('repobelt init --strict should use --since-default, not --since-main');
+  }
   expectIncludes('repobelt init --strict', strictWorkflow, '--fail-on-warn');
   expectIncludes('repobelt init --strict', strictWorkflow, '--codeowners-diagnostics-fail');
   expectIncludes('repobelt init --strict', strictWorkflow, '--max-files 50');

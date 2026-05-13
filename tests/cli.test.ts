@@ -241,7 +241,8 @@ allowlist:
       expect(policy).toContain('max_files: 50');
       expect(policy).toContain('max_risky: 0');
       expect(policy).toContain('max_secrets: 0');
-      expect(workflow).toContain('--since-main');
+      expect(workflow).toContain('--since-default');
+      expect(workflow).not.toContain('--since-main');
       expect(workflow).toContain('--fail-on-warn');
       expect(workflow).toContain('--codeowners-diagnostics-fail');
       expect(workflow).toContain('--max-files 50');

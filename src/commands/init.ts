@@ -168,7 +168,7 @@ ${checkCommand}
 function renderWorkflowCheckCommand(options: InitOptions): string {
   const lines = [
     '          npx repobelt check',
-    options.strict === true ? '            --since-main' : '            --diff "origin/$GITHUB_BASE_REF...$GITHUB_SHA"',
+    options.strict === true ? '            --since-default' : '            --diff "origin/$GITHUB_BASE_REF...$GITHUB_SHA"',
     '            --format github',
     '            --summary "$GITHUB_STEP_SUMMARY"',
   ];
