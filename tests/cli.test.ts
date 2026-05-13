@@ -43,6 +43,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(writes.join('\n')).toContain('Usage: repobelt check');
     expect(writes.join('\n')).toContain('--format <text|markdown|json|sarif|github>');
     expect(writes.join('\n')).toContain('--output <path>');
+    expect(writes.join('\n')).toContain('--summary <path>');
     expect(writes.join('\n')).toContain('--config <path>');
     expect(writes.join('\n')).toContain('--changed-files <path>');
     expect(writes.join('\n')).toContain('--stdin-changed-files');
@@ -388,6 +389,58 @@ describe('RepoBelt CLI foundation', () => {
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  });
+
+  it('writes --summary as a markdown sidecar while preserving the primary output format', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-summary-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths:
+  - custom-secret.txt
+risky_paths:
+  auth/**: require_review
+required_checks:
+  - summary-check
+allowlist:
+  paths: []
+`);
+      await mkdir(join(dir, 'auth'), { recursive: true });
+      await writeFile(join(dir, 'auth', 'login.ts'), 'export const login = true;\n');
+      await writeFile(join(dir, 'changed-files.txt'), 'auth/login.ts\n');
+
+      const result = await runCli(
+        ['check', '--changed-files', 'changed-files.txt', '--format', 'github', '--summary', 'reports/summary.md'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      const summary = await readFile(join(dir, 'reports', 'summary.md'), 'utf8');
+      expect(result.exitCode).toBe(0);
+      expect(writes.join('\n')).toContain('::warning file=auth/login.ts,title=RepoBelt risky path::auth/login.ts matched auth/** and requires review');
+      expect(writes.join('\n')).not.toContain('# RepoBelt Report');
+      expect(summary).toContain('# RepoBelt Report');
+      expect(summary).toContain('- `auth/login.ts` matched `auth/**` and requires review');
+      expect(summary).toContain('- `summary-check`');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects check --summary when no path is provided', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['check', '--summary'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Missing value for --summary');
   });
 
   it('writes --output to an absolute path when one is provided', async () => {

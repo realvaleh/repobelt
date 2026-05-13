@@ -78,6 +78,7 @@ try {
   expectIncludes('repobelt check --help', checkHelpOutput, '--stdin-changed-files');
   expectIncludes('repobelt check --help', checkHelpOutput, '--max-files <n>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--max-risky <n>');
+  expectIncludes('repobelt check --help', checkHelpOutput, '--summary <path>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--format <text|markdown|json|sarif|github>');
 
   const presetListOutput = run('npx', ['repobelt', 'init', '--list-presets'], { cwd: appDir });
@@ -167,6 +168,13 @@ allowlist:
     cwd: appDir,
   });
   expectIncludes('repobelt check dedupes explicit files', dedupedFilesOutput, 'RepoBelt check passed with warnings');
+
+  run('npx', ['repobelt', 'check', '--changed-files', 'oversized-files.txt', '--format', 'github', '--summary', 'reports/summary.md'], {
+    cwd: appDir,
+  });
+  const summary = run('node', ['-e', "process.stdout.write(require('node:fs').readFileSync('reports/summary.md', 'utf8'))"], { cwd: appDir });
+  expectIncludes('repobelt check --summary', summary, '# RepoBelt Report');
+  expectIncludes('repobelt check --summary', summary, '- `auth/login.ts` matched `auth/**` and requires review');
 
   console.log('\nRepoBelt packaged CLI smoke test passed.');
 } finally {

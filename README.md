@@ -143,6 +143,12 @@ Generate GitHub Actions annotations:
 npx repobelt check --base HEAD --head worktree --format github
 ```
 
+Write a Markdown sidecar summary for GitHub step summaries or bot comments while keeping another primary format on stdout:
+
+```bash
+npx repobelt check --format github --summary "$GITHUB_STEP_SUMMARY"
+```
+
 Write any report format to a file:
 
 ```bash

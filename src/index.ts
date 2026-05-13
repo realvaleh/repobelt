@@ -47,6 +47,7 @@ Options:
   --head <ref|worktree>           Head git ref or worktree. Default: worktree
   --format <text|markdown|json|sarif|github>   Output format. Default: text
   --output <path>                  Write report to a file instead of stdout
+  --summary <path>                 Also write a Markdown summary to a file
   --config <path>                  Policy file path. Default: .repobelt.yml
   --changed-files <path>           Newline-delimited changed-file list instead of git diff discovery
   --stdin-changed-files            Read newline-delimited changed-file list from stdin
@@ -114,6 +115,7 @@ export async function runCli(
     const head = getFlagValue(args, '--head') ?? 'worktree';
     const format = getFlagValue(args, '--format') ?? 'text';
     const output = getFlagValue(args, '--output');
+    const summary = getFlagValue(args, '--summary');
     const config = getFlagValue(args, '--config');
     const changedFilesPath = getFlagValue(args, '--changed-files');
     const readChangedFilesFromStdin = args.includes('--stdin-changed-files');
@@ -126,6 +128,10 @@ export async function runCli(
     }
     if (isMissingFlagValue(args, '--changed-files')) {
       io.stderr('Missing value for --changed-files');
+      return { exitCode: 1 };
+    }
+    if (isMissingFlagValue(args, '--summary')) {
+      io.stderr('Missing value for --summary');
       return { exitCode: 1 };
     }
     if (changedFilesPath !== undefined && readChangedFilesFromStdin) {
@@ -171,6 +177,10 @@ export async function runCli(
     } catch (error) {
       io.stderr(`RepoBelt check failed: ${formatError(error)}`);
       return { exitCode: 1 };
+    }
+
+    if (summary !== undefined) {
+      await writeOutputFile(resolveOutputPath(runtime.cwd, summary), renderMarkdownReport(result));
     }
 
     if (output !== undefined) {
