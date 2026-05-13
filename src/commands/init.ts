@@ -132,7 +132,7 @@ export function generateInitFiles(options: InitOptions = {}): Record<string, str
 function renderWorkflow(options: InitOptions): string {
   const issuesPermission = options.prComment === true ? '      issues: write\n' : '';
   const prCommentEnv = options.prComment === true ? '        env:\n          GH_TOKEN: ${{ github.token }}\n' : '';
-  const summarySuffix = options.prComment === true ? ' \\\n            --pr-comment auto' : '';
+  const checkCommand = renderWorkflowCheckCommand(options);
 
   return `name: RepoBelt
 
@@ -160,12 +160,24 @@ ${issuesPermission}    steps:
           node-version: 20
       - name: Run RepoBelt
 ${prCommentEnv}        run: |
-          npx repobelt check \
-            --base "origin/$GITHUB_BASE_REF" \
-            --head "$GITHUB_SHA" \
-            --format github \
-            --summary "$GITHUB_STEP_SUMMARY"${summarySuffix}
+${checkCommand}
 `;
+}
+
+function renderWorkflowCheckCommand(options: InitOptions): string {
+  const lines = [
+    '          npx repobelt check',
+    '            --base "origin/$GITHUB_BASE_REF"',
+    '            --head "$GITHUB_SHA"',
+    '            --format github',
+    '            --summary "$GITHUB_STEP_SUMMARY"',
+  ];
+
+  if (options.prComment === true) {
+    lines.push('            --pr-comment auto');
+  }
+
+  return lines.map((line, index) => (index === lines.length - 1 ? line : `${line} \\`)).join('\n');
 }
 
 export async function writeInitFiles(targetDirectory: string, options: InitOptions = {}): Promise<InitWriteResult> {

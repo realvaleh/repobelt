@@ -41,14 +41,31 @@ describe('repobelt init', () => {
     expect(files['.github/workflows/repobelt.yml']).not.toContain('| tee "$GITHUB_STEP_SUMMARY"');
   });
 
+  it('formats the generated GitHub Action check command as readable continued shell lines', () => {
+    const files = generateInitFiles();
+    const workflow = files['.github/workflows/repobelt.yml'];
+
+    expect(workflow).toContain(`          npx repobelt check \\
+            --base "origin/$GITHUB_BASE_REF" \\
+            --head "$GITHUB_SHA" \\
+            --format github \\
+            --summary "$GITHUB_STEP_SUMMARY"
+`);
+  });
+
   it('can generate a GitHub Action with persistent PR comments enabled', () => {
     const files = generateInitFiles({ prComment: true });
     const workflow = files['.github/workflows/repobelt.yml'];
 
     expect(workflow).toContain('issues: write');
     expect(workflow).toContain('GH_TOKEN: ${{ github.token }}');
-    expect(workflow).toContain('--summary "$GITHUB_STEP_SUMMARY" \\');
-    expect(workflow).toContain('--pr-comment auto');
+    expect(workflow).toContain(`          npx repobelt check \\
+            --base "origin/$GITHUB_BASE_REF" \\
+            --head "$GITHUB_SHA" \\
+            --format github \\
+            --summary "$GITHUB_STEP_SUMMARY" \\
+            --pr-comment auto
+`);
   });
 
   it('generates a web preset policy with frontend and API review paths', () => {
