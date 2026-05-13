@@ -64,6 +64,14 @@ npx repobelt check --base HEAD --head worktree
 
 `doctor` validates the local setup before CI depends on it: git repository status, `.repobelt.yml` presence/parsing, `.repobeltignore` pattern loading, CODEOWNERS diagnostics, and next suggested commands.
 
+For bot-friendly diagnostics, emit the same health report as JSON:
+
+```bash
+npx repobelt doctor --format json
+```
+
+The JSON shape includes `status` (`pass` or `fail`), `hasFailures`, `findings` (`level`, `message`, and optional `details`), and `nextCommands`. Treat it as a practical integration format for early-preview releases; pin RepoBelt versions in production automations.
+
 To generate the GitHub Actions workflow with persistent PR report comments enabled from the start:
 
 ```bash
@@ -413,8 +421,9 @@ Options:
 Usage: repobelt doctor [options]
 
 Options:
-  --config <path>  Policy file path. Default: .repobelt.yml
-  -h, --help       Show this help message
+  --config <path>       Policy file path. Default: .repobelt.yml
+  --format <text|json>  Output format. Default: text
+  -h, --help            Show this help message
 ```
 
 ```text

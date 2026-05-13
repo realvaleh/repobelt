@@ -82,6 +82,7 @@ describe('RepoBelt CLI foundation', () => {
     const output = writes.join('\n');
     expect(output).toContain('Usage: repobelt doctor');
     expect(output).toContain('--config <path>');
+    expect(output).toContain('--format <text|json>');
   });
 
   it('reports healthy local setup for doctor', async () => {
@@ -133,6 +134,54 @@ allowlist:
     }
   });
 
+  it('prints machine-readable doctor output with --format json', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-doctor-json-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths:
+  - .env
+risky_paths:
+  auth/**: require_review
+required_checks:
+  - test
+allowlist:
+  paths: []
+`);
+      await writeFile(join(dir, '.repobeltignore'), 'generated/**\n');
+      await mkdir(join(dir, '.github'), { recursive: true });
+      await writeFile(join(dir, '.github', 'CODEOWNERS'), 'auth/** @security-team\n');
+
+      const result = await runCli(
+        ['doctor', '--format', 'json'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        {
+          cwd: dir,
+          execFile: async () => ({ stdout: 'true\n', stderr: '' }),
+        },
+      );
+
+      const parsed = JSON.parse(writes.join('\n')) as {
+        status: string;
+        hasFailures: boolean;
+        findings: Array<{ level: string; message: string; details?: string[] }>;
+        nextCommands: string[];
+      };
+      expect(result.exitCode).toBe(0);
+      expect(parsed.status).toBe('pass');
+      expect(parsed.hasFailures).toBe(false);
+      expect(parsed.findings).toContainEqual({ level: 'OK', message: 'git repository' });
+      expect(parsed.findings.some((finding) => finding.message === 'policy .repobelt.yml')).toBe(true);
+      expect(parsed.nextCommands).toContain('repobelt check --since-main');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it('fails doctor for invalid policy and CODEOWNERS diagnostics', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-doctor-unhealthy-'));
     const writes: string[] = [];
@@ -160,6 +209,42 @@ allowlist:
       expect(output).toContain('FAIL policy .repobelt.yml: Unsupported RepoBelt policy version: 2');
       expect(output).toContain('WARN CODEOWNERS .github/CODEOWNERS: 1 diagnostic');
       expect(output).toContain('line 1 ownerless_rule auth/**');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('prints failing doctor issues as JSON and preserves non-zero exit code', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-doctor-json-unhealthy-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), 'version: 2\n');
+      await mkdir(join(dir, '.github'), { recursive: true });
+      await writeFile(join(dir, '.github', 'CODEOWNERS'), 'auth/**\n');
+
+      const result = await runCli(
+        ['doctor', '--format', 'json'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        {
+          cwd: dir,
+          execFile: async () => ({ stdout: 'true\n', stderr: '' }),
+        },
+      );
+
+      const parsed = JSON.parse(writes.join('\n')) as {
+        status: string;
+        hasFailures: boolean;
+        findings: Array<{ level: string; message: string; details?: string[] }>;
+      };
+      expect(result.exitCode).toBe(1);
+      expect(parsed.status).toBe('fail');
+      expect(parsed.hasFailures).toBe(true);
+      expect(parsed.findings.some((finding) => finding.level === 'FAIL' && finding.message.includes('Unsupported RepoBelt policy version'))).toBe(true);
+      expect(parsed.findings.some((finding) => finding.level === 'WARN' && finding.details?.some((detail) => detail.includes('ownerless_rule')))).toBe(true);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

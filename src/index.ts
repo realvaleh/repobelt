@@ -101,8 +101,9 @@ export function getDoctorHelpText(): string {
 Usage: repobelt doctor [options]
 
 Options:
-  --config <path>  Policy file path. Default: .repobelt.yml
-  -h, --help       Show this help message
+  --config <path>       Policy file path. Default: .repobelt.yml
+  --format <text|json>  Output format. Default: text
+  -h, --help            Show this help message
 `;
 }
 
@@ -162,9 +163,18 @@ export async function runCli(
       io.stderr('Missing value for --config');
       return { exitCode: 1 };
     }
+    if (isMissingFlagValue(args, '--format')) {
+      io.stderr('Missing value for --format');
+      return { exitCode: 1 };
+    }
     const config = getFlagValue(args, '--config');
+    const format = getFlagValue(args, '--format') ?? 'text';
+    if (format !== 'text' && format !== 'json') {
+      io.stderr(`Unsupported doctor format: ${format}`);
+      return { exitCode: 1 };
+    }
     const output = await renderDoctorReport({ cwd: runtime.cwd, config, execFile: runtime.execFile ?? defaultExecFile });
-    io.stdout(output.text);
+    io.stdout(formatDoctorReport(output, format));
     return { exitCode: output.hasFailures ? 1 : 0 };
   }
 
@@ -482,7 +492,14 @@ interface DoctorFinding {
   details?: string[];
 }
 
-async function renderDoctorReport(options: { cwd: string; config: string | undefined; execFile: ExecFileRunner }): Promise<{ text: string; hasFailures: boolean }> {
+interface DoctorReport {
+  status: 'pass' | 'fail';
+  hasFailures: boolean;
+  findings: DoctorFinding[];
+  nextCommands: string[];
+}
+
+async function renderDoctorReport(options: { cwd: string; config: string | undefined; execFile: ExecFileRunner }): Promise<DoctorReport> {
   const findings: DoctorFinding[] = [];
   findings.push(await inspectGitRepository(options.cwd, options.execFile));
   findings.push(await inspectPolicy(options.cwd, options.config));
@@ -490,18 +507,31 @@ async function renderDoctorReport(options: { cwd: string; config: string | undef
   findings.push(await inspectCodeowners(options.cwd));
 
   const hasIssues = findings.some((finding) => finding.level !== 'OK');
-  const lines = [hasIssues ? 'RepoBelt doctor found issues' : 'RepoBelt doctor passed'];
-  for (const finding of findings) {
+  return {
+    status: hasIssues ? 'fail' : 'pass',
+    hasFailures: hasIssues,
+    findings,
+    nextCommands: ['repobelt check --since-main', 'repobelt check --print-config', 'repobelt init --strict'],
+  };
+}
+
+function formatDoctorReport(report: DoctorReport, format: 'text' | 'json'): string {
+  if (format === 'json') {
+    return `${JSON.stringify(report, null, 2)}\n`;
+  }
+
+  const lines = [report.hasFailures ? 'RepoBelt doctor found issues' : 'RepoBelt doctor passed'];
+  for (const finding of report.findings) {
     lines.push(`${finding.level} ${finding.message}`);
     for (const detail of finding.details ?? []) {
       lines.push(`  - ${detail}`);
     }
   }
   lines.push('Next commands:');
-  lines.push('  repobelt check --since-main');
-  lines.push('  repobelt check --print-config');
-  lines.push('  repobelt init --strict');
-  return { text: `${lines.join('\n')}\n`, hasFailures: hasIssues };
+  for (const command of report.nextCommands) {
+    lines.push(`  ${command}`);
+  }
+  return `${lines.join('\n')}\n`;
 }
 
 async function inspectGitRepository(cwd: string, execFile: ExecFileRunner): Promise<DoctorFinding> {

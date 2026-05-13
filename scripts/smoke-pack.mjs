@@ -81,6 +81,7 @@ try {
   const doctorHelpOutput = run('npx', ['repobelt', 'doctor', '--help'], { cwd: appDir });
   expectIncludes('repobelt doctor --help', doctorHelpOutput, 'Usage: repobelt doctor');
   expectIncludes('repobelt doctor --help', doctorHelpOutput, '--config <path>');
+  expectIncludes('repobelt doctor --help', doctorHelpOutput, '--format <text|json>');
 
   const checkHelpOutput = run('npx', ['repobelt', 'check', '--help'], { cwd: appDir });
   expectIncludes('repobelt check --help', checkHelpOutput, '--config <path>');
@@ -187,6 +188,11 @@ try {
   expectIncludes('repobelt doctor', doctorOutput, 'OK git repository');
   expectIncludes('repobelt doctor', doctorOutput, 'OK policy .repobelt.yml');
   expectIncludes('repobelt doctor', doctorOutput, 'Next commands:');
+  const doctorJsonOutput = run('npx', ['repobelt', 'doctor', '--format', 'json'], { cwd: appDir });
+  expectIncludes('repobelt doctor --format json', doctorJsonOutput, '"status": "pass"');
+  expectIncludes('repobelt doctor --format json', doctorJsonOutput, '"hasFailures": false');
+  expectIncludes('repobelt doctor --format json', doctorJsonOutput, '"findings"');
+  expectIncludes('repobelt doctor --format json', doctorJsonOutput, '"nextCommands"');
   writeFileSync(join(appDir, '.gitignore'), 'node_modules/\n');
   writeFileSync(join(appDir, 'README.md'), '# Smoke test app\n');
   run('git', ['add', '.'], { cwd: appDir });

@@ -19,10 +19,11 @@ The script:
 5. Runs `npx repobelt init --dry-run`.
 6. Initializes a tiny git repository.
 7. Runs `npx repobelt init`.
-8. Commits a baseline fixture.
-9. Adds a changed `auth/login.ts` file.
-10. Runs `npx repobelt check --base HEAD --head worktree`.
-11. Verifies the packaged CLI reports a warning and lists `auth/login.ts` as a risky file.
+8. Runs `npx repobelt doctor` and `npx repobelt doctor --format json`.
+9. Commits a baseline fixture.
+10. Adds a changed `auth/login.ts` file.
+11. Runs `npx repobelt check --base HEAD --head worktree`.
+12. Verifies the packaged CLI reports a warning and lists `auth/login.ts` as a risky file.
 
 ## Keeping the temp directory
 
