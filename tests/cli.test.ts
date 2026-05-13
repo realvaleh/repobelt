@@ -83,6 +83,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(output).toContain('Usage: repobelt doctor');
     expect(output).toContain('--config <path>');
     expect(output).toContain('--format <text|json>');
+    expect(output).toContain('--output <path>');
   });
 
   it('reports healthy local setup for doctor', async () => {
@@ -180,6 +181,52 @@ allowlist:
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  });
+
+  it('writes doctor output to a file while keeping exit behavior', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-doctor-output-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths: []
+risky_paths: {}
+required_checks: []
+allowlist:
+  paths: []
+`);
+      const result = await runCli(
+        ['doctor', '--format', 'json', '--output', 'reports/doctor.json'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        {
+          cwd: dir,
+          execFile: async () => ({ stdout: 'true\n', stderr: '' }),
+        },
+      );
+
+      const parsed = JSON.parse(await readFile(join(dir, 'reports', 'doctor.json'), 'utf8')) as { status: string };
+      expect(result.exitCode).toBe(0);
+      expect(parsed.status).toBe('pass');
+      expect(writes.join('\n')).toContain('Wrote RepoBelt doctor report to reports/doctor.json');
+      expect(writes.join('\n')).not.toContain('"findings"');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects doctor --output when no path is provided', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['doctor', '--output'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Missing value for --output');
   });
 
   it('fails doctor for invalid policy and CODEOWNERS diagnostics', async () => {

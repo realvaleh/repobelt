@@ -103,6 +103,7 @@ Usage: repobelt doctor [options]
 Options:
   --config <path>       Policy file path. Default: .repobelt.yml
   --format <text|json>  Output format. Default: text
+  --output <path>       Write report to a file instead of stdout
   -h, --help            Show this help message
 `;
 }
@@ -167,14 +168,25 @@ export async function runCli(
       io.stderr('Missing value for --format');
       return { exitCode: 1 };
     }
+    if (isMissingFlagValue(args, '--output')) {
+      io.stderr('Missing value for --output');
+      return { exitCode: 1 };
+    }
     const config = getFlagValue(args, '--config');
     const format = getFlagValue(args, '--format') ?? 'text';
+    const outputPath = getFlagValue(args, '--output');
     if (format !== 'text' && format !== 'json') {
       io.stderr(`Unsupported doctor format: ${format}`);
       return { exitCode: 1 };
     }
     const output = await renderDoctorReport({ cwd: runtime.cwd, config, execFile: runtime.execFile ?? defaultExecFile });
-    io.stdout(formatDoctorReport(output, format));
+    const renderedOutput = formatDoctorReport(output, format);
+    if (outputPath !== undefined) {
+      await writeOutputFile(resolveOutputPath(runtime.cwd, outputPath), renderedOutput);
+      io.stdout(`Wrote RepoBelt doctor report to ${outputPath}`);
+      return { exitCode: output.hasFailures ? 1 : 0 };
+    }
+    io.stdout(renderedOutput);
     return { exitCode: output.hasFailures ? 1 : 0 };
   }
 

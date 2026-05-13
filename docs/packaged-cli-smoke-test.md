@@ -19,7 +19,7 @@ The script:
 5. Runs `npx repobelt init --dry-run`.
 6. Initializes a tiny git repository.
 7. Runs `npx repobelt init`.
-8. Runs `npx repobelt doctor` and `npx repobelt doctor --format json`.
+8. Runs `npx repobelt doctor`, `npx repobelt doctor --format json`, and `npx repobelt doctor --format json --output reports/doctor.json`.
 9. Commits a baseline fixture.
 10. Adds a changed `auth/login.ts` file.
 11. Runs `npx repobelt check --base HEAD --head worktree`.

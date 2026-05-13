@@ -70,6 +70,12 @@ For bot-friendly diagnostics, emit the same health report as JSON:
 npx repobelt doctor --format json
 ```
 
+Write doctor output to an artifact file when another CI step or bot should consume it:
+
+```bash
+npx repobelt doctor --format json --output reports/repobelt-doctor.json
+```
+
 The JSON shape includes `status` (`pass` or `fail`), `hasFailures`, `findings` (`level`, `message`, and optional `details`), and `nextCommands`. Treat it as a practical integration format for early-preview releases; pin RepoBelt versions in production automations.
 
 To generate the GitHub Actions workflow with persistent PR report comments enabled from the start:
@@ -423,6 +429,7 @@ Usage: repobelt doctor [options]
 Options:
   --config <path>       Policy file path. Default: .repobelt.yml
   --format <text|json>  Output format. Default: text
+  --output <path>       Write report to a file instead of stdout
   -h, --help            Show this help message
 ```
 
