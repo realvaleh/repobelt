@@ -4,7 +4,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { describe, expect, it } from 'vitest';
+import { generateInitFiles, supportedInitPresets } from '../src/commands/init.js';
 import { getHelpText, runCli } from '../src/index.js';
+import { loadPolicyFromText } from '../src/policy/load-policy.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -494,7 +496,7 @@ allowlist:
       expect(result.exitCode).toBe(0);
       const policy = await readFile(join(dir, '.repobelt.yml'), 'utf8');
       expect(policy).toContain('# Preset: infra');
-      expect(policy).toContain('**/*.tf: require_review');
+      expect(policy).toContain("'**/*.tf': require_review");
       expect(policy).toContain('k8s/**: require_review');
       expect(policy).toContain('  - plan');
     } finally {
@@ -516,6 +518,14 @@ allowlist:
       expect(policy).toContain('  - affected');
     } finally {
       await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('generates loadable policies for every init preset', () => {
+    for (const preset of supportedInitPresets) {
+      const files = generateInitFiles({ preset });
+
+      expect(() => loadPolicyFromText(files['.repobelt.yml'])).not.toThrow();
     }
   });
 

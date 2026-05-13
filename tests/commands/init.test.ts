@@ -140,7 +140,7 @@ describe('repobelt init', () => {
     const files = generateInitFiles({ preset: 'infra' });
 
     expect(files['.repobelt.yml']).toContain('# Preset: infra');
-    expect(files['.repobelt.yml']).toContain('**/*.tf: require_review');
+    expect(files['.repobelt.yml']).toContain("'**/*.tf': require_review");
     expect(files['.repobelt.yml']).toContain('k8s/**: require_review');
     expect(files['.repobelt.yml']).toContain('helm/**: require_review');
     expect(files['.repobelt.yml']).toContain('Dockerfile*: require_review');

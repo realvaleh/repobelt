@@ -219,8 +219,8 @@ function getStrictBudgets(options: InitOptions): { maxFiles: number; maxRisky: n
 function renderPolicy(preset: InitPreset, options: InitOptions): string {
   const presetDefinition = presetDefinitions[preset];
   const presetComment = preset === 'default' ? '' : `# Preset: ${preset}\n`;
-  const riskyPaths = [...baseRiskyPaths, ...presetDefinition.riskyPaths];
-  const requiredChecks = [...baseRequiredChecks, ...presetDefinition.requiredChecks];
+  const riskyPaths = uniqueStrings([...baseRiskyPaths, ...presetDefinition.riskyPaths]);
+  const requiredChecks = uniqueStrings([...baseRequiredChecks, ...presetDefinition.requiredChecks]);
   const strictBudgets = getStrictBudgets(options);
   const strictLimits = options.strict === true ? `
 limits:
@@ -230,8 +230,7 @@ limits:
 ` : '';
 
   return `version: 1
-${presetComment}
-# Files that should fail CI when changed by an AI-generated PR unless policy is edited.
+${presetComment}# Files that should fail CI when changed by an AI-generated PR unless policy is edited.
 protected_paths:
   - .env
   - .env.*
@@ -241,7 +240,7 @@ protected_paths:
 
 # Files that are allowed but should receive explicit human review.
 risky_paths:
-${riskyPaths.map((path) => `  ${path}`).join('\n')}
+${riskyPaths.map((path) => `  ${renderRiskyPathEntry(path)}`).join('\n')}
 
 required_checks:
 ${requiredChecks.map((check) => `  - ${check}`).join('\n')}
@@ -249,4 +248,26 @@ ${requiredChecks.map((check) => `  - ${check}`).join('\n')}
 allowlist:
   paths: []
 ${strictLimits}`;
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return values.filter((value, index) => values.indexOf(value) === index);
+}
+
+function renderRiskyPathEntry(entry: string): string {
+  const separator = entry.lastIndexOf(': ');
+  if (separator === -1) {
+    return entry;
+  }
+  const pattern = entry.slice(0, separator);
+  const action = entry.slice(separator + 2);
+  return `${shouldQuoteYamlKey(pattern) ? quoteYamlKey(pattern) : pattern}: ${action}`;
+}
+
+function shouldQuoteYamlKey(value: string): boolean {
+  return value.startsWith('*') || value.includes("'");
+}
+
+function quoteYamlKey(value: string): string {
+  return `'${value.replace(/'/g, "''")}'`;
 }
