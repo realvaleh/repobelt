@@ -14,6 +14,10 @@ describe('repobelt init', () => {
     expect(files['.github/workflows/repobelt.yml']).toContain('RepoBelt');
     expect(files['.github/workflows/repobelt.yml']).toContain('repobelt check');
     expect(files['.github/workflows/repobelt.yml']).toContain('FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true');
+    expect(files['.github/workflows/repobelt.yml']).toContain('actions/checkout@v6');
+    expect(files['.github/workflows/repobelt.yml']).toContain('actions/setup-node@v6');
+    expect(files['.github/workflows/repobelt.yml']).not.toContain('actions/checkout@v4');
+    expect(files['.github/workflows/repobelt.yml']).not.toContain('actions/setup-node@v4');
     expect(files['.github/workflows/repobelt.yml']).toContain('--format markdown');
     expect(files['.github/workflows/repobelt.yml']).toContain('$GITHUB_STEP_SUMMARY');
   });
