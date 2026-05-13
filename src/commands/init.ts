@@ -77,6 +77,22 @@ const presetDefinitions = {
     ],
     requiredChecks: ['plan'],
   },
+  monorepo: {
+    riskyPaths: [
+      ...packageRiskyPaths,
+      'pnpm-workspace.yaml: require_review',
+      'turbo.json: require_review',
+      'nx.json: require_review',
+      'lerna.json: require_review',
+      'rush.json: require_review',
+      'packages/*/package.json: require_review',
+      'apps/*/package.json: require_review',
+      'libs/*/package.json: require_review',
+      'tools/**: require_review',
+      'config/**: require_review',
+    ],
+    requiredChecks: ['build', 'affected'],
+  },
 } satisfies Record<string, InitPresetDefinition>;
 
 export const supportedInitPresets = Object.keys(presetDefinitions) as InitPreset[];

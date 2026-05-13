@@ -65,6 +65,7 @@ repobelt init --preset web
 repobelt init --preset node
 repobelt init --preset python
 repobelt init --preset infra
+repobelt init --preset monorepo
 ```
 
 The `default` preset is the baseline policy shown above.
@@ -159,6 +160,34 @@ required_checks:
 ```
 
 Use the infra preset for Terraform, Kubernetes, Helm, Docker, production infrastructure, and deployment-heavy repositories where generated changes need explicit maintainer review and a plan-style validation reminder.
+
+The `monorepo` preset keeps the baseline safeguards and adds review routing for workspace and shared tooling risk surfaces:
+
+```yaml
+risky_paths:
+  package.json: require_review
+  pnpm-lock.yaml: require_review
+  package-lock.json: require_review
+  pnpm-workspace.yaml: require_review
+  turbo.json: require_review
+  nx.json: require_review
+  lerna.json: require_review
+  rush.json: require_review
+  packages/*/package.json: require_review
+  apps/*/package.json: require_review
+  libs/*/package.json: require_review
+  tools/**: require_review
+  config/**: require_review
+
+required_checks:
+  - test
+  - lint
+  - typecheck
+  - build
+  - affected
+```
+
+Use the monorepo preset for pnpm/Turborepo/Nx/Lerna/Rush-style repositories where generated changes to workspace boundaries, package manifests, shared tooling, or shared config deserve explicit maintainer review and affected-project validation.
 
 ## Fields
 

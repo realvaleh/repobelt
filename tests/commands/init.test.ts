@@ -6,7 +6,7 @@ import { generateInitFiles, supportedInitPresets, writeInitFiles } from '../../s
 
 describe('repobelt init', () => {
   it('exposes supported preset names from the preset registry', () => {
-    expect(supportedInitPresets).toEqual(['default', 'web', 'node', 'python', 'infra']);
+    expect(supportedInitPresets).toEqual(['default', 'web', 'node', 'python', 'infra', 'monorepo']);
   });
 
   it('generates the starter policy and GitHub Action files', () => {
@@ -71,6 +71,18 @@ describe('repobelt init', () => {
     expect(files['.repobelt.yml']).toContain('Dockerfile*: require_review');
     expect(files['.repobelt.yml']).toContain('docker-compose*.yml: require_review');
     expect(files['.repobelt.yml']).toContain('  - plan');
+  });
+
+  it('generates a monorepo preset policy with workspace and shared tooling review paths', () => {
+    const files = generateInitFiles({ preset: 'monorepo' });
+
+    expect(files['.repobelt.yml']).toContain('# Preset: monorepo');
+    expect(files['.repobelt.yml']).toContain('pnpm-workspace.yaml: require_review');
+    expect(files['.repobelt.yml']).toContain('turbo.json: require_review');
+    expect(files['.repobelt.yml']).toContain('nx.json: require_review');
+    expect(files['.repobelt.yml']).toContain('packages/*/package.json: require_review');
+    expect(files['.repobelt.yml']).toContain('tools/**: require_review');
+    expect(files['.repobelt.yml']).toContain('  - affected');
   });
 
   it('writes generated files into a target directory', async () => {

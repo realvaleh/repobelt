@@ -15,7 +15,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(help).toContain('RepoBelt');
     expect(help).toContain('A seatbelt for AI-generated pull requests');
     expect(help).toContain('init');
-    expect(help).toContain('--preset <default|web|node|python|infra>');
+    expect(help).toContain('--preset <default|web|node|python|infra|monorepo>');
     expect(help).toContain('check');
   });
 
@@ -141,6 +141,23 @@ describe('RepoBelt CLI foundation', () => {
       expect(policy).toContain('**/*.tf: require_review');
       expect(policy).toContain('k8s/**: require_review');
       expect(policy).toContain('  - plan');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('creates monorepo preset files for init --preset monorepo', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-init-monorepo-'));
+
+    try {
+      const result = await runCli(['init', '--preset', 'monorepo'], { stdout: () => undefined, stderr: () => undefined }, { cwd: dir });
+
+      expect(result.exitCode).toBe(0);
+      const policy = await readFile(join(dir, '.repobelt.yml'), 'utf8');
+      expect(policy).toContain('# Preset: monorepo');
+      expect(policy).toContain('pnpm-workspace.yaml: require_review');
+      expect(policy).toContain('packages/*/package.json: require_review');
+      expect(policy).toContain('  - affected');
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
