@@ -113,6 +113,7 @@ export interface InitPresetDescription {
 
 export interface InitOptions {
   preset?: InitPreset;
+  prComment?: boolean;
 }
 
 export function describeInitPresets(): InitPresetDescription[] {
@@ -124,7 +125,16 @@ export function generateInitFiles(options: InitOptions = {}): Record<string, str
 
   return {
     '.repobelt.yml': policy,
-    '.github/workflows/repobelt.yml': `name: RepoBelt
+    '.github/workflows/repobelt.yml': renderWorkflow(options),
+  };
+}
+
+function renderWorkflow(options: InitOptions): string {
+  const issuesPermission = options.prComment === true ? '      issues: write\n' : '';
+  const prCommentEnv = options.prComment === true ? '        env:\n          GH_TOKEN: ${{ github.token }}\n' : '';
+  const summarySuffix = options.prComment === true ? ' \\\n            --pr-comment auto' : '';
+
+  return `name: RepoBelt
 
 on:
   pull_request:
@@ -139,7 +149,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    steps:
+${issuesPermission}    steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
@@ -149,14 +159,13 @@ jobs:
         with:
           node-version: 20
       - name: Run RepoBelt
-        run: |
+${prCommentEnv}        run: |
           npx repobelt check \
             --base "origin/$GITHUB_BASE_REF" \
             --head "$GITHUB_SHA" \
             --format github \
-            --summary "$GITHUB_STEP_SUMMARY"
-`,
-  };
+            --summary "$GITHUB_STEP_SUMMARY"${summarySuffix}
+`;
 }
 
 export async function writeInitFiles(targetDirectory: string, options: InitOptions = {}): Promise<InitWriteResult> {

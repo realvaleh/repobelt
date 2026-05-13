@@ -60,6 +60,12 @@ npx repobelt init
 npx repobelt check --base HEAD --head worktree
 ```
 
+To generate the GitHub Actions workflow with persistent PR report comments enabled from the start:
+
+```bash
+npx repobelt init --pr-comment
+```
+
 To discover the built-in policy presets:
 
 ```bash
@@ -360,6 +366,7 @@ Commands:
 
 Options:
   --preset <default|web|node|python|infra|monorepo>  Policy preset for init. Default: default
+  --pr-comment            Add persistent PR comment support to generated GitHub Action
   -h, --help              Show this help message
 ```
 

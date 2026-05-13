@@ -16,6 +16,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(help).toContain('A seatbelt for AI-generated pull requests');
     expect(help).toContain('init');
     expect(help).toContain('--preset <default|web|node|python|infra|monorepo>');
+    expect(help).toContain('--pr-comment');
     expect(help).toContain('check');
   });
 
@@ -105,6 +106,22 @@ describe('RepoBelt CLI foundation', () => {
       expect(result.exitCode).toBe(0);
       expect(writes.join('\n')).toContain('Created .repobelt.yml');
       await expect(readFile(join(dir, '.repobelt.yml'), 'utf8')).resolves.toContain('version: 1');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('creates starter files with PR comment workflow support for init --pr-comment', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-init-pr-comment-'));
+
+    try {
+      const result = await runCli(['init', '--pr-comment'], { stdout: () => undefined, stderr: () => undefined }, { cwd: dir });
+
+      expect(result.exitCode).toBe(0);
+      const workflow = await readFile(join(dir, '.github/workflows/repobelt.yml'), 'utf8');
+      expect(workflow).toContain('issues: write');
+      expect(workflow).toContain('GH_TOKEN: ${{ github.token }}');
+      expect(workflow).toContain('--pr-comment auto');
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

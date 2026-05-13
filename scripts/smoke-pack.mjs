@@ -71,6 +71,7 @@ try {
   const helpOutput = run('npx', ['repobelt', '--help'], { cwd: appDir });
   expectIncludes('repobelt --help', helpOutput, 'Usage: repobelt <command>');
   expectIncludes('repobelt --help', helpOutput, '--list-presets');
+  expectIncludes('repobelt --help', helpOutput, '--pr-comment');
 
   const checkHelpOutput = run('npx', ['repobelt', 'check', '--help'], { cwd: appDir });
   expectIncludes('repobelt check --help', checkHelpOutput, '--config <path>');
@@ -95,6 +96,14 @@ try {
   const dryRunOutput = run('npx', ['repobelt', 'init', '--dry-run'], { cwd: appDir });
   expectIncludes('repobelt init --dry-run', dryRunOutput, '.repobelt.yml');
   expectIncludes('repobelt init --dry-run', dryRunOutput, '.github/workflows/repobelt.yml');
+
+  const commentInitDir = join(appDir, 'comment-init');
+  mkdirSync(commentInitDir, { recursive: true });
+  run('npx', ['repobelt', 'init', '--pr-comment'], { cwd: commentInitDir });
+  const commentWorkflow = run('node', ['-e', "process.stdout.write(require('node:fs').readFileSync('.github/workflows/repobelt.yml', 'utf8'))"], { cwd: commentInitDir });
+  expectIncludes('repobelt init --pr-comment', commentWorkflow, 'issues: write');
+  expectIncludes('repobelt init --pr-comment', commentWorkflow, 'GH_TOKEN: ${{ github.token }}');
+  expectIncludes('repobelt init --pr-comment', commentWorkflow, '--pr-comment auto');
 
   run('git', ['init', '-b', 'main'], { cwd: appDir });
   run('git', ['config', 'user.name', 'RepoBelt Smoke Test'], { cwd: appDir });

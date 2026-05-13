@@ -51,6 +51,7 @@ Commands:
 
 Options:
   --preset <${formatInitPresetChoices()}>  Policy preset for init. Default: default
+  --pr-comment            Add persistent PR comment support to generated GitHub Action
   --list-presets          List available init presets
   -h, --help              Show this help message
 `;
@@ -101,7 +102,7 @@ export async function runCli(
     if (preset === undefined) {
       return { exitCode: 1 };
     }
-    const files = generateInitFiles({ preset });
+    const files = generateInitFiles({ preset, prComment: args.includes('--pr-comment') });
     io.stdout('RepoBelt would create:');
     for (const path of Object.keys(files)) {
       io.stdout(`- ${path}`);
@@ -120,7 +121,7 @@ export async function runCli(
       return { exitCode: 1 };
     }
     try {
-      const result = await writeInitFiles(runtime.cwd, { preset });
+      const result = await writeInitFiles(runtime.cwd, { preset, prComment: args.includes('--pr-comment') });
       for (const path of result.created) {
         io.stdout(`Created ${path}`);
       }

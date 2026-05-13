@@ -35,7 +35,20 @@ describe('repobelt init', () => {
     expect(files['.github/workflows/repobelt.yml']).not.toContain('actions/setup-node@v4');
     expect(files['.github/workflows/repobelt.yml']).toContain('--format github');
     expect(files['.github/workflows/repobelt.yml']).toContain('--summary "$GITHUB_STEP_SUMMARY"');
+    expect(files['.github/workflows/repobelt.yml']).not.toContain('--pr-comment auto');
+    expect(files['.github/workflows/repobelt.yml']).not.toContain('issues: write');
+    expect(files['.github/workflows/repobelt.yml']).not.toContain('GH_TOKEN:');
     expect(files['.github/workflows/repobelt.yml']).not.toContain('| tee "$GITHUB_STEP_SUMMARY"');
+  });
+
+  it('can generate a GitHub Action with persistent PR comments enabled', () => {
+    const files = generateInitFiles({ prComment: true });
+    const workflow = files['.github/workflows/repobelt.yml'];
+
+    expect(workflow).toContain('issues: write');
+    expect(workflow).toContain('GH_TOKEN: ${{ github.token }}');
+    expect(workflow).toContain('--summary "$GITHUB_STEP_SUMMARY" \\');
+    expect(workflow).toContain('--pr-comment auto');
   });
 
   it('generates a web preset policy with frontend and API review paths', () => {
