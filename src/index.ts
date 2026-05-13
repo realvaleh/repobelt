@@ -70,6 +70,7 @@ Options:
   --diff <base...head>            Git diff range shorthand; cannot be combined with --base/--head
   --against <branch>              Compare branch...HEAD without writing the full diff range
   --since-main                    Compare origin/main...HEAD
+  --since-default                 Compare origin's default branch...HEAD, falling back to origin/main
   --format <text|markdown|json|sarif|github>   Output format. Default: text
   --output <path>                  Write report to a file instead of stdout
   --summary <path>                 Also write a Markdown summary to a file
@@ -175,7 +176,7 @@ export async function runCli(
     const diffRange = getFlagValue(args, '--diff');
     const againstBranch = getFlagValue(args, '--against');
     const sinceMain = args.includes('--since-main');
-    const effectiveDiffRange = resolveDiffRange({ diffRange, againstBranch, sinceMain });
+    const sinceDefault = args.includes('--since-default');
     const format = getFlagValue(args, '--format') ?? 'text';
     const output = getFlagValue(args, '--output');
     const summary = getFlagValue(args, '--summary');
@@ -225,10 +226,18 @@ export async function runCli(
       io.stderr('Missing value for --against');
       return { exitCode: 1 };
     }
-    if ([diffRange !== undefined, againstBranch !== undefined, sinceMain].filter(Boolean).length > 1) {
-      io.stderr('Use only one of --diff, --against, or --since-main');
+    if ([diffRange !== undefined, againstBranch !== undefined, sinceMain, sinceDefault].filter(Boolean).length > 1) {
+      io.stderr('Use only one of --diff, --against, --since-main, or --since-default');
       return { exitCode: 1 };
     }
+    const effectiveDiffRange = await resolveDiffRange({
+      cwd: runtime.cwd,
+      diffRange,
+      againstBranch,
+      sinceMain,
+      sinceDefault,
+      execFile: runtime.execFile ?? defaultExecFile,
+    });
     if (effectiveDiffRange !== undefined && (hasFlag(args, '--base') || hasFlag(args, '--head'))) {
       io.stderr('Use comparison shorthands instead of --base/--head, not both');
       return { exitCode: 1 };
@@ -902,7 +911,14 @@ function hasFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
 }
 
-function resolveDiffRange(options: { diffRange: string | undefined; againstBranch: string | undefined; sinceMain: boolean }): string | undefined {
+async function resolveDiffRange(options: {
+  cwd: string;
+  diffRange: string | undefined;
+  againstBranch: string | undefined;
+  sinceMain: boolean;
+  sinceDefault: boolean;
+  execFile: ExecFileRunner;
+}): Promise<string | undefined> {
   if (options.diffRange !== undefined) {
     return options.diffRange;
   }
@@ -912,7 +928,20 @@ function resolveDiffRange(options: { diffRange: string | undefined; againstBranc
   if (options.sinceMain) {
     return 'origin/main...HEAD';
   }
+  if (options.sinceDefault) {
+    return `${await detectOriginDefaultBranch(options.cwd, options.execFile)}...HEAD`;
+  }
   return undefined;
+}
+
+async function detectOriginDefaultBranch(cwd: string, execFile: ExecFileRunner): Promise<string> {
+  try {
+    const result = await execFile('git', ['symbolic-ref', '--quiet', '--short', 'refs/remotes/origin/HEAD'], { cwd });
+    const branch = result.stdout.trim();
+    return branch.length > 0 ? branch : 'origin/main';
+  } catch {
+    return 'origin/main';
+  }
 }
 
 function isMissingFlagValue(args: string[], flag: string): boolean {

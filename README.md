@@ -251,9 +251,10 @@ Run against a specific git diff range without spelling out separate base/head fl
 npx repobelt check --diff origin/main...HEAD
 npx repobelt check --against origin/main
 npx repobelt check --since-main
+npx repobelt check --since-default
 ```
 
-`--against <branch>` expands to `<branch>...HEAD`; `--since-main` expands to `origin/main...HEAD`.
+`--against <branch>` expands to `<branch>...HEAD`; `--since-main` expands to `origin/main...HEAD`; `--since-default` detects `origin/HEAD` and falls back to `origin/main` when no remote default branch is available.
 
 Print the fully resolved check configuration for CI debugging:
 
@@ -417,6 +418,7 @@ Options:
   --diff <base...head>            Git diff range shorthand; cannot be combined with --base/--head
   --against <branch>              Compare branch...HEAD without writing the full diff range
   --since-main                    Compare origin/main...HEAD
+  --since-default                 Compare origin's default branch...HEAD, falling back to origin/main
   --format <text|markdown|json|sarif|github>   Output format. Default: text
   --output <path>                  Write report to a file instead of stdout
   --summary <path>                 Also write a Markdown summary to a file

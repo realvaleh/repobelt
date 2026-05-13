@@ -48,6 +48,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(writes.join('\n')).toContain('--diff <base...head>');
     expect(writes.join('\n')).toContain('--against <branch>');
     expect(writes.join('\n')).toContain('--since-main');
+    expect(writes.join('\n')).toContain('--since-default');
     expect(writes.join('\n')).toContain('--output <path>');
     expect(writes.join('\n')).toContain('--summary <path>');
     expect(writes.join('\n')).toContain('--pr-comment <number|auto>');
@@ -838,6 +839,78 @@ allowlist:
     }
   });
 
+  it('prints --since-default using remote HEAD when available', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-since-default-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths: []
+risky_paths: {}
+required_checks: []
+allowlist:
+  paths: []
+`);
+
+      const result = await runCli(
+        ['check', '--print-config', '--since-default'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        {
+          cwd: dir,
+          execFile: async (command, args) => {
+            expect(command).toBe('git');
+            expect(args).toEqual(['symbolic-ref', '--quiet', '--short', 'refs/remotes/origin/HEAD']);
+            return { stdout: 'origin/trunk\n', stderr: '' };
+          },
+        },
+      );
+
+      const parsed = JSON.parse(writes.join('\n')) as { cliOverrides: { diff: string } };
+      expect(result.exitCode).toBe(0);
+      expect(parsed.cliOverrides.diff).toBe('origin/trunk...HEAD');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('falls back to origin/main for --since-default when remote HEAD is unavailable', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-since-default-fallback-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths: []
+risky_paths: {}
+required_checks: []
+allowlist:
+  paths: []
+`);
+
+      const result = await runCli(
+        ['check', '--print-config', '--since-default'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        {
+          cwd: dir,
+          execFile: async () => {
+            throw new Error('no remote head');
+          },
+        },
+      );
+
+      const parsed = JSON.parse(writes.join('\n')) as { cliOverrides: { diff: string } };
+      expect(result.exitCode).toBe(0);
+      expect(parsed.cliOverrides.diff).toBe('origin/main...HEAD');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it('rejects check --against when no branch is provided', async () => {
     const errors: string[] = [];
 
@@ -853,13 +926,13 @@ allowlist:
   it('rejects multiple comparison shorthands', async () => {
     const errors: string[] = [];
 
-    const result = await runCli(['check', '--diff', 'main...HEAD', '--since-main'], {
+    const result = await runCli(['check', '--diff', 'main...HEAD', '--since-default'], {
       stdout: () => undefined,
       stderr: (message) => errors.push(message),
     });
 
     expect(result.exitCode).toBe(1);
-    expect(errors.join('\n')).toContain('Use only one of --diff, --against, or --since-main');
+    expect(errors.join('\n')).toContain('Use only one of --diff, --against, --since-main, or --since-default');
   });
 
   it('rejects comparison shorthands when --base or --head are also provided', async () => {

@@ -424,7 +424,7 @@ Use `repobelt check --codeowners-diagnostics-fail` when CODEOWNERS hygiene shoul
 
 Use `repobelt check --diff <base...head>` to check an explicit git diff range, for example `repobelt check --diff origin/main...HEAD`. The range is passed to `git diff --name-only` as a single argument, so both two-dot and three-dot git ranges are supported. Do not combine comparison shorthands with `--base` or `--head`.
 
-Use `repobelt check --against <branch>` for a shorter branch comparison. It expands to `<branch>...HEAD`, so `repobelt check --against origin/main` is equivalent to `repobelt check --diff origin/main...HEAD`. Use `repobelt check --since-main` for the common `origin/main...HEAD` comparison.
+Use `repobelt check --against <branch>` for a shorter branch comparison. It expands to `<branch>...HEAD`, so `repobelt check --against origin/main` is equivalent to `repobelt check --diff origin/main...HEAD`. Use `repobelt check --since-main` for the common `origin/main...HEAD` comparison. Use `repobelt check --since-default` to detect `origin/HEAD` and compare against the remote default branch, falling back to `origin/main` when no remote default branch is configured.
 
 Use `repobelt check --format github` to emit GitHub Actions annotations. Protected paths and secret findings become `error` annotations, risky paths become `warning` annotations, and CODEOWNERS/required-check reminders become `notice` annotations. The exit-code rules are the same as other report formats.
 
