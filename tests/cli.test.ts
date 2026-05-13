@@ -44,6 +44,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(writes.join('\n')).toContain('--format <text|markdown|json|sarif|github>');
     expect(writes.join('\n')).toContain('--output <path>');
     expect(writes.join('\n')).toContain('--summary <path>');
+    expect(writes.join('\n')).toContain('--pr-comment <number>');
     expect(writes.join('\n')).toContain('--print-config');
     expect(writes.join('\n')).toContain('--explain <path>');
     expect(writes.join('\n')).toContain('--explain-from <path>');
@@ -1256,6 +1257,109 @@ allowlist:
 
     expect(result.exitCode).toBe(1);
     expect(errors.join('\n')).toContain('Invalid value for --max-files: 0');
+  });
+
+  it('posts a persistent PR comment when --pr-comment is provided', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-pr-comment-'));
+    const writes: string[] = [];
+    const calls: Array<{ command: string; args: string[] }> = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths:
+  - custom-secret.txt
+risky_paths: {}
+required_checks:
+  - test
+allowlist:
+  paths: []
+`);
+      await writeFile(join(dir, 'custom-secret.txt'), 'safe fixture\n');
+      await writeFile(join(dir, 'changed-files.txt'), 'custom-secret.txt\n');
+
+      const result = await runCli(
+        ['check', '--changed-files', 'changed-files.txt', '--pr-comment', '42'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        {
+          cwd: dir,
+          execFile: async (command, args) => {
+            calls.push({ command, args });
+            if (args.includes('repos/:owner/:repo/issues/42/comments')) {
+              return { stdout: '[]', stderr: '' };
+            }
+            return { stdout: '{"id":321}', stderr: '' };
+          },
+        },
+      );
+
+      expect(result.exitCode).toBe(1);
+      expect(writes.join('\n')).toContain('Posted RepoBelt PR comment to #42');
+      expect(calls).toHaveLength(2);
+      expect(calls[0]).toEqual({ command: 'gh', args: ['api', 'repos/:owner/:repo/issues/42/comments', '--paginate', '--slurp'] });
+      expect(calls[1].args.slice(0, 3)).toEqual(['api', 'repos/:owner/:repo/issues/42/comments', '-f']);
+      const bodyArg = calls[1].args.find((arg) => arg.startsWith('body='));
+      expect(bodyArg).toContain('<!-- repobelt:report -->');
+      expect(bodyArg).toContain('# RepoBelt Report');
+      expect(bodyArg).toContain('custom-secret.txt');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('updates an existing persistent PR comment when the marker is found', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-pr-comment-update-'));
+    const writes: string[] = [];
+    const calls: Array<{ command: string; args: string[] }> = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths: []
+risky_paths: {}
+required_checks: []
+allowlist:
+  paths: []
+`);
+      await writeFile(join(dir, 'changed-files.txt'), 'README.md\n');
+
+      const result = await runCli(
+        ['check', '--changed-files', 'changed-files.txt', '--pr-comment', '7'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        {
+          cwd: dir,
+          execFile: async (command, args) => {
+            calls.push({ command, args });
+            if (args.includes('repos/:owner/:repo/issues/7/comments')) {
+              return { stdout: '[[{"id":123,"body":"old text <!-- repobelt:report -->"}]]', stderr: '' };
+            }
+            return { stdout: '{"id":123}', stderr: '' };
+          },
+        },
+      );
+
+      expect(result.exitCode).toBe(0);
+      expect(writes.join('\n')).toContain('Updated RepoBelt PR comment on #7');
+      expect(calls[1].args.slice(0, 5)).toEqual(['api', '-X', 'PATCH', 'repos/:owner/:repo/issues/comments/123', '-f']);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects check --pr-comment when no PR number is provided', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['check', '--pr-comment'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Missing value for --pr-comment');
   });
 
   it('uses changed files from stdin when --stdin-changed-files is provided', async () => {

@@ -412,6 +412,8 @@ Use `repobelt check --format github` to emit GitHub Actions annotations. Protect
 
 Use `repobelt check --summary <path>` to write an additional Markdown report sidecar while keeping the primary output format on stdout or in `--output`. Relative summary paths are resolved from the current working directory, and parent directories are created automatically. This is useful for commands such as `repobelt check --format github --summary "$GITHUB_STEP_SUMMARY"`, where stdout should stay as GitHub annotations but reviewers still get a readable Markdown step summary.
 
+Use `repobelt check --pr-comment <number>` to post or update one persistent Markdown report comment on a GitHub PR. RepoBelt calls `gh api`, lists issue comments for the PR, searches for the hidden `<!-- repobelt:report -->` marker, and patches that comment if it already exists; otherwise it creates a new one. In GitHub Actions, set `GH_TOKEN` and grant `issues: write` permission when using this option.
+
 Use `repobelt check --print-config` to print the resolved check configuration as JSON without running git diff discovery or scanning files. The output includes the policy path, CODEOWNERS source if present, loaded policy, CLI overrides, and effective limits after CLI overrides are applied.
 
 Use `repobelt check --explain <path>` to explain how one path is classified without running git diff discovery. The output includes the resulting status plus the exact `.repobeltignore`, `protected_paths`, `allowlist.paths`, `risky_paths`, and CODEOWNERS matches for that path. This is useful for policy debugging and reviewer questions such as why a file is ignored, blocked, risky, or allowed. Add `--format json` for bot and editor integrations that need to consume the explanation programmatically.

@@ -1,5 +1,7 @@
+import { execFile as nodeExecFile } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join } from 'node:path';
+import { promisify } from 'node:util';
 import { describeInitPresets, generateInitFiles, supportedInitPresets, writeInitFiles, type InitPreset } from './commands/init.js';
 import { runCheck, type CheckResult } from './check/run-check.js';
 import { loadPolicyFromText } from './policy/load-policy.js';
@@ -24,7 +26,18 @@ export interface CliResult {
 export interface CliRuntime {
   cwd: string;
   stdin?: () => Promise<string>;
+  execFile?: ExecFileRunner;
 }
+
+export type ExecFileRunner = (
+  command: string,
+  args: string[],
+  options: { cwd: string },
+) => Promise<{ stdout: string; stderr: string }>;
+
+const defaultExecFile = promisify(nodeExecFile) as ExecFileRunner;
+
+const prCommentMarker = '<!-- repobelt:report -->';
 
 export function getHelpText(): string {
   return `RepoBelt — A seatbelt for AI-generated pull requests.
@@ -53,6 +66,7 @@ Options:
   --format <text|markdown|json|sarif|github>   Output format. Default: text
   --output <path>                  Write report to a file instead of stdout
   --summary <path>                 Also write a Markdown summary to a file
+  --pr-comment <number>            Post or update a persistent Markdown report comment on a GitHub PR
   --print-config                   Print resolved policy, limits, sources, and CLI overrides
   --explain <path>                 Explain how one path matches ignore, policy, and CODEOWNERS rules
   --explain-from <path>            Explain newline-delimited paths from a file
@@ -127,6 +141,7 @@ export async function runCli(
     const format = getFlagValue(args, '--format') ?? 'text';
     const output = getFlagValue(args, '--output');
     const summary = getFlagValue(args, '--summary');
+    const prComment = getFlagValue(args, '--pr-comment');
     const config = getFlagValue(args, '--config');
     const baselinePath = getFlagValue(args, '--baseline');
     const explainPath = getFlagValue(args, '--explain');
@@ -165,6 +180,16 @@ export async function runCli(
     }
     if (isMissingFlagValue(args, '--summary')) {
       io.stderr('Missing value for --summary');
+      return { exitCode: 1 };
+    }
+    if (isMissingFlagValue(args, '--pr-comment')) {
+      io.stderr('Missing value for --pr-comment');
+      return { exitCode: 1 };
+    }
+    const prCommentNumber = parsePrNumber(prComment);
+    if (prComment !== undefined && prCommentNumber === undefined) {
+      io.stderr(`Invalid value for --pr-comment: ${prComment}`);
+      io.stderr('--pr-comment must be a positive integer');
       return { exitCode: 1 };
     }
     if (changedFilesPath !== undefined && readChangedFilesFromStdin) {
@@ -261,6 +286,21 @@ export async function runCli(
 
     if (summary !== undefined) {
       await writeOutputFile(resolveOutputPath(runtime.cwd, summary), renderMarkdownReport(result));
+    }
+
+    if (prCommentNumber !== undefined) {
+      try {
+        const action = await upsertPrComment({
+          cwd: runtime.cwd,
+          prNumber: prCommentNumber,
+          body: renderMarkdownReport(result),
+          execFile: runtime.execFile ?? defaultExecFile,
+        });
+        io.stdout(`${action === 'created' ? 'Posted' : 'Updated'} RepoBelt PR comment ${action === 'created' ? 'to' : 'on'} #${prCommentNumber}`);
+      } catch (error) {
+        io.stderr(`RepoBelt PR comment failed: ${formatError(error)}`);
+        return { exitCode: 1 };
+      }
     }
 
     if (output !== undefined) {
@@ -397,6 +437,46 @@ function renderCheckOutput(result: CheckResult, format: string): string {
     return renderGitHubActionsReport(result);
   }
   return renderTextReport(result);
+}
+
+interface GitHubIssueComment {
+  id: number;
+  body: string;
+}
+
+async function upsertPrComment(options: {
+  cwd: string;
+  prNumber: number;
+  body: string;
+  execFile: ExecFileRunner;
+}): Promise<'created' | 'updated'> {
+  const body = `${prCommentMarker}\n${options.body}`;
+  const commentsPath = `repos/:owner/:repo/issues/${options.prNumber}/comments`;
+  const listResult = await options.execFile('gh', ['api', commentsPath, '--paginate', '--slurp'], { cwd: options.cwd });
+  const comments = parseGitHubIssueComments(listResult.stdout);
+  const existing = comments.find((comment) => comment.body.includes(prCommentMarker));
+
+  if (existing !== undefined) {
+    await options.execFile('gh', ['api', '-X', 'PATCH', `repos/:owner/:repo/issues/comments/${existing.id}`, '-f', `body=${body}`], { cwd: options.cwd });
+    return 'updated';
+  }
+
+  await options.execFile('gh', ['api', commentsPath, '-f', `body=${body}`], { cwd: options.cwd });
+  return 'created';
+}
+
+function parseGitHubIssueComments(text: string): GitHubIssueComment[] {
+  const parsed = JSON.parse(text) as unknown;
+  const pages = Array.isArray(parsed) && parsed.every(Array.isArray) ? parsed.flat() : parsed;
+  if (!Array.isArray(pages)) {
+    throw new Error('GitHub comments response must be a JSON array');
+  }
+  return pages.flatMap((item) => {
+    if (item !== null && typeof item === 'object' && 'id' in item && 'body' in item && typeof item.id === 'number' && typeof item.body === 'string') {
+      return [{ id: item.id, body: item.body }];
+    }
+    return [];
+  });
 }
 
 interface BaselineReport {
@@ -685,7 +765,15 @@ function isSupportedFormat(format: string): boolean {
   return ['text', 'markdown', 'json', 'sarif', 'github'].includes(format);
 }
 
+function parsePrNumber(value: string | undefined): number | undefined {
+  return parsePositiveInteger(value);
+}
+
 function parseMaxFiles(value: string | undefined): number | undefined {
+  return parsePositiveInteger(value);
+}
+
+function parsePositiveInteger(value: string | undefined): number | undefined {
   if (value === undefined) {
     return undefined;
   }

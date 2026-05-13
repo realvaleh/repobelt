@@ -254,6 +254,12 @@ npx repobelt check --explain-from changed-files.txt --format json
 git diff --name-only origin/main...HEAD | npx repobelt check --explain-stdin --format json
 ```
 
+Post or update one persistent Markdown RepoBelt report comment on a GitHub PR. RepoBelt uses the GitHub CLI (`gh api`) and a hidden marker so the next run updates the existing comment instead of spamming the PR:
+
+```bash
+npx repobelt check --pr-comment 123
+```
+
 ## Example policy
 
 ```yaml
@@ -365,6 +371,7 @@ Options:
   --format <text|markdown|json|sarif|github>   Output format. Default: text
   --output <path>                  Write report to a file instead of stdout
   --summary <path>                 Also write a Markdown summary to a file
+  --pr-comment <number>            Post or update a persistent Markdown report comment on a GitHub PR
   --print-config                   Print resolved policy, limits, sources, and CLI overrides
   --explain <path>                 Explain how one path matches ignore, policy, and CODEOWNERS rules
   --explain-from <path>            Explain newline-delimited paths from a file
@@ -409,7 +416,7 @@ Near-term:
 
 - Better policy documentation
 - More CLI validation
-- PR comment mode
+- PR comment mode: done
 - richer CODEOWNERS validation and reviewer routing
 
 Later:
