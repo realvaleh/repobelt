@@ -44,6 +44,8 @@ describe('RepoBelt CLI foundation', () => {
     expect(writes.join('\n')).toContain('Usage: repobelt check');
     expect(writes.join('\n')).toContain('--format <text|markdown|json|sarif|github>');
     expect(writes.join('\n')).toContain('--diff <base...head>');
+    expect(writes.join('\n')).toContain('--against <branch>');
+    expect(writes.join('\n')).toContain('--since-main');
     expect(writes.join('\n')).toContain('--output <path>');
     expect(writes.join('\n')).toContain('--summary <path>');
     expect(writes.join('\n')).toContain('--pr-comment <number|auto>');
@@ -648,7 +650,108 @@ allowlist:
     });
 
     expect(result.exitCode).toBe(1);
-    expect(errors.join('\n')).toContain('Use --diff instead of --base/--head, not both');
+    expect(errors.join('\n')).toContain('Use comparison shorthands instead of --base/--head, not both');
+  });
+
+  it('runs check against a branch comparison with --against', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-against-'));
+    const writes: string[] = [];
+
+    try {
+      await execFileAsync('git', ['init', '-b', 'main'], { cwd: dir });
+      await execFileAsync('git', ['config', 'user.email', 'test@example.com'], { cwd: dir });
+      await execFileAsync('git', ['config', 'user.name', 'RepoBelt Test'], { cwd: dir });
+      await runCli(['init'], { stdout: () => undefined, stderr: () => undefined }, { cwd: dir });
+      await writeFile(join(dir, 'README.md'), '# demo\n');
+      await execFileAsync('git', ['add', '.'], { cwd: dir });
+      await execFileAsync('git', ['commit', '-m', 'initial'], { cwd: dir });
+      await execFileAsync('git', ['checkout', '-b', 'feature/auth-change'], { cwd: dir });
+      await mkdir(join(dir, 'auth'), { recursive: true });
+      await writeFile(join(dir, 'auth', 'login.ts'), 'export const loginChanged = true;\n');
+      await execFileAsync('git', ['add', 'auth/login.ts'], { cwd: dir });
+      await execFileAsync('git', ['commit', '-m', 'add auth change'], { cwd: dir });
+
+      const result = await runCli(
+        ['check', '--against', 'main'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(0);
+      expect(writes.join('\n')).toContain('RepoBelt check passed with warnings');
+      expect(writes.join('\n')).toContain('Risky: auth/login.ts matched auth/**');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('prints --since-main as an origin/main comparison in resolved config', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-since-main-'));
+    const writes: string[] = [];
+
+    try {
+      await writeFile(join(dir, '.repobelt.yml'), `version: 1
+protected_paths: []
+risky_paths: {}
+required_checks: []
+allowlist:
+  paths: []
+`);
+
+      const result = await runCli(
+        ['check', '--print-config', '--since-main'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      const parsed = JSON.parse(writes.join('\n')) as { cliOverrides: { diff: string } };
+      expect(result.exitCode).toBe(0);
+      expect(parsed.cliOverrides.diff).toBe('origin/main...HEAD');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects check --against when no branch is provided', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['check', '--against'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Missing value for --against');
+  });
+
+  it('rejects multiple comparison shorthands', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['check', '--diff', 'main...HEAD', '--since-main'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Use only one of --diff, --against, or --since-main');
+  });
+
+  it('rejects comparison shorthands when --base or --head are also provided', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['check', '--against', 'main', '--head', 'HEAD'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Use comparison shorthands instead of --base/--head, not both');
   });
 
   it('ignores findings that are already present in a JSON baseline report', async () => {

@@ -77,6 +77,8 @@ try {
   expectIncludes('repobelt check --help', checkHelpOutput, '--config <path>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--baseline <path>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--diff <base...head>');
+  expectIncludes('repobelt check --help', checkHelpOutput, '--against <branch>');
+  expectIncludes('repobelt check --help', checkHelpOutput, '--since-main');
   expectIncludes('repobelt check --help', checkHelpOutput, '--changed-files <path>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--stdin-changed-files');
   expectIncludes('repobelt check --help', checkHelpOutput, '--max-files <n>');
@@ -126,6 +128,9 @@ try {
   const diffRangeOutput = run('npx', ['repobelt', 'check', '--diff', 'main...HEAD'], { cwd: diffRangeDir });
   expectIncludes('repobelt check --diff', diffRangeOutput, 'RepoBelt check passed with warnings');
   expectIncludes('repobelt check --diff', diffRangeOutput, 'Risky: auth/login.ts matched auth/**');
+  const againstOutput = run('npx', ['repobelt', 'check', '--against', 'main'], { cwd: diffRangeDir });
+  expectIncludes('repobelt check --against', againstOutput, 'RepoBelt check passed with warnings');
+  expectIncludes('repobelt check --against', againstOutput, 'Risky: auth/login.ts matched auth/**');
 
   run('git', ['init', '-b', 'main'], { cwd: appDir });
   run('git', ['config', 'user.name', 'RepoBelt Smoke Test'], { cwd: appDir });

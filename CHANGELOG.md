@@ -8,6 +8,7 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 
 ### Added since release
 
+- `check --against <branch>` and `check --since-main` for common local branch comparisons without spelling out full git diff ranges.
 - `check --diff <base...head>` for running RepoBelt against an explicit git diff range such as `origin/main...HEAD` without separate `--base` and `--head` flags.
 - `check --codeowners-diagnostics-fail` for teams that want CODEOWNERS diagnostics to fail CI instead of remaining non-failing warnings.
 - `init --pr-comment` for generating a GitHub Actions workflow with persistent PR comments enabled (`issues: write`, `GH_TOKEN`, and `--pr-comment auto`).

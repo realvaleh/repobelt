@@ -66,6 +66,8 @@ Options:
   --base <ref>                    Base git ref. Default: HEAD
   --head <ref|worktree>           Head git ref or worktree. Default: worktree
   --diff <base...head>            Git diff range shorthand; cannot be combined with --base/--head
+  --against <branch>              Compare branch...HEAD without writing the full diff range
+  --since-main                    Compare origin/main...HEAD
   --format <text|markdown|json|sarif|github>   Output format. Default: text
   --output <path>                  Write report to a file instead of stdout
   --summary <path>                 Also write a Markdown summary to a file
@@ -143,6 +145,9 @@ export async function runCli(
     const base = getFlagValue(args, '--base') ?? 'HEAD';
     const head = getFlagValue(args, '--head') ?? 'worktree';
     const diffRange = getFlagValue(args, '--diff');
+    const againstBranch = getFlagValue(args, '--against');
+    const sinceMain = args.includes('--since-main');
+    const effectiveDiffRange = resolveDiffRange({ diffRange, againstBranch, sinceMain });
     const format = getFlagValue(args, '--format') ?? 'text';
     const output = getFlagValue(args, '--output');
     const summary = getFlagValue(args, '--summary');
@@ -188,8 +193,16 @@ export async function runCli(
       io.stderr('Missing value for --diff');
       return { exitCode: 1 };
     }
-    if (diffRange !== undefined && (hasFlag(args, '--base') || hasFlag(args, '--head'))) {
-      io.stderr('Use --diff instead of --base/--head, not both');
+    if (isMissingFlagValue(args, '--against')) {
+      io.stderr('Missing value for --against');
+      return { exitCode: 1 };
+    }
+    if ([diffRange !== undefined, againstBranch !== undefined, sinceMain].filter(Boolean).length > 1) {
+      io.stderr('Use only one of --diff, --against, or --since-main');
+      return { exitCode: 1 };
+    }
+    if (effectiveDiffRange !== undefined && (hasFlag(args, '--base') || hasFlag(args, '--head'))) {
+      io.stderr('Use comparison shorthands instead of --base/--head, not both');
       return { exitCode: 1 };
     }
     if (isMissingFlagValue(args, '--summary')) {
@@ -265,7 +278,7 @@ export async function runCli(
           maxSecrets,
           failOnWarn,
           failOnCodeownersDiagnostics,
-          diffRange,
+          diffRange: effectiveDiffRange,
         }));
         return { exitCode: 0 };
       }
@@ -291,7 +304,7 @@ export async function runCli(
         cwd: runtime.cwd,
         base,
         head,
-        diff: diffRange,
+        diff: effectiveDiffRange,
         policyText,
         changedFilesProvider: changedFiles === undefined ? undefined : async () => changedFiles,
       });
@@ -763,6 +776,19 @@ function getFlagValue(args: string[], flag: string): string | undefined {
 
 function hasFlag(args: string[], flag: string): boolean {
   return args.includes(flag);
+}
+
+function resolveDiffRange(options: { diffRange: string | undefined; againstBranch: string | undefined; sinceMain: boolean }): string | undefined {
+  if (options.diffRange !== undefined) {
+    return options.diffRange;
+  }
+  if (options.againstBranch !== undefined) {
+    return `${options.againstBranch}...HEAD`;
+  }
+  if (options.sinceMain) {
+    return 'origin/main...HEAD';
+  }
+  return undefined;
 }
 
 function isMissingFlagValue(args: string[], flag: string): boolean {

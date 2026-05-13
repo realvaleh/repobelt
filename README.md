@@ -240,7 +240,11 @@ Run against a specific git diff range without spelling out separate base/head fl
 
 ```bash
 npx repobelt check --diff origin/main...HEAD
+npx repobelt check --against origin/main
+npx repobelt check --since-main
 ```
+
+`--against <branch>` expands to `<branch>...HEAD`; `--since-main` expands to `origin/main...HEAD`.
 
 Print the fully resolved check configuration for CI debugging:
 
