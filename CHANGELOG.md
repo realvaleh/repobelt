@@ -8,6 +8,7 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 
 ### Added since release
 
+- `check --fail-on-warn` for stricter CI that exits 1 when risky paths produce warnings.
 - `init --list-presets` for discovering built-in policy presets and descriptions from the CLI.
 - CODEOWNERS reviewer hints in check results, text output, Markdown reports, and JSON reports.
 - `init --preset web` for web-app policies covering API routes, middleware, build config, package manifests, lockfiles, and a `build` required-check reminder.

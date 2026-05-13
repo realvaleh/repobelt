@@ -23,6 +23,27 @@ function run(command, args, options = {}) {
   });
 }
 
+function runExpectFailure(command, args, options = {}) {
+  const printable = [command, ...args].join(' ');
+  console.log(`$ ${printable}`);
+  try {
+    execFileSync(command, args, {
+      cwd: options.cwd ?? projectRoot,
+      encoding: 'utf8',
+      stdio: 'pipe',
+      env: {
+        ...process.env,
+        npm_config_yes: 'true',
+        npm_config_audit: 'false',
+        npm_config_fund: 'false',
+      },
+    });
+  } catch (error) {
+    return `${error.stdout ?? ''}${error.stderr ?? ''}`;
+  }
+  throw new Error(`${printable} unexpectedly succeeded`);
+}
+
 function expectIncludes(label, text, expected) {
   if (!text.includes(expected)) {
     throw new Error(`${label} did not include expected text: ${expected}`);
@@ -72,6 +93,11 @@ try {
   const checkOutput = run('npx', ['repobelt', 'check', '--base', 'HEAD', '--head', 'worktree'], { cwd: appDir });
   expectIncludes('repobelt check', checkOutput, 'RepoBelt check passed with warnings');
   expectIncludes('repobelt check', checkOutput, 'Risky: auth/login.ts matched auth/**');
+
+  const strictCheckOutput = runExpectFailure('npx', ['repobelt', 'check', '--base', 'HEAD', '--head', 'worktree', '--fail-on-warn'], {
+    cwd: appDir,
+  });
+  expectIncludes('repobelt check --fail-on-warn', strictCheckOutput, 'RepoBelt check passed with warnings');
 
   console.log('\nRepoBelt packaged CLI smoke test passed.');
 } finally {

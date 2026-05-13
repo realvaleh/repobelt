@@ -43,6 +43,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(writes.join('\n')).toContain('Usage: repobelt check');
     expect(writes.join('\n')).toContain('--format <text|markdown|json|sarif>');
     expect(writes.join('\n')).toContain('--output <path>');
+    expect(writes.join('\n')).toContain('--fail-on-warn');
   });
 
   it('prints planned init files for init --dry-run', async () => {
@@ -411,6 +412,38 @@ describe('RepoBelt CLI foundation', () => {
     } finally {
       await rm(dir, { recursive: true, force: true });
       await rm(outputDir, { recursive: true, force: true });
+    }
+  });
+
+  it('exits 1 for risky-path warnings when --fail-on-warn is provided', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-fail-on-warn-'));
+    const writes: string[] = [];
+
+    try {
+      await runCli(['init'], { stdout: () => undefined, stderr: () => undefined }, { cwd: dir });
+      await execFileAsync('git', ['init'], { cwd: dir });
+      await execFileAsync('git', ['config', 'user.email', 'test@example.com'], { cwd: dir });
+      await execFileAsync('git', ['config', 'user.name', 'RepoBelt Test'], { cwd: dir });
+      await writeFile(join(dir, 'README.md'), '# demo\n');
+      await execFileAsync('git', ['add', '.'], { cwd: dir });
+      await execFileAsync('git', ['commit', '-m', 'initial'], { cwd: dir });
+      await mkdir(join(dir, 'auth'), { recursive: true });
+      await writeFile(join(dir, 'auth', 'login.ts'), 'export const login = true;\n');
+
+      const result = await runCli(
+        ['check', '--base', 'HEAD', '--head', 'worktree', '--fail-on-warn'],
+        {
+          stdout: (message) => writes.push(message),
+          stderr: (message) => writes.push(`ERR:${message}`),
+        },
+        { cwd: dir },
+      );
+
+      expect(result.exitCode).toBe(1);
+      expect(writes.join('\n')).toContain('RepoBelt check passed with warnings');
+      expect(writes.join('\n')).toContain('Risky: auth/login.ts matched auth/**');
+    } finally {
+      await rm(dir, { recursive: true, force: true });
     }
   });
 

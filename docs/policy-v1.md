@@ -365,6 +365,8 @@ Exit code:
 0
 ```
 
+Use `repobelt check --fail-on-warn` when you want stricter CI behavior. With that flag, RepoBelt still reports status `warn` in text, Markdown, JSON, and SARIF output, but exits `1` so the CI job fails.
+
 ### `fail`
 
 Returned when:

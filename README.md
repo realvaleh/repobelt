@@ -143,6 +143,12 @@ Write any report format to a file:
 npx repobelt check --base HEAD --head worktree --format sarif --output repobelt.sarif
 ```
 
+By default, risky-path warnings exit `0` so CI can pass while reviewers still see the warning. For stricter CI, make warnings fail too:
+
+```bash
+npx repobelt check --base HEAD --head worktree --fail-on-warn
+```
+
 ## Example policy
 
 ```yaml

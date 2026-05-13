@@ -45,6 +45,7 @@ Options:
   --head <ref|worktree>           Head git ref or worktree. Default: worktree
   --format <text|markdown|json|sarif>   Output format. Default: text
   --output <path>                  Write report to a file instead of stdout
+  --fail-on-warn                  Exit 1 when risky paths produce warnings
   -h, --help                      Show this help message
 `;
 }
@@ -106,6 +107,7 @@ export async function runCli(
     const head = getFlagValue(args, '--head') ?? 'worktree';
     const format = getFlagValue(args, '--format') ?? 'text';
     const output = getFlagValue(args, '--output');
+    const failOnWarn = args.includes('--fail-on-warn');
     if (!isSupportedFormat(format)) {
       io.stderr(`Unsupported format: ${format}`);
       io.stderr('Supported formats: text, markdown, json, sarif');
@@ -123,22 +125,22 @@ export async function runCli(
     if (output !== undefined) {
       await writeOutputFile(resolveOutputPath(runtime.cwd, output), renderCheckOutput(result, format));
       io.stdout(`Wrote RepoBelt report to ${output}`);
-      return { exitCode: result.status === 'fail' ? 1 : 0 };
+      return { exitCode: getCheckExitCode(result, failOnWarn) };
     }
 
     if (format === 'markdown') {
       io.stdout(renderMarkdownReport(result));
-      return { exitCode: result.status === 'fail' ? 1 : 0 };
+      return { exitCode: getCheckExitCode(result, failOnWarn) };
     }
 
     if (format === 'json') {
       io.stdout(renderJsonReport(result));
-      return { exitCode: result.status === 'fail' ? 1 : 0 };
+      return { exitCode: getCheckExitCode(result, failOnWarn) };
     }
 
     if (format === 'sarif') {
       io.stdout(renderSarifReport(result));
-      return { exitCode: result.status === 'fail' ? 1 : 0 };
+      return { exitCode: getCheckExitCode(result, failOnWarn) };
     }
 
     if (result.status === 'fail') {
@@ -161,7 +163,7 @@ export async function runCli(
       }
       writeReviewerHints(result, io);
       writeRequiredChecks(result, io);
-      return { exitCode: 0 };
+      return { exitCode: getCheckExitCode(result, failOnWarn) };
     }
 
     io.stdout('RepoBelt check passed');
@@ -179,6 +181,13 @@ const defaultIo: CliIo = {
   stdout: (message) => process.stdout.write(`${message}\n`),
   stderr: (message) => process.stderr.write(`${message}\n`),
 };
+
+function getCheckExitCode(result: Awaited<ReturnType<typeof runCheck>>, failOnWarn: boolean): number {
+  if (result.status === 'fail' || (failOnWarn && result.status === 'warn')) {
+    return 1;
+  }
+  return 0;
+}
 
 function renderCheckOutput(result: Awaited<ReturnType<typeof runCheck>>, format: string): string {
   if (format === 'markdown') {
