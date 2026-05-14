@@ -45,7 +45,7 @@ describe('repobelt init', () => {
     const files = generateInitFiles();
     const workflow = files['.github/workflows/repobelt.yml'];
 
-    expect(workflow).toContain(`          npx repobelt check \\
+    expect(workflow).toContain(`          npx --yes repobelt check \\
             --diff "origin/$GITHUB_BASE_REF...$GITHUB_SHA" \\
             --format github \\
             --summary "$GITHUB_STEP_SUMMARY"
@@ -58,7 +58,7 @@ describe('repobelt init', () => {
 
     expect(workflow).toContain('issues: write');
     expect(workflow).toContain('GH_TOKEN: ${{ github.token }}');
-    expect(workflow).toContain(`          npx repobelt check \\
+    expect(workflow).toContain(`          npx --yes repobelt check \\
             --diff "origin/$GITHUB_BASE_REF...$GITHUB_SHA" \\
             --format github \\
             --summary "$GITHUB_STEP_SUMMARY" \\
@@ -75,7 +75,7 @@ describe('repobelt init', () => {
     expect(policy).toContain('  max_files: 50');
     expect(policy).toContain('  max_risky: 0');
     expect(policy).toContain('  max_secrets: 0');
-    expect(workflow).toContain(`          npx repobelt check \\
+    expect(workflow).toContain(`          npx --yes repobelt check \\
             --since-default \\
             --format github \\
             --summary "$GITHUB_STEP_SUMMARY" \\

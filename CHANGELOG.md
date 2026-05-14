@@ -51,6 +51,7 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 
 ### Changed since release
 
+- Generated GitHub Actions workflows now run `npx --yes repobelt check` so CI installs non-interactively instead of risking an npm prompt.
 - `init --strict` now generates workflows with `--since-default` so strict first-day CI follows the repository's remote default branch instead of assuming `origin/main`.
 - Generated GitHub Actions workflows now render the `npx repobelt check` command as clean continued shell lines instead of collapsed template output.
 - Generated GitHub Actions workflows now emit inline annotations with `--format github` while writing readable Markdown step summaries with `--summary "$GITHUB_STEP_SUMMARY"`.

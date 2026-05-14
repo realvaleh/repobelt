@@ -400,6 +400,7 @@ allowlist:
       const workflow = await readFile(join(dir, '.github/workflows/repobelt.yml'), 'utf8');
       expect(workflow).toContain('issues: write');
       expect(workflow).toContain('GH_TOKEN: ${{ github.token }}');
+      expect(workflow).toContain('npx --yes repobelt check');
       expect(workflow).toContain('--pr-comment auto');
     } finally {
       await rm(dir, { recursive: true, force: true });
