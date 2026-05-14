@@ -39,12 +39,14 @@ function parseIgnorePattern(pattern: string): { negated: boolean; glob: string }
 }
 
 function matchesIgnorePattern(path: string, pattern: string): boolean {
-  if (matchesGlob(path, pattern)) {
+  const effectivePattern = pattern.endsWith('/') ? `${pattern}**` : pattern;
+
+  if (matchesGlob(path, effectivePattern)) {
     return true;
   }
 
-  if (!pattern.includes('/')) {
-    return matchesGlob(pathBasename(path), pattern);
+  if (!effectivePattern.includes('/')) {
+    return matchesGlob(pathBasename(path), effectivePattern);
   }
 
   return false;

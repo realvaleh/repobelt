@@ -31,4 +31,18 @@ dist/*.json
   it('parses negation patterns while skipping blank lines and comments', () => {
     expect(parseIgnorePatterns('\n# comment\ndist/**\n!dist/manifest.json\n')).toEqual(['dist/**', '!dist/manifest.json']);
   });
+
+  it('treats trailing slash ignore patterns as directory contents', () => {
+    const ignoreText = `
+cache/
+!cache/keep.txt
+`;
+
+    expect(filterIgnoredPaths(['cache/app.log', 'cache/keep.txt', 'src/cache/app.log'], ignoreText)).toEqual([
+      'cache/keep.txt',
+      'src/cache/app.log',
+    ]);
+    expect(firstMatchingIgnorePattern('cache/app.log', ignoreText)).toBe('cache/');
+    expect(firstMatchingIgnorePattern('cache/keep.txt', ignoreText)).toBeUndefined();
+  });
 });
