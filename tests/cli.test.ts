@@ -581,6 +581,19 @@ allowlist:
     expect(errors.join('\n')).toContain('Missing value for --preset');
   });
 
+  it('rejects unknown init flags so scaffold typos do not create partial setup', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['init', '--dryrun'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Unknown init option: --dryrun');
+    expect(errors.join('\n')).toContain('Run repobelt --help for supported init options');
+  });
+
   it('explains how a single path matches ignore, policy, and CODEOWNERS rules', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'repobelt-cli-explain-'));
     const writes: string[] = [];

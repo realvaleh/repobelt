@@ -1042,6 +1042,22 @@ function findUnknownOption(args: string[], allowedOptions: string[]): string | u
 }
 
 function getInitOptions(args: string[], io: CliIo): InitOptions | undefined {
+  const unknownInitOption = findUnknownOption(args.slice(1), [
+    '--preset',
+    '--dry-run',
+    '--list-presets',
+    '--pr-comment',
+    '--strict',
+    '--max-files',
+    '--max-risky',
+    '--max-secrets',
+  ]);
+  if (unknownInitOption !== undefined) {
+    io.stderr(`Unknown init option: ${unknownInitOption}`);
+    io.stderr('Run repobelt --help for supported init options');
+    return undefined;
+  }
+
   const preset = getInitPreset(args, io);
   if (preset === undefined) {
     return undefined;
