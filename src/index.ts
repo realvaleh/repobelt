@@ -202,6 +202,37 @@ export async function runCli(
       return { exitCode: 0 };
     }
 
+    const unknownCheckOption = findUnknownOption(args.slice(1), [
+      '--base',
+      '--head',
+      '--diff',
+      '--against',
+      '--since-main',
+      '--since-default',
+      '--format',
+      '--output',
+      '--summary',
+      '--pr-comment',
+      '--print-config',
+      '--explain',
+      '--explain-from',
+      '--explain-stdin',
+      '--config',
+      '--baseline',
+      '--changed-files',
+      '--stdin-changed-files',
+      '--max-files',
+      '--max-risky',
+      '--max-secrets',
+      '--fail-on-warn',
+      '--codeowners-diagnostics-fail',
+    ]);
+    if (unknownCheckOption !== undefined) {
+      io.stderr(`Unknown check option: ${unknownCheckOption}`);
+      io.stderr('Run repobelt check --help for supported options');
+      return { exitCode: 1 };
+    }
+
     const base = getFlagValue(args, '--base') ?? 'HEAD';
     const head = getFlagValue(args, '--head') ?? 'worktree';
     const diffRange = getFlagValue(args, '--diff');

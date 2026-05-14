@@ -72,6 +72,19 @@ describe('RepoBelt CLI foundation', () => {
     expect(writes.join('\n')).toContain('--codeowners-diagnostics-fail');
   });
 
+  it('rejects unknown check flags so automation typos do not run with defaults', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['check', '--formt', 'json'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Unknown check option: --formt');
+    expect(errors.join('\n')).toContain('Run repobelt check --help for supported options');
+  });
+
   it('prints doctor-specific help for doctor --help', async () => {
     const writes: string[] = [];
 
