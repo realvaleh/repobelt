@@ -85,6 +85,18 @@ describe('RepoBelt CLI foundation', () => {
     expect(errors.join('\n')).toContain('Run repobelt check --help for supported options');
   });
 
+  it('rejects check --output when no path is provided', async () => {
+    const errors: string[] = [];
+
+    const result = await runCli(['check', '--output'], {
+      stdout: () => undefined,
+      stderr: (message) => errors.push(message),
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(errors.join('\n')).toContain('Missing value for --output');
+  });
+
   it('prints doctor-specific help for doctor --help', async () => {
     const writes: string[] = [];
 

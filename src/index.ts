@@ -304,6 +304,10 @@ export async function runCli(
       io.stderr('Use comparison shorthands instead of --base/--head, not both');
       return { exitCode: 1 };
     }
+    if (isMissingFlagValue(args, '--output')) {
+      io.stderr('Missing value for --output');
+      return { exitCode: 1 };
+    }
     if (isMissingFlagValue(args, '--summary')) {
       io.stderr('Missing value for --summary');
       return { exitCode: 1 };
