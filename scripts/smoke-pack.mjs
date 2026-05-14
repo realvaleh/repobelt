@@ -71,6 +71,7 @@ try {
   const helpOutput = run('npx', ['repobelt', '--help'], { cwd: appDir });
   expectIncludes('repobelt --help', helpOutput, 'Usage: repobelt <command>');
   expectIncludes('repobelt --help', helpOutput, '--list-presets');
+  expectIncludes('repobelt --help', helpOutput, '--dry-run');
   expectIncludes('repobelt --help', helpOutput, '--pr-comment');
   expectIncludes('repobelt --help', helpOutput, '--strict');
   expectIncludes('repobelt --help', helpOutput, '--max-files <n>');
@@ -104,6 +105,17 @@ try {
   expectIncludes('repobelt check --help', checkHelpOutput, '--explain-from <path>');
   expectIncludes('repobelt check --help', checkHelpOutput, '--explain-stdin');
   expectIncludes('repobelt check --help', checkHelpOutput, '--format <text|markdown|json|sarif|github>');
+
+  const initHelpOutput = run('npx', ['repobelt', 'init', '--help'], { cwd: appDir });
+  expectIncludes('repobelt init --help', initHelpOutput, 'Usage: repobelt init');
+  expectIncludes('repobelt init --help', initHelpOutput, '--dry-run');
+  expectIncludes('repobelt init --help', initHelpOutput, '--preset <default|web|node|python|infra|monorepo>');
+  expectIncludes('repobelt init --help', initHelpOutput, '--pr-comment');
+  expectIncludes('repobelt init --help', initHelpOutput, '--strict');
+  expectIncludes('repobelt init --help', initHelpOutput, '--max-files <n>');
+  expectIncludes('repobelt init --help', initHelpOutput, '--max-risky <n>');
+  expectIncludes('repobelt init --help', initHelpOutput, '--max-secrets <n>');
+  expectIncludes('repobelt init --help', initHelpOutput, '--list-presets');
 
   const presetListOutput = run('npx', ['repobelt', 'init', '--list-presets'], { cwd: appDir });
   expectIncludes('repobelt init --list-presets', presetListOutput, 'Available RepoBelt init presets:');

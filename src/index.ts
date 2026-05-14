@@ -52,6 +52,25 @@ Commands:
 
 Options:
   --preset <${formatInitPresetChoices()}>  Policy preset for init. Default: default
+  --dry-run               Preview init files without writing them
+  --pr-comment            Add persistent PR comment support to generated GitHub Action
+  --strict                Generate stricter CI defaults and policy limits
+  --max-files <n>         Override init --strict changed-file budget. Default: 50
+  --max-risky <n>         Override init --strict risky-file budget. Default: 0
+  --max-secrets <n>       Override init --strict secret-finding budget. Default: 0
+  --list-presets          List available init presets
+  -h, --help              Show this help message
+`;
+}
+
+export function getInitHelpText(): string {
+  return `RepoBelt init — create starter RepoBelt policy and GitHub Action files.
+
+Usage: repobelt init [options]
+
+Options:
+  --preset <${formatInitPresetChoices()}>  Policy preset for init. Default: default
+  --dry-run               Preview files that would be created without writing them
   --pr-comment            Add persistent PR comment support to generated GitHub Action
   --strict                Generate stricter CI defaults and policy limits
   --max-files <n>         Override init --strict changed-file budget. Default: 50
@@ -117,6 +136,11 @@ export async function runCli(
 
   if (command === undefined || command === '--help' || command === '-h') {
     io.stdout(getHelpText());
+    return { exitCode: 0 };
+  }
+
+  if (command === 'init' && (args.includes('--help') || args.includes('-h'))) {
+    io.stdout(getInitHelpText());
     return { exitCode: 0 };
   }
 

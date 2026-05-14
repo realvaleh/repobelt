@@ -8,6 +8,7 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 
 ### Added since release
 
+- `init --help` for command-specific init usage, including discoverable `--dry-run`, strict budget, preset, and PR-comment options.
 - `doctor --output <path>` for writing setup health reports to CI artifacts or bot handoff files.
 - `doctor --format json` for machine-readable setup health reports in CI, bots, and editor integrations.
 - `init --strict --max-files <n> --max-risky <n> --max-secrets <n>` for tuning generated strict policy limits and workflow budget flags during init without manual YAML editing.

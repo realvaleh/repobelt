@@ -417,8 +417,12 @@ Commands:
 
 Options:
   --preset <default|web|node|python|infra|monorepo>  Policy preset for init. Default: default
+  --dry-run               Preview init files without writing them
   --pr-comment            Add persistent PR comment support to generated GitHub Action
   --strict                Generate stricter CI defaults and policy limits
+  --max-files <n>         Override init --strict changed-file budget. Default: 50
+  --max-risky <n>         Override init --strict risky-file budget. Default: 0
+  --max-secrets <n>       Override init --strict secret-finding budget. Default: 0
   --list-presets          List available init presets
   -h, --help              Show this help message
 ```

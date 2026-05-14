@@ -18,6 +18,7 @@ describe('RepoBelt CLI foundation', () => {
     expect(help).toContain('A seatbelt for AI-generated pull requests');
     expect(help).toContain('init');
     expect(help).toContain('--preset <default|web|node|python|infra|monorepo>');
+    expect(help).toContain('--dry-run');
     expect(help).toContain('--pr-comment');
     expect(help).toContain('--strict');
     expect(help).toContain('--max-files <n>');
@@ -37,6 +38,43 @@ describe('RepoBelt CLI foundation', () => {
 
     expect(result.exitCode).toBe(0);
     expect(writes.join('\n')).toContain('Usage: repobelt');
+  });
+
+  it('prints init-specific help for init --help', async () => {
+    const writes: string[] = [];
+
+    const result = await runCli(['init', '--help'], {
+      stdout: (message) => writes.push(message),
+      stderr: (message) => writes.push(`ERR:${message}`),
+    });
+
+    const output = writes.join('\n');
+    expect(result.exitCode).toBe(0);
+    expect(output).toContain('Usage: repobelt init');
+    expect(output).toContain('--dry-run');
+    expect(output).toContain('--preset <default|web|node|python|infra|monorepo>');
+    expect(output).toContain('--pr-comment');
+    expect(output).toContain('--strict');
+    expect(output).toContain('--max-files <n>');
+    expect(output).toContain('--max-risky <n>');
+    expect(output).toContain('--max-secrets <n>');
+    expect(output).toContain('--list-presets');
+    expect(output).not.toContain('ERR:');
+  });
+
+  it('prints init-specific help for init -h', async () => {
+    const writes: string[] = [];
+
+    const result = await runCli(['init', '-h'], {
+      stdout: (message) => writes.push(message),
+      stderr: (message) => writes.push(`ERR:${message}`),
+    });
+
+    const output = writes.join('\n');
+    expect(result.exitCode).toBe(0);
+    expect(output).toContain('Usage: repobelt init');
+    expect(output).toContain('--dry-run');
+    expect(output).not.toContain('ERR:');
   });
 
   it('prints check-specific help for check --help', async () => {
