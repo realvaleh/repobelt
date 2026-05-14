@@ -1,20 +1,24 @@
 # Public launch readiness audit
 
-Audit date: 2026-05-10
+Audit date: 2026-05-14
 
 ## Summary
 
-RepoBelt has completed the approved GitHub public-launch steps.
+RepoBelt has completed the approved GitHub public-launch steps and remains release-ready from the repository, CI, local verification, and package dry-run perspective.
 
-The repository is now public, branch protection is enabled for `main`, private vulnerability reporting is enabled, and the `v0.1.0` GitHub prerelease is published.
+The repository is public, branch protection is enabled for `main`, private vulnerability reporting is enabled, and the `v0.1.0` GitHub prerelease is published.
+
+Important current release note: the published `v0.1.0` GitHub tag/release still points to an older commit than `main`. Since `main` now contains additional `0.1.0` polish after the prerelease, final npm publication should either retarget/recreate the `v0.1.0` release at the current `main` commit or bump to a new patch/pre-1.0 release before publishing.
 
 ## Repository state
 
 - Repository: `realvaleh/repobelt`
 - Visibility: `PUBLIC`
 - Default branch: `main`
-- Working tree: clean
-- Package: `repobelt@0.1.0`
+- Working tree at audit start: clean
+- Current branch: `main`
+- Current `main` HEAD: `bcf6ffeedea35afbc5c32539783e348112c8ddea`
+- Current package: `repobelt@0.1.0`
 
 ## GitHub metadata
 
@@ -40,16 +44,22 @@ typescript
 
 ## CI status
 
-Latest CI run:
+Latest CI run verified during this audit:
 
 ```text
-https://github.com/realvaleh/repobelt/actions/runs/25649881741
+https://github.com/realvaleh/repobelt/actions/runs/25850840905
 ```
 
 Status:
 
 ```text
 completed / success
+```
+
+Latest verified CI commit:
+
+```text
+bcf6ffe feat: add init help command
 ```
 
 Required branch protection status check:
@@ -72,16 +82,16 @@ Passed during this audit:
 
 ```bash
 pnpm test
-pnpm build
+pnpm typecheck
 pnpm smoke:pack
-npm pack --dry-run
+npm pack --dry-run --json
 ```
 
 Test status:
 
 ```text
-Test Files: 9 passed
-Tests: 34 passed
+Test Files: 14 passed
+Tests: 148 passed
 ```
 
 Packaged CLI smoke test status:
@@ -90,19 +100,33 @@ Packaged CLI smoke test status:
 passed
 ```
 
+Packaged smoke coverage now verifies the npm tarball through `npx`, including:
+
+```text
+repobelt --help
+repobelt init --help
+repobelt init --dry-run
+repobelt init --pr-comment
+repobelt init --strict
+repobelt doctor
+repobelt doctor --format json
+repobelt doctor --format json --output reports/doctor.json
+repobelt check with diff ranges, explicit file lists, stdin, baselines, ignore patterns, summaries, annotations, and explain modes
+```
+
 ## npm package dry run
 
-Dry-run package:
+Dry-run package generated from current `main`:
 
 ```text
 repobelt@0.1.0
 filename: repobelt-0.1.0.tgz
-package size: 101.7 kB
-unpacked size: 177.6 kB
-total files: 58
+package size: 361.6 kB
+unpacked size: 590.4 kB
+total files: 71
 ```
 
-Important packaged files verified:
+Important packaged files verified in the dry run:
 
 ```text
 README.md
@@ -110,12 +134,16 @@ CHANGELOG.md
 SECURITY.md
 CONTRIBUTING.md
 LICENSE
+dist/cli.js
+dist/index.js
+docs/assets/repobelt-demo-sfx.mp4
 docs/assets/repobelt-demo.mp4
 docs/assets/repobelt-demo.svg
 docs/public-launch-checklist.md
 docs/release-process.md
 docs/branch-protection.md
 docs/launch-announcement-kit.md
+docs/policy-v1.md
 examples/basic/.repobelt.yml
 package.json
 ```
@@ -128,16 +156,22 @@ Package version:
 0.1.0
 ```
 
-Local tag:
+Current `main` HEAD:
 
 ```text
-v0.1.0
+bcf6ffeedea35afbc5c32539783e348112c8ddea
 ```
 
-Published tag/release target:
+Local and remote tag:
 
 ```text
-feefcfc1f200120be9f9aced42c0453cf4e178c1
+v0.1.0 -> 808fb690471b5a8bdf867419c2bf9c592e51a754
+```
+
+Published GitHub release target:
+
+```text
+808fb690471b5a8bdf867419c2bf9c592e51a754
 ```
 
 Release state:
@@ -146,26 +180,39 @@ Release state:
 Draft: false
 Prerelease: true
 Published URL: https://github.com/realvaleh/repobelt/releases/tag/v0.1.0
+Published at: 2026-05-10T19:50:39Z
 ```
 
-Release asset:
+Release assets:
 
 ```text
+repobelt-demo-sfx.mp4
 repobelt-demo.mp4
 ```
 
-## Security and secrets check
-
-A lightweight scan for obvious real secret-shaped literals found no matches outside ignored build/vendor directories. The package author field and personal copyright name were removed before npm publishing prep; the remaining `realvaleh` references are the public GitHub repository URL/owner handle.
-
-Ignored directories for this check:
+Alignment status:
 
 ```text
-.git
-node_modules
+WARN: package.json is still 0.1.0, but current main contains release-polish commits after the v0.1.0 tag/release target.
+```
+
+Before npm publication, choose one of these release-safe paths:
+
+1. Retarget/recreate the `v0.1.0` tag and GitHub prerelease at current `main`, then publish `repobelt@0.1.0`.
+2. Keep the existing `v0.1.0` prerelease immutable, bump the package to a new patch/pre-1.0 version, create a new tag/release, then publish that version.
+
+## Security and secrets check
+
+A lightweight tracked-file scan for obvious real secret-shaped literals found no apparent real credentials outside expected documentation, policy examples, synthetic tests, and generated workflow token placeholders. The scan intentionally excluded build/vendor/git directories:
+
+```text
 dist
+node_modules
+.git
 .pnpm-store
 ```
+
+Expected non-secret matches include documentation about secrets, synthetic token fixtures that split token prefixes from repeated characters in tests, and GitHub Actions' `${{ github.token }}` placeholder used by generated PR-comment workflows.
 
 Security docs verified:
 
@@ -186,12 +233,13 @@ Verified launch assets:
 ```text
 docs/assets/repobelt-demo.svg
 docs/assets/repobelt-demo.mp4
+docs/assets/repobelt-demo-sfx.mp4
 docs/demo.md
 docs/demo-video.md
 docs/launch-announcement-kit.md
 ```
 
-The MP4 demo is synthetic and does not display real secret values.
+The MP4 demos are synthetic and do not display real secret values.
 
 ## Completed public-launch steps
 
@@ -209,12 +257,17 @@ Branch protection note: enabling `main` protection while RepoBelt was private pr
 
 ## Approval-required steps remaining
 
-This has maintainer approval, but cannot be completed until npm authentication is available on this machine:
+The following still require explicit maintainer approval and/or npm authentication:
 
-```bash
-npm publish --access public
+```text
+Resolve tag/release alignment for the final package version.
+Authenticate npm on this machine if needed.
+Run npm publish --access public for the chosen final version.
+Verify npx repobelt --help from the public npm package.
 ```
+
+Do not publish to npm until the tag/release alignment decision is made.
 
 ## Recommendation
 
-Next step: authenticate npm on this machine, then publish `repobelt@0.1.0` to npm and verify `npx repobelt --help`.
+Next step: resolve whether `0.1.0` should be retagged to current `main` or whether the current polish should become a new patch/pre-1.0 release. After that decision, publish the chosen package version to npm and verify `npx repobelt --help` from the public registry.
