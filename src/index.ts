@@ -566,7 +566,7 @@ async function renderDoctorReport(options: { cwd: string; config: string | undef
     status: hasIssues ? 'fail' : 'pass',
     hasFailures: hasIssues,
     findings,
-    nextCommands: ['repobelt check --since-main', 'repobelt check --print-config', 'repobelt init --strict'],
+    nextCommands: ['repobelt check --since-default', 'repobelt check --print-config', 'repobelt init --strict'],
   };
 }
 

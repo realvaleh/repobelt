@@ -156,7 +156,8 @@ allowlist:
       expect(output).toContain('OK .repobeltignore 2 patterns');
       expect(output).toContain('OK CODEOWNERS .github/CODEOWNERS');
       expect(output).toContain('Next commands:');
-      expect(output).toContain('repobelt check --since-main');
+      expect(output).toContain('repobelt check --since-default');
+      expect(output).not.toContain('repobelt check --since-main');
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -206,7 +207,8 @@ allowlist:
       expect(parsed.hasFailures).toBe(false);
       expect(parsed.findings).toContainEqual({ level: 'OK', message: 'git repository' });
       expect(parsed.findings.some((finding) => finding.message === 'policy .repobelt.yml')).toBe(true);
-      expect(parsed.nextCommands).toContain('repobelt check --since-main');
+      expect(parsed.nextCommands).toContain('repobelt check --since-default');
+      expect(parsed.nextCommands).not.toContain('repobelt check --since-main');
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

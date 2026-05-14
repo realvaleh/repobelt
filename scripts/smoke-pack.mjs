@@ -195,6 +195,7 @@ try {
   expectIncludes('repobelt doctor --format json', doctorJsonOutput, '"hasFailures": false');
   expectIncludes('repobelt doctor --format json', doctorJsonOutput, '"findings"');
   expectIncludes('repobelt doctor --format json', doctorJsonOutput, '"nextCommands"');
+  expectIncludes('repobelt doctor --format json', doctorJsonOutput, 'repobelt check --since-default');
   const doctorOutputFileMessage = run('npx', ['repobelt', 'doctor', '--format', 'json', '--output', 'reports/doctor.json'], { cwd: appDir });
   expectIncludes('repobelt doctor --output', doctorOutputFileMessage, 'Wrote RepoBelt doctor report to reports/doctor.json');
   const doctorOutputFile = run('node', ['-e', "process.stdout.write(require('node:fs').readFileSync('reports/doctor.json', 'utf8'))"], { cwd: appDir });
