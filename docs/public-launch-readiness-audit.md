@@ -262,9 +262,11 @@ The following still require explicit maintainer approval and/or npm authenticati
 ```text
 Resolve tag/release alignment for the final package version.
 Authenticate npm on this machine if needed.
-Run npm publish --access public for the chosen final version.
+Run npm publish --access public for the chosen final version with REPOBELT_NPM_PUBLISH_APPROVED=<name>@<version> set.
 Verify npx repobelt --help from the public npm package.
 ```
+
+The package now includes a `prepublishOnly` guard that blocks accidental npm publishes unless the approval environment variable exactly matches the package name/version, the working tree is clean, and the matching `v<version>` tag points at `HEAD`.
 
 Do not publish to npm until the tag/release alignment decision is made.
 

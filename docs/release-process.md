@@ -98,8 +98,10 @@ pnpm test
 pnpm build
 pnpm smoke:pack
 npm pack --dry-run
-npm publish --access public
+REPOBELT_NPM_PUBLISH_APPROVED=repobelt@0.1.0 npm publish --access public
 ```
+
+The `prepublishOnly` guard blocks accidental publishes unless `REPOBELT_NPM_PUBLISH_APPROVED` exactly matches the package name/version and the matching `v<version>` tag points at `HEAD` with a clean working tree. If the guard fails because the tag is behind `main`, either retag/recreate the intended release at the current commit or bump the package version and create a fresh tag/release before publishing.
 
 After publish, verify from a clean temporary directory:
 

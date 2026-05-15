@@ -8,6 +8,7 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 
 ### Added since release
 
+- `prepublishOnly` guard for npm publishing, requiring version-scoped maintainer approval plus clean working tree and `v<version>` tag alignment before `npm publish` can proceed.
 - `init --help` for command-specific init usage, including discoverable `--dry-run`, strict budget, preset, and PR-comment options.
 - `doctor --output <path>` for writing setup health reports to CI artifacts or bot handoff files.
 - `doctor --format json` for machine-readable setup health reports in CI, bots, and editor integrations.
