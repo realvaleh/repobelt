@@ -2,11 +2,12 @@ import { execFile } from 'node:child_process';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { describe, expect, it } from 'vitest';
 
 const execFileAsync = promisify(execFile);
-const projectRoot = new URL('../..', import.meta.url).pathname;
+const projectRoot = fileURLToPath(new URL('../..', import.meta.url));
 const guardScript = join(projectRoot, 'scripts', 'prepublish-guard.mjs');
 
 async function git(cwd: string, args: string[]): Promise<void> {
@@ -26,21 +27,28 @@ async function createReleaseRepo(version = '1.2.3'): Promise<string> {
 
 describe('prepublish guard', () => {
   it('registers a prepublishOnly guard so npm publish cannot run accidentally', async () => {
-    const packageJson = JSON.parse(await readFile(new URL('../../package.json', import.meta.url), 'utf8')) as {
+    const packageJson = JSON.parse(await readFile(join(projectRoot, 'package.json'), 'utf8')) as {
       scripts?: Record<string, string>;
+      version?: string;
     };
 
     expect(packageJson.scripts?.prepublishOnly).toBe('node scripts/prepublish-guard.mjs');
   });
 
   it('fails without an explicit version-scoped approval environment variable', async () => {
+    const packageJson = JSON.parse(await readFile(join(projectRoot, 'package.json'), 'utf8')) as {
+      name?: string;
+      version?: string;
+    };
+    const expectedApproval = `${packageJson.name}@${packageJson.version}`;
+
     await expect(
       execFileAsync('node', [guardScript], {
         cwd: projectRoot,
         env: { ...process.env, REPOBELT_NPM_PUBLISH_APPROVED: '' },
       }),
     ).rejects.toMatchObject({
-      stderr: expect.stringContaining('Set REPOBELT_NPM_PUBLISH_APPROVED=repobelt@0.1.0'),
+      stderr: expect.stringContaining(`Set REPOBELT_NPM_PUBLISH_APPROVED=${expectedApproval}`),
     });
   });
 

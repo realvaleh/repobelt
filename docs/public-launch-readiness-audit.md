@@ -1,53 +1,30 @@
 # Public launch readiness audit
 
-Audit date: 2026-05-14
+Audit date: 2026-05-15
 
 ## Summary
 
-RepoBelt has completed the approved GitHub public-launch steps and remains release-ready from the repository, CI, local verification, and package dry-run perspective.
+RepoBelt remains locally release-ready and is now prepared as the safer `0.1.1` release candidate path instead of retagging the already-published `v0.1.0` prerelease.
 
-The repository is public, branch protection is enabled for `main`, private vulnerability reporting is enabled, and the `v0.1.0` GitHub prerelease is published.
+The repository is public, branch protection is enabled for `main`, private vulnerability reporting is enabled, and the old `v0.1.0` GitHub prerelease remains published at its original commit. The current package version is now `repobelt@0.1.1`; npm publication is still blocked until a fresh `v0.1.1` tag/release exists at the intended commit, npm authentication is available, and explicit maintainer approval is given.
 
-Important current release note: the published `v0.1.0` GitHub tag/release still points to an older commit than `main`. Since `main` now contains additional `0.1.0` polish after the prerelease, final npm publication should either retarget/recreate the `v0.1.0` release at the current `main` commit or bump to a new patch/pre-1.0 release before publishing.
+No tag, GitHub release, repository visibility setting, or npm publication was changed during this release-prep update.
 
 ## Repository state
 
 - Repository: `realvaleh/repobelt`
 - Visibility: `PUBLIC`
 - Default branch: `main`
-- Working tree at audit start: clean
 - Current branch: `main`
-- Current `main` HEAD: `bcf6ffeedea35afbc5c32539783e348112c8ddea`
-- Current package: `repobelt@0.1.0`
-
-## GitHub metadata
-
-Description:
-
-```text
-A seatbelt for AI-generated pull requests.
-```
-
-Topics:
-
-```text
-ai-agents
-ci
-code-review
-devtools
-github-actions
-guardrails
-pull-requests
-security
-typescript
-```
+- Current package candidate: `repobelt@0.1.1`
+- Previous published prerelease: `v0.1.0`
 
 ## CI status
 
-Latest CI run verified during this audit:
+Latest fully verified GitHub CI run before the `0.1.1` release-prep commit:
 
 ```text
-https://github.com/realvaleh/repobelt/actions/runs/25850840905
+https://github.com/realvaleh/repobelt/actions/runs/25910226985
 ```
 
 Status:
@@ -56,10 +33,10 @@ Status:
 completed / success
 ```
 
-Latest verified CI commit:
+Verified CI commit:
 
 ```text
-bcf6ffe feat: add init help command
+4013874 feat: add release alignment check
 ```
 
 Required branch protection status check:
@@ -76,6 +53,8 @@ pnpm build
 pnpm smoke:pack
 ```
 
+After the `0.1.1` release-prep commit is pushed, watch the new CI run before treating the candidate as GitHub-verified.
+
 ## Local verification
 
 Passed during this audit:
@@ -84,14 +63,14 @@ Passed during this audit:
 pnpm test
 pnpm typecheck
 pnpm smoke:pack
-npm pack --dry-run --json
+npm pack --dry-run --json --ignore-scripts
 ```
 
 Test status:
 
 ```text
-Test Files: 14 passed
-Tests: 148 passed
+Test Files: 17 passed
+Tests: 163 passed
 ```
 
 Packaged CLI smoke test status:
@@ -100,10 +79,12 @@ Packaged CLI smoke test status:
 passed
 ```
 
-Packaged smoke coverage now verifies the npm tarball through `npx`, including:
+Packaged smoke coverage verifies the npm tarball through `npx`, including:
 
 ```text
 repobelt --help
+repobelt doctor --help
+repobelt check --help
 repobelt init --help
 repobelt init --dry-run
 repobelt init --pr-comment
@@ -116,13 +97,13 @@ repobelt check with diff ranges, explicit file lists, stdin, baselines, ignore p
 
 ## npm package dry run
 
-Dry-run package generated from current `main`:
+Dry-run package generated from the `0.1.1` candidate:
 
 ```text
-repobelt@0.1.0
-filename: repobelt-0.1.0.tgz
-package size: 361.6 kB
-unpacked size: 590.4 kB
+repobelt@0.1.1
+filename: repobelt-0.1.1.tgz
+package size: 362.9 kB
+unpacked size: 594.7 kB
 total files: 71
 ```
 
@@ -153,57 +134,47 @@ package.json
 Package version:
 
 ```text
-0.1.0
+0.1.1
 ```
 
-Current `main` HEAD:
+Expected release tag:
 
 ```text
-bcf6ffeedea35afbc5c32539783e348112c8ddea
+v0.1.1
 ```
 
-Local and remote tag:
+Current alignment status before tag/release creation:
+
+```text
+RepoBelt release alignment: FAIL
+package: repobelt@0.1.1
+tag: v0.1.1
+tag exists: no
+tag target: missing
+tag aligned with HEAD: no
+```
+
+This failure is expected and desirable until an explicit release step creates `v0.1.1` at the intended commit. `pnpm release:check` is read-only and does not create tags, edit releases, or publish packages.
+
+Existing published prerelease:
 
 ```text
 v0.1.0 -> 808fb690471b5a8bdf867419c2bf9c592e51a754
-```
-
-Published GitHub release target:
-
-```text
-808fb690471b5a8bdf867419c2bf9c592e51a754
-```
-
-Release state:
-
-```text
-Draft: false
-Prerelease: true
 Published URL: https://github.com/realvaleh/repobelt/releases/tag/v0.1.0
+Prerelease: true
 Published at: 2026-05-10T19:50:39Z
 ```
 
-Release assets:
+Release assets on the existing prerelease:
 
 ```text
 repobelt-demo-sfx.mp4
 repobelt-demo.mp4
 ```
 
-Alignment status:
-
-```text
-WARN: package.json is still 0.1.0, but current main contains release-polish commits after the v0.1.0 tag/release target.
-```
-
-Before npm publication, choose one of these release-safe paths:
-
-1. Retarget/recreate the `v0.1.0` tag and GitHub prerelease at current `main`, then publish `repobelt@0.1.0`.
-2. Keep the existing `v0.1.0` prerelease immutable, bump the package to a new patch/pre-1.0 version, create a new tag/release, then publish that version.
-
 ## Security and secrets check
 
-A lightweight tracked-file scan for obvious real secret-shaped literals found no apparent real credentials outside expected documentation, policy examples, synthetic tests, and generated workflow token placeholders. The scan intentionally excluded build/vendor/git directories:
+A lightweight tracked-file scan for obvious real secret-shaped literals has historically found no apparent real credentials outside expected documentation, policy examples, synthetic tests, and generated workflow token placeholders. The scan intentionally excludes build/vendor/git directories:
 
 ```text
 dist
@@ -226,21 +197,6 @@ docs/release-process.md
 
 Private vulnerability reporting is enabled for the public repository.
 
-## Launch assets
-
-Verified launch assets:
-
-```text
-docs/assets/repobelt-demo.svg
-docs/assets/repobelt-demo.mp4
-docs/assets/repobelt-demo-sfx.mp4
-docs/demo.md
-docs/demo-video.md
-docs/launch-announcement-kit.md
-```
-
-The MP4 demos are synthetic and do not display real secret values.
-
 ## Completed public-launch steps
 
 Completed with maintainer approval on 2026-05-10:
@@ -260,16 +216,21 @@ Branch protection note: enabling `main` protection while RepoBelt was private pr
 The following still require explicit maintainer approval and/or npm authentication:
 
 ```text
-Resolve tag/release alignment for the final package version.
+Create and push the v0.1.1 tag at the intended release commit.
+Create/publish the GitHub v0.1.1 release.
 Authenticate npm on this machine if needed.
-Run npm publish --access public for the chosen final version with REPOBELT_NPM_PUBLISH_APPROVED=<name>@<version> set.
+Run npm publish --access public for repobelt@0.1.1 with REPOBELT_NPM_PUBLISH_APPROVED=repobelt@0.1.1 set.
 Verify npx repobelt --help from the public npm package.
 ```
 
-The package now includes a `prepublishOnly` guard that blocks accidental npm publishes unless the approval environment variable exactly matches the package name/version, the working tree is clean, and the matching `v<version>` tag points at `HEAD`. Use `pnpm release:check` for a safe local alignment report before attempting any publish step.
+The package includes a `prepublishOnly` guard that blocks accidental npm publishes unless the approval environment variable exactly matches the package name/version, the working tree is clean, and the matching `v<version>` tag points at `HEAD`. Use `pnpm release:check` for a safe local alignment report before attempting any publish step.
 
-Do not publish to npm until the tag/release alignment decision is made.
+Do not publish to npm until the `v0.1.1` tag/release exists at the intended commit and the maintainer explicitly approves publication.
 
 ## Recommendation
 
-Next step: resolve whether `0.1.0` should be retagged to current `main` or whether the current polish should become a new patch/pre-1.0 release. After that decision, publish the chosen package version to npm and verify `npx repobelt --help` from the public registry.
+Next step: after CI passes on the `0.1.1` release-prep commit, explicitly choose whether to create `v0.1.1` and its GitHub release. Then, only with maintainer approval and npm authentication, publish with:
+
+```bash
+REPOBELT_NPM_PUBLISH_APPROVED=repobelt@0.1.1 npm publish --access public
+```

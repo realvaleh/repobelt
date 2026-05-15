@@ -4,9 +4,9 @@ All notable changes to RepoBelt will be documented in this file.
 
 RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview caveat: minor versions may still include breaking policy or CLI changes while the project is stabilizing.
 
-## [0.1.0] - 2026-05-10
+## [0.1.1] - 2026-05-15
 
-### Added since release
+### Added
 
 - `prepublishOnly` guard for npm publishing, requiring version-scoped maintainer approval plus clean working tree and `v<version>` tag alignment before `npm publish` can proceed.
 - `release:check` for safe local release diagnostics that report package version, expected tag, tag target, HEAD alignment, and working-tree cleanliness without tagging or publishing.
@@ -52,7 +52,7 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 - `check --output <path>` for writing text, Markdown, JSON, or SARIF reports to files.
 - Generated and project GitHub workflows now use Node 24-ready action majors (`actions/checkout@v6`, `actions/setup-node@v6`, and `pnpm/action-setup@v6` where applicable).
 
-### Changed since release
+### Changed
 
 - `doctor` next-command guidance now suggests `check --since-default` so setup diagnostics match non-`main` default branch support.
 - Generated GitHub Actions workflows now run `npx --yes repobelt check` so CI installs non-interactively instead of risking an npm prompt.
@@ -61,6 +61,8 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 - Generated GitHub Actions workflows now emit inline annotations with `--format github` while writing readable Markdown step summaries with `--summary "$GITHUB_STEP_SUMMARY"`.
 - Explicit changed-file inputs now deduplicate paths before count and risky-file guardrails run.
 - Init presets are now backed by a data-driven registry that also powers CLI validation and help text.
+
+## [0.1.0] - 2026-05-10
 
 ### Added
 
@@ -87,4 +89,5 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 - `PASS` exits with status code `0` when no findings are detected.
 - Secret values are intentionally not printed in reports.
 
+[0.1.1]: https://github.com/realvaleh/repobelt/releases/tag/v0.1.1
 [0.1.0]: https://github.com/realvaleh/repobelt/releases/tag/v0.1.0

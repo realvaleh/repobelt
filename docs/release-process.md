@@ -19,12 +19,14 @@ npm pack --dry-run
 git status --short --branch
 ```
 
-It is also safe to prepare private GitHub release assets while the repository remains private:
+### Release tag/release preparation
+
+Requires explicit approval before running in the public repository. Creating or pushing a tag and creating a GitHub release are public release side effects now that RepoBelt is public:
 
 ```bash
-git tag -a v0.1.0 -m "RepoBelt v0.1.0"
-git push origin v0.1.0
-gh release create v0.1.0 --title "RepoBelt v0.1.0" --notes-file /tmp/release-notes.md --prerelease --draft
+git tag -a v0.1.1 -m "RepoBelt v0.1.1"
+git push origin v0.1.1
+gh release create v0.1.1 --title "RepoBelt v0.1.1" --notes-file /tmp/release-notes.md --prerelease --draft
 ```
 
 ### Requires explicit approval
@@ -33,7 +35,7 @@ Do not run these without explicit approval from the maintainer:
 
 ```bash
 gh repo edit realvaleh/repobelt --visibility public
-gh release edit v0.1.0 --draft=false
+gh release edit v0.1.1 --draft=false
 npm publish
 ```
 
@@ -52,7 +54,7 @@ Before any public launch step:
 - [ ] `pnpm smoke:pack` passes.
 - [ ] `npm pack --dry-run` shows only expected files.
 - [ ] `package.json` version matches `CHANGELOG.md`.
-- [ ] the git tag matches the package version, for example `v0.1.0` for `0.1.0`.
+- [ ] the git tag matches the package version, for example `v0.1.1` for `0.1.1`.
 - [ ] the GitHub release notes match `CHANGELOG.md`.
 - [ ] no real secrets, credentials, private keys, or private repository contents are present.
 - [ ] README demo and quickstart still match current behavior.
@@ -85,7 +87,7 @@ Expected response:
 Publish the GitHub release draft only after reviewing the rendered release page:
 
 ```bash
-gh release edit v0.1.0 --draft=false --prerelease
+gh release edit v0.1.1 --draft=false --prerelease
 ```
 
 ## npm publish steps
@@ -99,7 +101,7 @@ pnpm build
 pnpm smoke:pack
 pnpm release:check
 npm pack --dry-run
-REPOBELT_NPM_PUBLISH_APPROVED=repobelt@0.1.0 npm publish --access public
+REPOBELT_NPM_PUBLISH_APPROVED=repobelt@0.1.1 npm publish --access public
 ```
 
 `pnpm release:check` is safe to run any time. It prints the current package version, expected `v<version>` tag, tag target, `HEAD`, tag alignment, and working-tree cleanliness, then exits non-zero when the package is not publish-aligned. It does not create tags, edit releases, or publish anything.
@@ -112,7 +114,7 @@ After publish, verify from a clean temporary directory:
 TMP_DIR=$(mktemp -d)
 cd "$TMP_DIR"
 npm init -y
-npm install repobelt@0.1.0
+npm install repobelt@0.1.1
 npx repobelt --help
 npx repobelt init --dry-run
 ```
@@ -139,6 +141,6 @@ npm packages cannot be treated like private git commits. Avoid publishing until 
 If a bad version is published:
 
 1. Do not delete history from git.
-2. Immediately prepare a patch version, for example `0.1.1`.
+2. Immediately prepare a patch version, for example `0.1.2`.
 3. Mark the bad GitHub release with a warning if necessary.
 4. Publish the fixed package only after repeating the full checklist.
