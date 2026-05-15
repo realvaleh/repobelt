@@ -63,6 +63,7 @@ Passed during this audit:
 pnpm test
 pnpm typecheck
 pnpm smoke:pack
+pnpm release:notes
 npm pack --dry-run --json --ignore-scripts
 ```
 
@@ -89,6 +90,7 @@ repobelt init --help
 repobelt init --dry-run
 repobelt init --pr-comment
 repobelt init --strict
+pnpm release:notes
 repobelt doctor
 repobelt doctor --format json
 repobelt doctor --format json --output reports/doctor.json
@@ -223,7 +225,7 @@ Run npm publish --access public for repobelt@0.1.1 with REPOBELT_NPM_PUBLISH_APP
 Verify npx repobelt --help from the public npm package.
 ```
 
-The package includes a `prepublishOnly` guard that blocks accidental npm publishes unless the approval environment variable exactly matches the package name/version, the working tree is clean, and the matching `v<version>` tag points at `HEAD`. Use `pnpm release:check` for a safe local alignment report before attempting any publish step.
+The package includes `release:notes` for generating GitHub-ready notes from the current `CHANGELOG.md` version section and a `prepublishOnly` guard that blocks accidental npm publishes unless the approval environment variable exactly matches the package name/version, the working tree is clean, and the matching `v<version>` tag points at `HEAD`. Use `pnpm release:notes` to prepare reviewable release text and `pnpm release:check` for a safe local alignment report before attempting any publish step.
 
 Do not publish to npm until the `v0.1.1` tag/release exists at the intended commit and the maintainer explicitly approves publication.
 

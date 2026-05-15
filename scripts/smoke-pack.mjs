@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { mkdtempSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -55,8 +55,19 @@ function expectIncludes(label, text, expected) {
 try {
   const packDir = join(tempRoot, 'pack');
   const appDir = join(tempRoot, 'app');
+  const releaseNotesPath = join(tempRoot, 'release-notes.md');
   mkdirSync(packDir, { recursive: true });
   mkdirSync(appDir, { recursive: true });
+
+  const releaseNotesMessage = run('pnpm', ['release:notes', '--', '--output', releaseNotesPath]);
+  expectIncludes('pnpm release:notes', releaseNotesMessage, `Wrote release notes to ${releaseNotesPath}`);
+  const packageJson = JSON.parse(readFileSync(join(projectRoot, 'package.json'), 'utf8'));
+  const releaseNotes = readFileSync(releaseNotesPath, 'utf8');
+  expectIncludes('pnpm release:notes output', releaseNotes, `# RepoBelt v${packageJson.version}`);
+  expectIncludes('pnpm release:notes output', releaseNotes, '`release:check` for safe local release diagnostics');
+  if (releaseNotes.includes('## [0.1.0]')) {
+    throw new Error('release:notes should only include the current package version section');
+  }
 
   const packOutput = run('npm', ['pack', '--pack-destination', packDir]);
   const tarballName = packOutput.trim().split('\n').at(-1);

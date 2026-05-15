@@ -15,6 +15,7 @@ pnpm install --frozen-lockfile
 pnpm test
 pnpm build
 pnpm smoke:pack
+pnpm release:notes
 npm pack --dry-run
 git status --short --branch
 ```
@@ -24,6 +25,7 @@ git status --short --branch
 Requires explicit approval before running in the public repository. Creating or pushing a tag and creating a GitHub release are public release side effects now that RepoBelt is public:
 
 ```bash
+pnpm release:notes -- --output /tmp/release-notes.md
 git tag -a v0.1.1 -m "RepoBelt v0.1.1"
 git push origin v0.1.1
 gh release create v0.1.1 --title "RepoBelt v0.1.1" --notes-file /tmp/release-notes.md --prerelease --draft
@@ -103,6 +105,8 @@ pnpm release:check
 npm pack --dry-run
 REPOBELT_NPM_PUBLISH_APPROVED=repobelt@0.1.1 npm publish --access public
 ```
+
+`pnpm release:notes` is safe to run any time. It extracts the current `package.json` version's section from `CHANGELOG.md` and prints GitHub-ready release notes, or writes them with `pnpm release:notes -- --output /tmp/release-notes.md`. It does not create tags, edit releases, or publish packages.
 
 `pnpm release:check` is safe to run any time. It prints the current package version, expected `v<version>` tag, tag target, `HEAD`, tag alignment, and working-tree cleanliness, then exits non-zero when the package is not publish-aligned. It does not create tags, edit releases, or publish anything.
 
