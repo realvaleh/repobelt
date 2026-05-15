@@ -266,7 +266,7 @@ Run npm publish --access public for the chosen final version with REPOBELT_NPM_P
 Verify npx repobelt --help from the public npm package.
 ```
 
-The package now includes a `prepublishOnly` guard that blocks accidental npm publishes unless the approval environment variable exactly matches the package name/version, the working tree is clean, and the matching `v<version>` tag points at `HEAD`.
+The package now includes a `prepublishOnly` guard that blocks accidental npm publishes unless the approval environment variable exactly matches the package name/version, the working tree is clean, and the matching `v<version>` tag points at `HEAD`. Use `pnpm release:check` for a safe local alignment report before attempting any publish step.
 
 Do not publish to npm until the tag/release alignment decision is made.
 

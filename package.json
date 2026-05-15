@@ -31,6 +31,7 @@
     "build": "tsc -p tsconfig.json",
     "prepack": "pnpm build",
     "prepublishOnly": "node scripts/prepublish-guard.mjs",
+    "release:check": "node scripts/release-check.mjs",
     "render:demo-video": "python3 scripts/render-demo-video.py",
     "render:demo-sfx": "python3 scripts/add-demo-sfx.py",
     "smoke:pack": "node scripts/smoke-pack.mjs",

@@ -97,9 +97,12 @@ npm whoami
 pnpm test
 pnpm build
 pnpm smoke:pack
+pnpm release:check
 npm pack --dry-run
 REPOBELT_NPM_PUBLISH_APPROVED=repobelt@0.1.0 npm publish --access public
 ```
+
+`pnpm release:check` is safe to run any time. It prints the current package version, expected `v<version>` tag, tag target, `HEAD`, tag alignment, and working-tree cleanliness, then exits non-zero when the package is not publish-aligned. It does not create tags, edit releases, or publish anything.
 
 The `prepublishOnly` guard blocks accidental publishes unless `REPOBELT_NPM_PUBLISH_APPROVED` exactly matches the package name/version and the matching `v<version>` tag points at `HEAD` with a clean working tree. If the guard fails because the tag is behind `main`, either retag/recreate the intended release at the current commit or bump the package version and create a fresh tag/release before publishing.
 
