@@ -16,6 +16,7 @@ pnpm test
 pnpm build
 pnpm smoke:pack
 pnpm release:notes
+pnpm release:preflight
 npm pack --dry-run
 git status --short --branch
 ```
@@ -101,12 +102,16 @@ npm whoami
 pnpm test
 pnpm build
 pnpm smoke:pack
+pnpm release:notes -- --output /tmp/release-notes.md
+pnpm release:preflight
 pnpm release:check
 npm pack --dry-run
 REPOBELT_NPM_PUBLISH_APPROVED=repobelt@0.1.1 npm publish --access public
 ```
 
 `pnpm release:notes` is safe to run any time. It extracts the current `package.json` version's section from `CHANGELOG.md` and prints GitHub-ready release notes, or writes them with `pnpm release:notes -- --output /tmp/release-notes.md`. It does not create tags, edit releases, or publish packages.
+
+`pnpm release:preflight` is safe to run any time. It combines release notes extraction, npm package dry-run metadata, and release tag alignment into one PASS/FAIL report. A FAIL is expected before the matching `v<version>` tag exists, and the command still does not create tags, edit releases, or publish packages.
 
 `pnpm release:check` is safe to run any time. It prints the current package version, expected `v<version>` tag, tag target, `HEAD`, tag alignment, and working-tree cleanliness, then exits non-zero when the package is not publish-aligned. It does not create tags, edit releases, or publish anything.
 

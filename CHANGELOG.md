@@ -8,6 +8,7 @@ RepoBelt follows semantic versioning before `1.0.0` with the usual early-preview
 
 ### Added
 
+- `release:preflight` for one-command read-only release readiness checks that combine release notes extraction, npm package dry-run summary, and tag alignment diagnostics without release side effects.
 - `release:notes` for generating GitHub-ready release notes from the current package version's `CHANGELOG.md` section without creating tags, editing releases, or publishing packages.
 - `prepublishOnly` guard for npm publishing, requiring version-scoped maintainer approval plus clean working tree and `v<version>` tag alignment before `npm publish` can proceed.
 - `release:check` for safe local release diagnostics that report package version, expected tag, tag target, HEAD alignment, and working-tree cleanliness without tagging or publishing.

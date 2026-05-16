@@ -68,6 +68,12 @@ try {
   if (releaseNotes.includes('## [0.1.0]')) {
     throw new Error('release:notes should only include the current package version section');
   }
+  const preflightOutput = runExpectFailure('pnpm', ['release:preflight']);
+  expectIncludes('pnpm release:preflight', preflightOutput, 'RepoBelt release preflight: FAIL');
+  expectIncludes('pnpm release:preflight', preflightOutput, `package: repobelt@${packageJson.version}`);
+  expectIncludes('pnpm release:preflight', preflightOutput, 'release notes: ok');
+  expectIncludes('pnpm release:preflight', preflightOutput, 'package dry-run: ok');
+  expectIncludes('pnpm release:preflight', preflightOutput, 'release alignment: fail');
 
   const packOutput = run('npm', ['pack', '--pack-destination', packDir]);
   const tarballName = packOutput.trim().split('\n').at(-1);
