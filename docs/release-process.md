@@ -17,6 +17,7 @@ pnpm build
 pnpm smoke:pack
 pnpm release:notes
 pnpm release:preflight
+pnpm release:manifest
 npm pack --dry-run
 git status --short --branch
 ```
@@ -104,6 +105,7 @@ pnpm build
 pnpm smoke:pack
 pnpm release:notes -- --output /tmp/release-notes.md
 pnpm release:preflight
+pnpm release:manifest
 pnpm release:check
 npm pack --dry-run
 REPOBELT_NPM_PUBLISH_APPROVED=repobelt@0.1.1 npm publish --access public
@@ -112,6 +114,8 @@ REPOBELT_NPM_PUBLISH_APPROVED=repobelt@0.1.1 npm publish --access public
 `pnpm release:notes` is safe to run any time. It extracts the current `package.json` version's section from `CHANGELOG.md` and prints GitHub-ready release notes, or writes them with `pnpm release:notes -- --output /tmp/release-notes.md`. It does not create tags, edit releases, or publish packages.
 
 `pnpm release:preflight` is safe to run any time. It combines release notes extraction, npm package dry-run metadata, and release tag alignment into one PASS/FAIL report. A FAIL is expected before the matching `v<version>` tag exists, and the command still does not create tags, edit releases, or publish packages.
+
+`pnpm release:manifest` is safe to run any time. It prints a JSON release-candidate summary with package version, git/tag state, latest GitHub Actions run when available, release notes status, package dry-run summary, preflight status, and the approval-scoped publish reminder. It is stdout-only and does not write files, create tags, edit releases, or publish packages. Use `pnpm --silent release:manifest > /tmp/release-manifest.json` or `node scripts/release-manifest.mjs > /tmp/release-manifest.json` when redirecting the JSON to a file so package-manager lifecycle banners do not pollute the JSON.
 
 `pnpm release:check` is safe to run any time. It prints the current package version, expected `v<version>` tag, tag target, `HEAD`, tag alignment, and working-tree cleanliness, then exits non-zero when the package is not publish-aligned. It does not create tags, edit releases, or publish anything.
 

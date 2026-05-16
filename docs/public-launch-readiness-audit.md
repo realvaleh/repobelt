@@ -65,6 +65,7 @@ pnpm typecheck
 pnpm smoke:pack
 pnpm release:notes
 pnpm release:preflight
+pnpm release:manifest
 npm pack --dry-run --json --ignore-scripts
 ```
 
@@ -93,6 +94,7 @@ repobelt init --pr-comment
 repobelt init --strict
 pnpm release:notes
 pnpm release:preflight
+pnpm release:manifest
 repobelt doctor
 repobelt doctor --format json
 repobelt doctor --format json --output reports/doctor.json
@@ -227,7 +229,7 @@ Run npm publish --access public for repobelt@0.1.1 with REPOBELT_NPM_PUBLISH_APP
 Verify npx repobelt --help from the public npm package.
 ```
 
-The package includes `release:notes` for generating GitHub-ready notes from the current `CHANGELOG.md` version section, `release:preflight` for combining notes/package/tag readiness into one read-only report, and a `prepublishOnly` guard that blocks accidental npm publishes unless the approval environment variable exactly matches the package name/version, the working tree is clean, and the matching `v<version>` tag points at `HEAD`. Use `pnpm release:notes` to prepare reviewable release text, `pnpm release:preflight` for the combined readiness report, and `pnpm release:check` for a focused alignment report before attempting any publish step.
+The package includes `release:notes` for generating GitHub-ready notes from the current `CHANGELOG.md` version section, `release:preflight` for combining notes/package/tag readiness into one read-only report, `release:manifest` for a JSON release-candidate summary for final human review, and a `prepublishOnly` guard that blocks accidental npm publishes unless the approval environment variable exactly matches the package name/version, the working tree is clean, and the matching `v<version>` tag points at `HEAD`. Use `pnpm release:notes` to prepare reviewable release text, `pnpm release:preflight` for the combined readiness report, `pnpm release:manifest` for machine-readable review context, and `pnpm release:check` for a focused alignment report before attempting any publish step.
 
 Do not publish to npm until the `v0.1.1` tag/release exists at the intended commit and the maintainer explicitly approves publication.
 

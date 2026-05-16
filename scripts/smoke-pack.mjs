@@ -74,6 +74,17 @@ try {
   expectIncludes('pnpm release:preflight', preflightOutput, 'release notes: ok');
   expectIncludes('pnpm release:preflight', preflightOutput, 'package dry-run: ok');
   expectIncludes('pnpm release:preflight', preflightOutput, 'release alignment: fail');
+  const manifestOutput = run('node', ['scripts/release-manifest.mjs']);
+  const manifest = JSON.parse(manifestOutput);
+  if (manifest.package.version !== packageJson.version) {
+    throw new Error(`release:manifest version mismatch: ${manifest.package.version}`);
+  }
+  if (manifest.status !== 'fail' || manifest.releaseNotes.status !== 'ok' || manifest.packageDryRun.status !== 'ok') {
+    throw new Error('release:manifest should report expected pre-tag readiness state');
+  }
+  if (manifest.git.expectedTag !== `v${packageJson.version}` || manifest.git.tagExists !== false) {
+    throw new Error('release:manifest should report the missing expected version tag');
+  }
 
   const packOutput = run('npm', ['pack', '--pack-destination', packDir]);
   const tarballName = packOutput.trim().split('\n').at(-1);
